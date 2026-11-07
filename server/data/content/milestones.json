@@ -1,0 +1,296 @@
+[
+  {
+    "occurredOn": "1950-10",
+    "title": "Turing proposes the imitation game",
+    "summary": "Alan Turing's \"Computing Machinery and Intelligence\" opens with \"I propose to consider the question, 'Can machines think?'\" and replaces it with an operational test of indistinguishability. The paper also anticipates most objections raised against machine intelligence for the following seventy years.",
+    "kind": "paper",
+    "sourceName": "Mind 59(236), 433-460 (1950)",
+    "topicSlug": "turing-test-machine-intelligence"
+  },
+  {
+    "occurredOn": "1956",
+    "title": "The Dartmouth workshop coins \"artificial intelligence\"",
+    "summary": "A summer research proposal and workshop organised by McCarthy, Minsky, Rochester and Shannon named the field and set its founding ambition: that every aspect of learning and intelligence can in principle be precisely described and simulated. The optimism of the proposal is now usually read alongside the two funding winters that followed.",
+    "kind": "event",
+    "sourceName": "Dartmouth Summer Research Project on Artificial Intelligence (1956)",
+    "topicSlug": "ai-paradigm-eras"
+  },
+  {
+    "occurredOn": "1958",
+    "title": "The perceptron",
+    "summary": "Frank Rosenblatt's perceptron demonstrated a learning rule for a single artificial neuron and proved it converges when the data are linearly separable. Minsky and Papert's 1969 analysis of its limitations — most famously XOR — is commonly cited as a trigger for the first drop in funding.",
+    "kind": "paper",
+    "sourceName": "Psychological Review 65(6), 385-408 (1958)",
+    "topicSlug": "perceptron-to-multilayer-networks-history"
+  },
+  {
+    "occurredOn": "1986-10",
+    "title": "Back-propagation reaches a wide audience",
+    "summary": "Rumelhart, Hinton and Williams published \"Learning representations by back-propagating errors\" in Nature. The algorithm had earlier precedents — Linnainmaa's 1970 work on automatic differentiation of nested operations, and Werbos's 1974 thesis — but this paper made reverse-mode differentiation the standard tool of connectionism.",
+    "kind": "paper",
+    "sourceName": "Nature 323, 533-536 (1986)",
+    "topicSlug": "backpropagation-autodiff-forward-reverse"
+  },
+  {
+    "occurredOn": "1995",
+    "title": "The support vector machine",
+    "summary": "Cortes and Vapnik's soft-margin SVM made margin maximisation practical on real data and connected statistical learning theory to a usable algorithm. For roughly a decade SVMs were the strongest general-purpose classifier available, until deep networks displaced them on perceptual tasks.",
+    "kind": "paper",
+    "sourceName": "Machine Learning 20(3), 273-297 (1995)",
+    "topicSlug": "support-vector-machines-and-kernel-methods"
+  },
+  {
+    "occurredOn": "1997",
+    "title": "Long short-term memory",
+    "summary": "Hochreiter and Schmidhuber introduced gated memory cells with an input, output and forget gate, giving recurrent networks a path along which gradient information could persist. The forget gate appeared in a 1999 extension and is what most implementations mean by LSTM today.",
+    "kind": "paper",
+    "sourceName": "Neural Computation 9(8), 1735-1780 (1997)",
+    "topicSlug": "recurrent-networks-lstm-gru-seq2seq"
+  },
+  {
+    "occurredOn": "1998-11",
+    "title": "LeNet-5 and convolutional networks for handwriting",
+    "summary": "LeCun, Bottou, Bengio and Haffner's \"Gradient-based learning applied to document recognition\" established the convolution-pool-fully-connected template and trained it end to end on digit recognition, showing that learned features beat hand-designed ones on a real deployed task.",
+    "kind": "paper",
+    "sourceName": "Proceedings of the IEEE 86(11), 2278-2324 (1998)",
+    "topicSlug": "convolutional-architectures-operations-and-lineage"
+  },
+  {
+    "occurredOn": "2001",
+    "title": "Random forests",
+    "summary": "Breiman combined bagging with random feature subsampling and proved consistency results for the ensemble. Random forests remain a strong default on tabular data, where they frequently outperform neural networks at a fraction of the tuning cost.",
+    "kind": "paper",
+    "sourceName": "Machine Learning 45, 5-32 (2001)",
+    "topicSlug": "decision-trees-and-ensemble-methods"
+  },
+  {
+    "occurredOn": "2009-06",
+    "title": "ImageNet is released",
+    "summary": "Deng, Dong, Socher, Li, Li and Fei-Fei presented a 14-million-image labelled hierarchy crowdsourced with Amazon Mechanical Turk. Its associated Large Scale Visual Recognition Challenge from 2010 became the benchmark whose 2012 result changed the direction of the field.",
+    "kind": "dataset",
+    "sourceName": "CVPR 2009",
+    "topicSlug": "evaluation-benchmarking-in-computer-vision"
+  },
+  {
+    "occurredOn": "2012-07",
+    "title": "Dropout",
+    "summary": "Hinton, Srivastava, Krizhevsky, Sutskever and Salakhutdinov proposed randomly omitting units during training to prevent feature co-adaptation, framing it as averaging over an exponential number of thinned networks. It became the default regularizer for deep networks for several years.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1207.0580",
+    "sourceName": "arXiv:1207.0580",
+    "topicSlug": "normalization-and-regularization-for-deep-networks"
+  },
+  {
+    "occurredOn": "2012-12",
+    "title": "AlexNet wins ImageNet by a wide margin",
+    "summary": "Krizhevsky, Sutskever and Hinton's eight-layer convolutional network reduced ILSVRC top-5 error from 26% to 15%. Three ingredients mattered: ReLU, dropout, and training on two GPUs — the first clear demonstration that GPU scale plus depth beats engineered features.",
+    "kind": "model",
+    "sourceName": "Advances in Neural Information Processing Systems 25 (2012)",
+    "topicSlug": "image-classification-recipes-and-modern-vision-training"
+  },
+  {
+    "occurredOn": "2013-01",
+    "title": "Efficient word vectors (word2vec)",
+    "summary": "Mikolov, Chen, Corrado and Dean published skip-gram and CBOW with negative sampling, making dense word embeddings cheap to train. The famous linear structure of the resulting space — king minus man plus woman near queen — reframed lexical semantics as geometry.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1301.3781",
+    "sourceName": "arXiv:1301.3781",
+    "topicSlug": "semi-supervised-self-supervised-and-representation-learning"
+  },
+  {
+    "occurredOn": "2013-12",
+    "title": "The variational autoencoder",
+    "summary": "Kingma and Welling's \"Auto-Encoding Variational Bayes\" combined a neural encoder-decoder with a tractable evidence lower bound and the reparameterization trick, making latent-variable models differentiable end to end. Rezende, Mohamed and Wierstra reached the same idea independently the same year.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1312.6114",
+    "sourceName": "arXiv:1312.6114",
+    "topicSlug": "vae-latent-variable-objectives"
+  },
+  {
+    "occurredOn": "2014-06",
+    "title": "Generative adversarial networks",
+    "summary": "Goodfellow and colleagues cast generation as a two-player minimax game between a generator and a discriminator. GANs produced dramatically sharper samples than contemporaneous likelihood models and opened a decade of work on training stability, mode collapse, and evaluation.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1406.2661",
+    "sourceName": "arXiv:1406.2661",
+    "topicSlug": "gan-dynamics-equilibria-lineage"
+  },
+  {
+    "occurredOn": "2014-09",
+    "title": "Attention for sequence to sequence",
+    "summary": "Bahdanau, Cho and Bengio's \"Neural Machine Translation by Jointly Learning to Align and Translate\" replaced the single fixed-length context vector with a learned alignment over source positions. Sutskever, Vinyals and Le's encoder-decoder paper appeared the same month. Both are direct ancestors of the transformer.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1409.0473",
+    "sourceName": "arXiv:1409.0473 (with arXiv:1409.3215)",
+    "topicSlug": "recurrent-networks-lstm-gru-seq2seq"
+  },
+  {
+    "occurredOn": "2014-12",
+    "title": "Adam",
+    "summary": "Kingma and Ba combined momentum with per-coordinate second-moment normalization and a bias correction for the zero-initialized statistics. Adam became the default optimizer for most of deep learning, and AdamW later fixed how weight decay interacts with its adaptive scaling.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1412.6980",
+    "sourceName": "arXiv:1412.6980",
+    "topicSlug": "optimization-for-neural-networks"
+  },
+  {
+    "occurredOn": "2015-02",
+    "title": "Initialization theory for deep networks",
+    "summary": "Two papers in the same month made depth trainable: He, Zhang, Ren and Sun derived the 2/n_in variance rule for ReLU networks, and Ioffe and Szegedy introduced batch normalization. Together they gave practitioners a principled way to keep activations and gradients at usable scale across many layers.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1502.01852",
+    "sourceName": "arXiv:1502.01852 and arXiv:1502.03167",
+    "topicSlug": "gradient-pathologies-initialization-theory"
+  },
+  {
+    "occurredOn": "2015-12",
+    "title": "Residual connections",
+    "summary": "He, Zhang, Ren and Sun's ResNet trained a 152-layer network by adding identity shortcuts, winning ILSVRC 2015. Beyond the benchmark, the identity path changed the gradient flow analysis of deep networks: the layer Jacobian becomes I + J, so gradients retain a direct route to early layers.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1512.03385",
+    "sourceName": "arXiv:1512.03385",
+    "topicSlug": "residual-connections-and-ode-view"
+  },
+  {
+    "occurredOn": "2016-01",
+    "title": "AlphaGo beats a professional player",
+    "summary": "Silver and colleagues combined deep policy and value networks with Monte Carlo tree search to defeat Fan Hui 5-0, published in Nature; the 4-1 match against Lee Sedol followed in March 2016. The system learned from self-play at a scale that had not previously been demonstrated on a problem of this complexity.",
+    "kind": "model",
+    "sourceName": "Nature 529, 484-489 (2016)",
+    "topicSlug": "mcts-planning-under-uncertainty"
+  },
+  {
+    "occurredOn": "2016-07",
+    "title": "Layer normalization",
+    "summary": "Ba, Kiros and Hinton normalized across the features of a single example rather than across a batch, removing batch-size dependence entirely. This made normalization usable in recurrent and sequence models and became the standard in transformers.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1607.06450",
+    "sourceName": "arXiv:1607.06450",
+    "topicSlug": "normalization-layers-mathematics"
+  },
+  {
+    "occurredOn": "2017-06",
+    "title": "The transformer",
+    "summary": "Vaswani and colleagues replaced recurrence entirely with scaled dot-product attention and residual blocks, reducing sequential computation to zero and exposing large parallelism. The architecture scaled better than anything preceding it and now underlies essentially all large language and most large vision models.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1706.03762",
+    "sourceName": "arXiv:1706.03762",
+    "topicSlug": "transformer-block-internals-normalization-mlp-stacking"
+  },
+  {
+    "occurredOn": "2018-06",
+    "title": "Neural ordinary differential equations",
+    "summary": "Chen, Rubanova, Bettencourt and Duvenaud parameterized a continuous-depth network as an ODE solved by an adaptive integrator, with gradients obtained by the adjoint method. It unified residual networks with dynamical systems and made memory cost independent of depth.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1806.07366",
+    "sourceName": "arXiv:1806.07366",
+    "topicSlug": "residual-connections-and-ode-view"
+  },
+  {
+    "occurredOn": "2018-10",
+    "title": "BERT and bidirectional pretraining",
+    "summary": "Devlin, Chang, Lee and Toutanova pretrained a transformer encoder on masked language modelling and next-sentence prediction, then fine-tuned it. Pretrain-then-adapt became the dominant paradigm in NLP and displaced task-specific architectures within about two years.",
+    "kind": "model",
+    "url": "https://arxiv.org/abs/1810.04805",
+    "sourceName": "arXiv:1810.04805",
+    "topicSlug": "transformer-block-internals-normalization-mlp-stacking"
+  },
+  {
+    "occurredOn": "2019-10",
+    "title": "RMSNorm",
+    "summary": "Zhang and Sennrich showed that re-centering in layer normalization is inessential: scaling by the root mean square alone matches quality at lower cost. RMSNorm is now the default normalization in most large language models.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/1910.07467",
+    "sourceName": "arXiv:1910.07467",
+    "topicSlug": "normalization-layers-mathematics"
+  },
+  {
+    "occurredOn": "2020-05",
+    "title": "In-context learning at scale (GPT-3)",
+    "summary": "Brown and colleagues showed that a 175-billion-parameter language model performs many tasks from a few examples in the prompt, with no gradient updates. The result shifted attention from fine-tuning to prompting, and made evaluation contamination and benchmark design central concerns.",
+    "kind": "model",
+    "url": "https://arxiv.org/abs/2005.14165",
+    "sourceName": "arXiv:2005.14165",
+    "topicSlug": "transfer-online-active-and-continual-learning"
+  },
+  {
+    "occurredOn": "2020-06",
+    "title": "Denoising diffusion probabilistic models",
+    "summary": "Ho, Jain and Abbeel connected score matching with Langevin dynamics to a simple noise-prediction objective, producing sample quality that surpassed GANs on image synthesis without adversarial training. Diffusion became the default generative family for images within two years.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2006.11239",
+    "sourceName": "arXiv:2006.11239",
+    "topicSlug": "score-matching-diffusion-theory"
+  },
+  {
+    "occurredOn": "2020-10",
+    "title": "Vision transformers",
+    "summary": "Dosovitskiy and colleagues split images into patches and fed them to an unmodified transformer encoder, showing that with sufficient data the inductive biases of convolution are not necessary. It unified the vision and language stacks and made joint training on both modalities straightforward.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2010.11929",
+    "sourceName": "arXiv:2010.11929",
+    "topicSlug": "vision-transformer-and-hybrid-backbones"
+  },
+  {
+    "occurredOn": "2021-04",
+    "title": "Rotary position embeddings",
+    "summary": "Su and colleagues applied position-dependent rotations to queries and keys so that attention scores depend only on relative distance. RoPE became the dominant positional scheme in open language models and interacts directly with long-context extension methods.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2104.09864",
+    "sourceName": "arXiv:2104.09864",
+    "topicSlug": "positional-encoding-mathematics-rope-alibi-long-context"
+  },
+  {
+    "occurredOn": "2021-06",
+    "title": "Low-rank adaptation",
+    "summary": "Hu and colleagues froze pretrained weights and trained small low-rank factor matrices instead, cutting the trainable parameter count by orders of magnitude. LoRA made adaptation of large models feasible on modest hardware and became the standard fine-tuning method.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2106.09685",
+    "sourceName": "arXiv:2106.09685",
+    "topicSlug": "transfer-online-active-and-continual-learning"
+  },
+  {
+    "occurredOn": "2021-07",
+    "title": "AlphaFold2 and protein structure prediction",
+    "summary": "Jumper and colleagues achieved accuracy competitive with experimental methods on the CASP14 targets, using an attention-based architecture that iteratively refined a structural representation. The result is one of the clearest demonstrations of machine learning producing a scientific capability that did not previously exist.",
+    "kind": "model",
+    "sourceName": "Nature 596, 583-589 (2021)",
+    "topicSlug": "protein-structure-prediction"
+  },
+  {
+    "occurredOn": "2021-12",
+    "title": "Latent diffusion",
+    "summary": "Rombach and colleagues moved the diffusion process into the compressed latent space of an autoencoder, reducing compute by an order of magnitude and enabling conditioning through cross-attention. The architecture underlies Stable Diffusion and most subsequent text-to-image systems.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2112.10752",
+    "sourceName": "arXiv:2112.10752",
+    "topicSlug": "diffusion-transformer-architecture"
+  },
+  {
+    "occurredOn": "2022-03",
+    "title": "Compute-optimal training (Chinchilla)",
+    "summary": "Hoffmann and colleagues trained models across a grid of sizes and token counts and concluded that most large language models at the time were undertrained: for a fixed compute budget, parameters and data should grow together. The finding redirected a generation of training runs toward much larger datasets.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2203.15556",
+    "sourceName": "arXiv:2203.15556",
+    "topicSlug": "ai-science-epistemics-fair-reproducibility"
+  },
+  {
+    "occurredOn": "2022-05",
+    "title": "FlashAttention",
+    "summary": "Dao, Fu, Ermon, Rudra and Re showed that attention is memory-bound rather than compute-bound and fused it into a tiled kernel that never materializes the score matrix. The asymptotics stayed quadratic, but wall-clock time and memory fell enough to make long contexts practical.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2205.14135",
+    "sourceName": "arXiv:2205.14135",
+    "topicSlug": "kv-cache-paged-attention"
+  },
+  {
+    "occurredOn": "2023-12",
+    "title": "Selective state space models (Mamba)",
+    "summary": "Gu and Dao introduced input-dependent selection into state space models, giving linear-time sequence modelling with quality competitive with attention on language tasks. It is the strongest current evidence that attention is not the only viable sequence mechanism at scale.",
+    "kind": "paper",
+    "url": "https://arxiv.org/abs/2312.00752",
+    "sourceName": "arXiv:2312.00752",
+    "topicSlug": "state-space-models-s4-mamba-rwkv-hybrids"
+  }
+]

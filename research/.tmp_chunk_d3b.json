@@ -1,0 +1,146 @@
+{
+  "domain": { "slug": "inference-systems", "name": "Inference Systems", "summary": "placeholder" },
+  "subdomain": { "slug": "inference-deployment-and-retrieval", "name": "Deployment Formats, Edge Inference and Vector Retrieval", "summary": "Compressing models to fit their target runtime, packaging them portably and safely, and the approximate-nearest-neighbour indexes that serve embeddings at scale." },
+  "topics": [
+    {
+      "slug": "model-compression-for-inference",
+      "name": "Quantisation, Pruning and Distillation for Deployment",
+      "difficulty": "advanced",
+      "tags": ["quantization", "pruning", "distillation", "compression"],
+      "definition": "Reducing the memory, bandwidth and compute a deployed model requires - through weight/activation quantisation, sparsity and pruning, or knowledge distillation into a smaller student - and measuring the quality that is lost per unit of saving.",
+      "explanation": "Deployment compression starts from an accounting of what limits the target: decode-time cost is dominated by bytes of weight and KV cache read per token, so weight-only quantisation to int8 or int4 is usually the highest-leverage change, whereas compute-bound prefill and training benefit more from structure and kernel choices. Post-training quantisation methods differ in how they choose scales and absorb error. Round-to-nearest with per-channel scales is the baseline; GPTQ performs layer-wise compensation using approximate second-order (Hessian) information from calibration data; AWQ observes that a small fraction of channels are salient because of large activation magnitudes and protects them by scaling; SmoothQuant migrates activation outlier difficulty into the weights so that int8 activations become feasible; block-wise and microscaling formats trade a small metadata overhead for much better tolerance of heavy-tailed distributions. Activation quantisation is harder than weight quantisation precisely because of impulse channels and because scales must be calibrated without hurting the model, while KV-cache quantisation is now routine at fp8. Pruning removes parameters: unstructured magnitude or second-order methods (SparseGPT, Wanda) can zero most weights with modest quality loss but rarely yield large-batch speed-up, whereas semi-structured 2:4 patterns have hardware support on some accelerators, and structured pruning of heads, layers or experts actually reduces FLOPs but usually requires retraining or distillation to recover quality. Distillation trains a student against a teacher's outputs: soft-target logit distillation is the classical form, and for LLMs the practical recipe is generation-based distillation, where teacher outputs become training data (this is how many open and on-device models are produced) - the honest caveat being that the student inherits the teacher's failure modes and style. Distillation is also the cheapest path to a smaller model when no teacher logits are available, and it interacts with everything: quantisation-aware training, calibration after compression, and re-validation of slice-level and safety behaviour. Measurement discipline decides everything: report task accuracy, calibration (ECE/Brier), and latency/memory at realistic batch, not perplexity alone.",
+      "learning_objectives": [
+        "Compute memory and bandwidth savings of weight-only int8/int4 and KV fp8 quantisation for a concrete model",
+        "Distinguish per-tensor, per-channel, per-block and microscaling quantisation, and weight-only versus weight-and-activation schemes",
+        "Explain why activation outliers block naive int8 activation quantisation and how SmoothQuant/GPTQ/AWQ respond",
+        "Compare unstructured, semi-structured and structured pruning with respect to realised speed-up",
+        "Design a distillation recipe (logit-based versus generation-based) and evaluate student quality beyond aggregate accuracy",
+        "Re-calibrate and re-evaluate a compressed model, including confidence and slice-level regressions"
+      ],
+      "prerequisites_strict": ["numerical-formats-mixed-precision"],
+      "prerequisites_recommended": ["llm-serving-continuous-batching", "model-packaging-edge-deployment", "supervised-learning-foundations", "kv-cache-paged-attention"],
+      "related_concepts": ["model-packaging-edge-deployment", "speculative-decoding", "accelerator-landscape-hardware-codesign", "llm-application-engineering"],
+      "advanced_extensions": ["Quantisation-aware training and fake-quant simulation", "Low-rank and merged-weight factorisation for adapters", "Sparsity plus fused kernels for MoE expert load", "Rate-distortion/quantisation theory for weight distributions", "Compression as a privacy and licensing question for distillation"],
+      "key_results_or_algorithms": ["RTN and per-channel scaling", "GPTQ (second-order layer-wise quantisation)", "AWQ (activation-aware weight quantisation)", "SmoothQuant (outlier migration)", "LLM.int8() and blockwise quantisation", "SparseGPT / Wanda pruning", "2:4 structured sparsity", "Hinton logit distillation", "Generation-based (sequence) distillation"],
+      "math_foundations": [
+        "Uniform quantisation: x_q = round(x/s) + z with scale s and zero point z; error bounded by s/2 per element",
+        "Quantisation noise vs signal: per-channel scale selection, heavy-tailed activation statistics, MSE-optimal clipping",
+        "Distillation objective: KL(teacher || student) on soft targets with temperature, plus cross-entropy on hard labels"
+      ],
+      "applications": [
+        "Fitting a 70B model into a single accelerator with int4 weights",
+        "Halving KV-cache memory so long-context serving fits",
+        "Producing a small model for a mobile or embedded product",
+        "Meeting a cost-per-million-tokens target without changing the serving architecture"
+      ],
+      "common_misconceptions": [
+        "Perplexity change predicts task change: compressed models can shift sharply on reasoning, multilingual, safety and calibration slices while aggregate perplexity barely moves",
+        "Unstructured sparsity gives free speed-up: it needs kernels and batch regimes where skipping actually saves bytes or FLOPs",
+        "Quantisation is symmetric across the network: a few layers and a few channels dominate the error",
+        "Distillation is just training on teacher outputs: it inherits teacher biases, and legal/licensing constraints may apply to that data",
+        "One calibration pass is enough: compressed models usually need recalibration for temperature and thresholds"
+      ],
+      "further_reading": [
+        { "title": "GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers", "authors": "Elias Frantar et al.", "year": 2022, "type": "paper", "url": null },
+        { "title": "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration", "authors": "Ji Lin et al.", "year": 2023, "type": "paper", "url": null },
+        { "title": "SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models", "authors": "Guangxuan Xiao et al.", "year": 2022, "type": "paper", "url": null },
+        { "title": "Distilling the Knowledge in a Neural Network", "authors": "Geoffrey Hinton, Oriol Vinyals, Jeff Dean", "year": 2015, "type": "paper", "url": "https://arxiv.org/abs/1503.02531" },
+        { "title": "SparseGPT: Massive Language Models Can Be Accurately Pruned in One-Shot", "authors": "Elias Frantar, Dan Alistarh", "year": 2023, "type": "paper", "url": null },
+        { "title": "LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale", "authors": "Tim Dettmers et al.", "year": 2022, "type": "paper", "url": null }
+      ]
+    },
+    {
+      "slug": "model-packaging-edge-deployment",
+      "name": "Model Packaging, Portability and Edge Deployment",
+      "difficulty": "intermediate",
+      "tags": ["onnx", "safetensors", "edge", "portability", "security"],
+      "definition": "Serialising a trained model so that a different runtime or device can execute it - exchange graphs, weight containers, runtimes and delegates - and the memory, thermal and security constraints that decide whether that model can run at the edge.",
+      "explanation": "A checkpoint produced by one framework version is not automatically a portable artifact. Graph exchange formats such as ONNX describe the computation as a model with a versioned operator set, tensor initialisers and dynamic-shape annotations; a runtime (ONNX Runtime, TensorRT, OpenVINO, Core ML, NNAPI delegates) then applies layout optimisations, fuses operators, selects kernels and may quantise the graph. Portability in practice is a coverage problem: a model is portable to the extent that every operator exists on the target at the shape and precision required, and unsupported ops cause silent fallbacks to slower paths, which is why the correct evaluation is a measured end-to-end run on device rather than an export success. LLM-era containers differ from classical graph export because decoding is a loop with growing state: formats such as GGUF bundle quantised weights plus metadata for llama.cpp-style runtimes, while ExecuTorch and TFLite target mobile with explicit memory planning, delegate dispatch to NPUs/GPUs, and a pre-packaged program rather than a live graph. The security story matters and is often ignored: Python pickle-based checkpoints execute arbitrary code on load, so untrusted model files are a real supply-chain attack surface; PyTorch's weights_only loading path and container formats that carry only data (safetensors, memory-mapped tensor files) exist to remove that execution step, and organisations should still verify artifact provenance and signature rather than trusting a filename. Edge deployment is bounded by more than FLOPs: the sum of weights, KV cache and runtime buffers must fit in the device's usable RAM, sustained throughput is limited by thermal throttling and battery policy, and update distribution is a fleet-operations problem. The right mental model is a joint budget - bytes, peak memory, energy per inference, and time-to-first-token on a cold load - and an honest benchmark methodology, which is what suites like MLPerf (including its mobile and client benchmarks) try to standardise.",
+      "learning_objectives": [
+        "Explain what an ONNX graph contains (opset version, initialisers, inputs/outputs, dynamic axes) and what a runtime adds",
+        "Diagnose portability failures: missing ops, unsupported dtypes, shape specialisation, and fallback-to-CPU effects",
+        "State why pickle-based checkpoints are unsafe and how weights_only loading and safetensors change the trust model",
+        "Build a device memory budget for an on-device LLM (weights + KV cache + activations + runtime overhead)",
+        "Describe runtime delegates, quantised kernels and thermal throttling, and design an on-device benchmark",
+        "Discuss model-artifact provenance, signing and supply-chain checks"
+      ],
+      "prerequisites_strict": ["numerical-formats-mixed-precision"],
+      "prerequisites_recommended": ["model-compression-for-inference", "ml-compilers-operator-fusion", "accelerator-landscape-hardware-codesign", "kv-cache-paged-attention"],
+      "related_concepts": ["model-compression-for-inference", "llm-serving-continuous-batching", "ml-deployment-rollout-monitoring", "accelerator-landscape-hardware-codesign"],
+      "advanced_extensions": ["Kernel-memory planning and static allocation for embedded runtimes", "NPU/GPU delegate graphs vs CPU fallback paths", "Streaming weights from flash to overcome RAM limits", "Federated fleet update, rollback and staged rollout of models", "Model provenance and attestation (signed artifacts, SBOM-style records)"],
+      "key_results_or_algorithms": ["ONNX opset versioning and graph optimisation passes", "ONNX Runtime execution providers", "safetensors data-only tensor format", "PyTorch weights_only deserialisation", "ExecuTorch portable edge programs", "TFLite/Core ML/NNAPI delegate dispatch", "GGUF quantised LLM containers", "MLPerf Inference and mobile benchmark methodology"],
+      "math_foundations": [
+        "Bytes: parameters x bytes-per-parameter plus KV-cache bytes, compared against device usable memory",
+        "Energy per inference = average power x time; throttling makes sustained performance lower than peak"
+      ],
+      "applications": [
+        "Shipping a model to phones or in-vehicle hardware with fixed RAM ceilings",
+        "Moving a training checkpoint to a cheaper inference runtime",
+        "Loading third-party model weights safely in a service",
+        "Publishing a reproducible model artifact for regulators or partners"
+      ],
+      "common_misconceptions": [
+        "Export success means deployability: operator coverage, precision and measured on-device latency decide",
+        "A model file is inert data: pickle checkpoints can execute code at load time",
+        "Desktop GPU benchmarks transfer to mobile: thermals, memory bandwidth and battery policy dominate on device",
+        "Quantisation metadata travels for free: containers differ in which scales and ops they support",
+        "Edge models need no monitoring: fleet versions drift and silently degrade when inputs shift"
+      ],
+      "further_reading": [
+        { "title": "ONNX Runtime documentation", "authors": "Microsoft ONNX Runtime project", "year": null, "type": "docs", "url": "https://onnxruntime.ai/docs" },
+        { "title": "ExecuTorch documentation", "authors": "PyTorch team", "year": null, "type": "docs", "url": null },
+        { "title": "safetensors documentation", "authors": "Hugging Face", "year": null, "type": "docs", "url": null },
+        { "title": "MLPerf Inference Benchmark", "authors": "Vijay Janapa Reddi et al.", "year": 2020, "type": "paper", "url": null },
+        { "title": "PyTorch security notes on weights_only model loading", "authors": "PyTorch team", "year": 2025, "type": "blog", "url": null }
+      ]
+    },
+    {
+      "slug": "ann-vector-search-indexes",
+      "name": "Vector Search and Approximate Nearest Neighbour Indexes",
+      "difficulty": "intermediate",
+      "tags": ["retrieval", "ann", "hnsw", "ivf-pq", "embeddings"],
+      "definition": "Indexes that answer approximate k-nearest-neighbour queries over high-dimensional embeddings - graph, inverted-file and quantised structures - traded against recall, latency, memory and build cost, including filtering and freshness requirements.",
+      "explanation": "Exact search over N vectors of dimension d costs O(Nd) per query, which is unaffordable once N reaches millions or a query budget is a few milliseconds, so retrieval systems answer approximately: they accept a small probability of missing a true neighbour in exchange for orders-of-magnitude less work, and quantify the trade-off with recall@k measured against exact ground truth. Graph indexes such as HNSW build a multi-layer navigable small-world graph, greedily descending from sparse long-range layers to a dense base layer; efSearch and M tune the exploration/latency curve, and the structure handles incremental inserts well while deletions and tombstones degrade it. Inverted-file indexes cluster vectors into Voronoi cells with a coarse quantiser and scan only the nprobe closest cells; pairing IVF with product quantisation compresses each vector into codes from several small dictionaries so many candidates can be scored from RAM-resident codes (with optional re-ranking using the stored original vectors), which is how billion-scale search fits in a server. ScaNN's anisotropic quantisation is the sharpest theoretical idea in this area: quantisation error should be penalised along the direction of the query rather than isotropically, because only the inner-product component along the query changes ranking - so the loss function that decides code assignment is asymmetric. Disk-oriented graph designs (DiskANN-style) keep the index on SSD with compressed in-memory navigation, GPU implementations exploit massive parallel distance evaluation, and filtered search - where metadata predicates must be honoured - is genuinely harder than post-filtering, since an index traversal can wander into regions that all fail the predicate; practical designs combine attribute filtering with either pre-filtered candidate sets or predicate-aware graph traversal. Evaluation must report recall@k, queries per second, p99 latency, memory per vector, and build/update time under a realistic query and filter distribution, because a configuration that wins on one axis usually loses on another; downstream relevance evaluation (nDCG, hit rate of a retrieval-augmented pipeline) is a separate question from ANN quality, and the embedding model's quality dominates it.",
+      "learning_objectives": [
+        "Derive brute-force cost and explain why approximation is necessary at scale",
+        "Explain HNSW construction/search, the roles of M, efConstruction and efSearch, and their effect on recall/latency",
+        "Explain IVF coarse quantisation, nprobe, and product-quantisation codebooks with re-ranking",
+        "State the intuition behind anisotropic (ScaNN) quantisation loss for inner-product ranking",
+        "Describe filtered/constrained search strategies and their failure modes",
+        "Evaluate an index by recall@k, QPS, p99 latency, memory per vector, and build/update cost",
+        "Reason about updates, deletes, streaming inserts and index retraining"
+      ],
+      "prerequisites_strict": ["linear-algebra-and-matrix-theory"],
+      "prerequisites_recommended": ["probability-and-stochastic-processes", "self-supervised-learning", "computational-complexity"],
+      "related_concepts": ["llm-application-engineering", "model-compression-for-inference", "llm-serving-continuous-batching", "benchmark-design-contamination"],
+      "advanced_extensions": ["Learned and hybrid index selection", "Compressed residual quantisation with GPU decoding", "Freshness/incremental indexing with deletes and retraining", "Query-class-aware filtering and predicate-cost estimation", "Late-interaction/reranker stages in multi-stage retrieval"],
+      "key_results_or_algorithms": ["HNSW multi-layer graph search", "IVF-Flat and IVF-PQ with coarse quantiser and re-ranking", "Product quantisation (Jegou et al.)", "ScaNN anisotropic vector quantisation", "DiskANN/Vamana SSD graph", "GPU brute-force and IVF (FAISS)", "Random projection / locality-sensitive hashing", "ANN-Benchmarks evaluation protocol"],
+      "math_foundations": [
+        "Inner-product and cosine similarity ranking; the score is determined by the component along the query vector",
+        "Quantisation as vector composition of codebook entries; distortion measured per candidate and averaged",
+        "Recall@k as a function of explored candidates; graph degree bounds search cost"
+      ],
+      "applications": [
+        "Retrieval-augmented generation over a private corpus",
+        "Semantic deduplication and clustering of large datasets",
+        "Recommendation candidate generation and duplicate detection",
+        "Long-term memory layers for LLM agents"
+      ],
+      "common_misconceptions": [
+        "Higher recall is simply better: recall, latency, memory and build time trade off and the operating point must match the product",
+        "Benchmarking one index type is meaningful: configuration matters more than the family label",
+        "ANN quality equals retrieval quality: embedding quality and ranking/aggregation dominate end-task relevance",
+        "Filters are a cheap afterthought: post-filtering can return too few results and pre-filtering can break graph connectivity",
+        "One build lasts forever: insert/delete drift and embedding-model upgrades require re-indexing plans"
+      ],
+      "further_reading": [
+        { "title": "Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs", "authors": "Yury Malkov, Dmitry Yashunin", "year": 2020, "type": "paper", "url": "https://arxiv.org/abs/1603.09320" },
+        { "title": "Accelerating Large-Scale Inference with Anisotropic Vector Quantization", "authors": "Ruiqi Guo et al.", "year": 2020, "type": "paper", "url": null },
+        { "title": "Product Quantization for Nearest Neighbor Search", "authors": "Herve Jegou, Matthijs Douze, Cordelia Schmid", "year": 2011, "type": "paper", "url": null },
+        { "title": "Billion-Scale Similarity Search with GPUs", "authors": "Jeff Johnson, Matthijs Douze, Herve Jegou", "year": 2019, "type": "paper", "url": null },
+        { "title": "ANN-Benchmarks: A Benchmarking Tool for Approximate Nearest Neighbor Algorithms", "authors": "Martin Aumuller et al.", "year": 2020, "type": "paper", "url": null },
+        { "title": "DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node", "authors": "Suhas Jayaram Subramanya et al.", "year": 2019, "type": "paper", "url": null }
+      ]
+    }
+  ]
+}

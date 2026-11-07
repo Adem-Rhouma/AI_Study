@@ -1,0 +1,452 @@
+{
+  "slug": "computer-vision",
+  "name": "Computer Vision",
+  "summary": "From the physics and signal processing of images through geometry and classical feature-based pipelines to modern learned perception: recognition, detection, segmentation, motion, 3D, video, self-supervised and multimodal visual representation learning, and the measurement and robustness problems that decide whether a vision system is trustworthy.",
+  "subdomains": [
+    {
+      "slug": "classical-and-geometric-vision",
+      "name": "Classical and Geometric Vision",
+      "summary": "The pre-deep and non-deep substrate: image formation and filtering, feature-based recognition, and the projective geometry that makes 3D inference from 2D possible.",
+      "topics": [
+        {
+          "slug": "classical-vision-image-processing-and-feature-based-recognition",
+          "name": "Image Formation, Classical Image Processing, and Feature-Based Recognition",
+          "difficulty": "intermediate",
+          "definition": "Image formation maps a 3D radiance distribution to sampled 2D intensities; classical image processing filters, transforms and measures those samples, and feature-based recognition builds categories from detected local features and their statistics.",
+          "explanation": "A digital image is a samples-and-quantization model of a light field: irradiance is projected through optics (with vignetting, exposure, and sensor noise that is roughly signal-dependent, e.g. Poisson-like shot noise plus read noise), sampled on a lattice, and quantized, so aliasing is a permanent design constraint - which is why Gaussian pre-filtering before downsampling matters, why image pyramids (Laplacian/Gaussian, and the later scale-space axiomatization by Lindeberg: the unique smoothing kernel family satisfying causality, isotropy, and scale invariance is the Gaussian) are the correct multi-scale substrate, and why modern architectures that need invariance must still think in these terms. The filtering layer is a small, exact body of mathematics: separable and linear shift-invariant convolution, the frequency-domain view (a filter is a transfer function; the FFT turns convolution into multiplication at O(N log N) with circular-convolution caveats), high/low-pass and derivative-of-Gaussian filters (the basis of edge and blob detection), non-linear morphology (erosion/dilation/opening/closing, granulometry, area opening - indispensable for segmenting microscopy/industrial images where a learned model would be overkill), histogram operations (equalization, adaptive contrast, CLAHE), and bilateral/NL-means as edge-preserving nonlinear denoisers. Feature detection asks for repeatable, localized structure: The Harris-Stephens and Shi-Tomasi corner measures use the second-moment matrix M = sum w(grad I)(grad I)^T whose eigenvalues decide corner/edge/flat (and the Harris response det - k tr^2 is exactly a rotation-invariant summary of those eigenvalues); the Moravec, SUSAN, and Foerstner structure-tensor operators are variants; SIFT adds scale-space extrema of DoG plus orientation assignment from gradient histograms and a 128-dimensional normalized gradient descriptor with partial invariance to illumination, rotation, and small affine change; SURF approximates Hessian blobs with integral images for speed (the integral image is the O(1) box-sum trick); ORB uses intensity-comparison (BRIEF) binary descriptors with learned/rotated orientation for fast Hamming matching, BRISK and FREAK similar. These enable the classical recognition pipeline that predates and still sometimes beats deep nets on tiny datasets: detect features, describe, match by nearest neighbor with a distance-ratio test, verify geometry with RANSAC (a random-minimal-set consensus method whose sample count depends on inlier probability - teaching it is the cheapest way to make students robust to outliers), then aggregate descriptors into an image representation (bag of visual words via k-means vocabularies, Fisher vectors / VLAD as first- and higher-order pooling of descriptor statistics, spatial pyramid matching) and classify with a linear SVM. Everything in that last sentence reappears in modern form - pooling, codebooks, and the vocabulary idea are the ancestors of vector-quantized tokenization - and teaching the classical pipeline is the honest way to explain why deep nets were a revolution (jointly learned features beat hand-designed ones) and what was not actually replaced (geometry, scale space, outlier-robust estimation).",
+          "learning_objectives": [
+            "Model sampling, aliasing, and quantization; explain why smoothing precedes downsampling and derive the FFT convolution cost argument.",
+            "Compute the second-moment matrix and Harris response for a small image patch and classify corner/edge/flat.",
+            "Explain what SIFT's scale-space extrema and orientation assignment buy, and what SIFT is not invariant to.",
+            "Contrast SURF, ORB/BRIEF, and KAZE with respect to speed, descriptor type, and invariance.",
+            "Derive the RANSAC sample-count formula and apply it to a fundamental-matrix or homography fit.",
+            "Build a bag-of-visual-words and a simple Fisher/VLAD vector and compare recognition performance with a small CNN.",
+            "Apply morphological opening/closing to a binary mask and explain when morphology beats a learned segmenter."
+          ],
+          "prerequisites_strict": ["fourier-analysis", "linear-algebra-foundations", "multivariable-calculus"],
+          "prerequisites_recommended": ["statistical-inference", "numerical-linear-algebra", "optimization-convex"],
+          "related_concepts": ["geometric-vision-camera-geometry-depth-sfm-and-slam", "convolutional-architectures-operations-and-lineage", "vector-quantized-tokenizers-for-generation"],
+          "advanced_extensions": ["scale-space axiomatics-and-nonlinear-diffusion", "integral-images-and-separable-filters", "shape-context-and-hog-descriptors", "robust-estimation-beyond-ransac-magsac-lo"],
+          "key_results_or_algorithms": ["Gaussian/scale-space pyramid", "Harris and Shi-Tomasi corner detectors", "SIFT", "SURF (integral images + Hessian)", "ORB/BRIEF", "RANSAC and its variants", "Distance-ratio (Lowe) matching test", "Bag of visual words, Fisher vectors, VLAD, spatial pyramid matching"],
+          "math_foundations": ["Convolution and transfer functions", "Eigenvalue analysis of 2x2 gradient structure tensors", "Quantization and signal-dependent noise", "Consensus and inlier/outlier modeling"],
+          "applications": ["Panorama stitching and image blending", "Retinography/microscopy pre-processing", "Visual place recognition and SLAM front ends", "Small-dataset recognition without deep training"],
+          "common_misconceptions": [
+            "Classical computer vision was superseded entirely (geometry and robust estimation remain prerequisites for modern 3D learning).",
+            "SIFT is fully affine invariant (it handles moderate affine change only; the invariances are approximations).",
+            "Downsampling without filtering is harmless (it creates aliasing that learned filters then cannot undo).",
+            "Feature matching is verification-free (ratio-tested matches are mostly wrong without geometric consensus)."
+          ],
+          "further_reading": [
+            { "title": "Computer Vision: Algorithms and Applications (2nd edition)", "authors": "Richard Szeliski", "year": 2022, "type": "book", "url": null },
+            { "title": "Computer Vision: Models, Learning, and Inference", "authors": "Simon J. Prince", "year": 2012, "type": "book", "url": null },
+            { "title": "Distinctive Image Features from Scale-Invariant Keypoints", "authors": "David G. Lowe", "year": 2004, "type": "paper", "url": null },
+            { "title": "A Combined Corner and Edge Detector", "authors": "Harris and Stephens", "year": 1988, "type": "paper", "url": null },
+            { "title": "Random Sample Consensus: A Paradigm for Model Fitting", "authors": "Fischler and Bolles", "year": 1981, "type": "paper", "url": null },
+            { "title": "Scale-Space for Extreme Points and Saddle Points of Image Structures", "authors": "Lindeberg", "year": 1998, "type": "survey", "url": null },
+            { "title": "OpenCV tutorials: image filtering, morphology, feature detection and camera calibration", "authors": "OpenCV team", "year": 2024, "type": "docs", "url": "https://docs.opencv.org/4.x/" }
+          ]
+        },
+        {
+          "slug": "geometric-vision-camera-geometry-depth-sfm-and-slam",
+          "name": "Camera Geometry, Stereo Depth, and Structure-from-Motion",
+          "difficulty": "advanced",
+          "definition": "Geometric vision models image formation with projective camera matrices and uses multi-view correspondence to recover pose, epipolar constraints, depth, and 3D structure; stereo and SfM/SLAM are the same estimation problems at different scale and with different real-time constraints.",
+          "explanation": "Everything follows from the pinhole model: a world point is projected x = K [R|t] X with the intrinsic calibration matrix K (focal lengths, principal point, skew) and pose [R|t], and real lenses add radial/tangential distortion that must be estimated (Zhang's planar-calibration method with a checkerboard is the standard practical procedure, and calibration quality silently bounds every downstream metric). Two views of the same scene are related by the epipolar constraint x'^T F x = 0 with the essential matrix E = [t]_x R = K'^T F K: this single equation gives the eight-point algorithm (a linear least-squares eigen-solution that must then be refined by enforcing rank-2/det constraints), RANSAC-based five-point pose estimation (Nister, the minimal solver used everywhere), degeneracy cases (pure translation, coplanar scenes), and the epipolar geometry used to prune matches. Depth then comes from triangulation (linear DLT or non-linear reprojection minimization), with baseline-to-depth ratio setting accuracy, and from active/passive sensors - stereo matching is a per-pixel correspondence problem solved by dynamic-programming sweep-line algorithms (SGBM), by semi-global smoothness priors, and now by cost-volume CNNs, while monocular dense depth (MiDaS/Depth-Anything-style) learns scale/shift-indeterminate shape-from-shading and motion parallax cues, so its outputs need metric alignment. Structure-from-Motion is the multi-view generalization: incremental or global registration, sparse point clouds, then bundle adjustment - large-scale sparse non-linear least squares over all cameras and points minimizing reprojection error, whose Jacobian is block-bordered sparse and solved with Schur-complement tricks (Ceres/g2o are the reference implementations), plus loop closure and place recognition (which is where the classical feature pipelines reappear). Visual SLAM adds the real-time and memory constraints: tracking on frame-to-frame motion, local mapping, a pose graph or keyframe window, and relocalization, with direct (photometric-error, e.g. DVO/LSD-SVO-style, and learned) versus indirect (feature-reprojection) formulations, and a drift-vs-consistency trade-off that geometric methods alone cannot escape. The learned-modern layer matters for a curriculum: relative-pose and correspondence networks now replace parts of the pipeline (LoFTR/DISIM-style matching, pose regressors like PoseNet and VGGT-style transformers), and the geometric loss structure (epipolar, reprojection) survives as regularizer, because networks without geometric grounding generalize poorly and cannot be calibrated. Teaching this topic also means teaching numerical honesty: scale ambiguity, gauge freedom, degenerate configurations, ill-conditioning, and the fact that 'recovered structure is only correct up to a similarity transform' in the uncalibrated case.",
+          "learning_objectives": [
+            "Derive the pinhole projection chain and explain what each element of K and each distortion coefficient changes.",
+            "State the epipolar constraint, derive F from E, and explain the rank-2 and det constraints the eight-point solution violates.",
+            "Compare the five-point and seven-point minimal solvers and say when each applies.",
+            "Triangulate a point from two calibrated poses and analyze how error scales with baseline and depth.",
+            "Explain bundle adjustment's sparse Jacobian structure and the Schur-complement solve.",
+            "Contrast SfM and SLAM on real-time, memory, loop-closure, and drift terms.",
+            "Explain the scale ambiguity of monocular depth and how metric alignment is performed."
+          ],
+          "prerequisites_strict": ["linear-algebra-foundations", "classical-vision-image-processing-and-feature-based-recognition", "numerical-linear-algebra"],
+          "prerequisites_recommended": ["optimization-convex", "matrix-analytical-functions", "probability-foundations", "differential-equations"],
+          "related_concepts": ["three-dimensional-representations-point-clouds-neural-rendering-gaussian-splatting", "optical-flow-tracking-and-video-understanding", "object-detection-and-pose-estimation"],
+          "advanced_extensions": ["non-refectable-sfm-and-degeneracy-detection", "direct-and-hybrid-slam-with-learned-photometric-models", "neural-structure-from-motion-and-learned-multi-view-depth", "relative-pose-and-correspondence-transformers"],
+          "key_results_or_algorithms": ["Pinhole + distortion calibration (Zhang)", "Epipolar geometry and the essential/fundamental matrix", "Eight-point and five-point solvers", "Triangulation (DLT, nonlinear)", "Two-view and multi-view bundle adjustment", "SGBM / semi-global stereo matching", "Incremental vs global SfM", "PTAM/ORB-SLAM-style visual SLAM", "LoFTR/DISIM learned matching"],
+          "math_foundations": ["Projective geometry and homogeneous coordinates", "SVD-based least-squares and eigen-solutions", "Sparse nonlinear least squares", "Eigenspace/conditioning analysis of estimators"],
+          "applications": ["3D reconstruction and mapping", "Augmented reality pose tracking", "Autonomous-driving perception (VIO/SLAM)", "Robot navigation and map building", "Depth for AR/robotics and metric reconstruction"],
+          "common_misconceptions": [
+            "The eight-point algorithm output is a valid essential matrix (it needs rank-2 and internal-parameter refinement).",
+            "Monocular depth is metric without scale priors (it is up-to-scale in general).",
+            "SLAM and SfM are different problems (shared estimation, different constraints).",
+            "Calibration error is a small nuisance (it is often the dominant systematic error)."
+          ],
+          "further_reading": [
+            { "title": "Multiple View Geometry in Computer Vision", "authors": "Hartley and Zisserman", "year": 2004, "type": "book", "url": null },
+            { "title": "A Flexible New Technique for Camera Calibration", "authors": "Zhengyou Zhang", "year": 2000, "type": "paper", "url": null },
+            { "title": "An Efficient Solution to the Five-Point Relative Pose Problem", "authors": "Nister", "year": 2004, "type": "paper", "url": null },
+            { "title": "ORB-SLAM2: An Open-Source SLAM System for Monocular, Stereo and RGB-D Cameras", "authors": "Mur-Artal and Tardos", "year": 2017, "type": "paper", "url": null },
+            { "title": "Towards Robust Monocular Depth Estimation: Mixing Datasets for Zero-Shot Cross-Dataset Transfer", "authors": "Ranftl, Lasinger, Hafner, Schindler and Pollefeys", "year": 2020, "type": "paper", "url": null },
+            { "title": "6.86x Vision Meets Machines: Introduction to Computer Vision lecture notes", "authors": "MIT (Durand)", "year": 2021, "type": "lecture-notes", "url": null }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "visual-recognition-and-dense-prediction",
+      "name": "Recognition, Detection, and Dense Prediction",
+      "summary": "The core learned perception tasks: image classification training practice, object detection with keypoints, and pixel-level segmentation from U-Net to promptable foundation segmenters.",
+      "topics": [
+        {
+          "slug": "image-classification-recipes-and-modern-vision-training",
+          "name": "Image Classification Practice and Modern Vision Training Recipes",
+          "difficulty": "intermediate",
+          "definition": "Image classification is the reference task for deep vision, and its 'recipes' are the empirically validated bundles of architecture, optimization, augmentation, and validation practices (the CS231n line and the 'Recipe for Training Image Classifiers' study) that determine results more than architecture novelty.",
+          "explanation": "The substantive claim of the recipe literature, verified over hundreds of runs on ImageNet-1k, is that a small number of decisions dominate: optimizer choice (AdamW for ViTs, SGD+momentum with careful LR for convnets), warmup-plus-decay schedules (cosine vs step, and matching schedule shape to the optimizer), normalization (GroupNorm/LayerNorm vs BatchNorm under small batch or distributed settings), weight decay tuned against LR, label smoothing and dropout, gradient clipping, mixed precision with loss scaling, EMA of weights, and augmentation (RandAugment, MixUp/CutMix, and their interaction with the metric you optimize). The same study documents the ways this fails: results are extremely sensitive to LR and to the specific optimizer/schedule pairing, so 'SOTA architecture' comparisons without matched recipe and matched compute are close to meaningless - a methodological lesson that generalizes to the whole field. Add the data-side practices: train/val/test hygiene (and the reality that public leaderboard saturation makes contamination and memorization a live concern), coarse-to-fine training resolution schedules, transfer learning and feature extraction from pretrained backbones (usually worth more than architecture choice on datasets below ImageNet scale), self-supervised pretraining when labels are scarce (see representation-learning topic), calibration for safety-relevant outputs (temperature scaling/ECE), long-tail handling (class-balanced sampling, logit adjustment), and the engineering of modern pretraining at scale (DataComp-style curation, distributed batch/optimizer sharding, and loss-vs-compute scaling analysis). CS231n's own arc is worth teaching as a curriculum in itself: linear/MLP baselines and loss functions, then SGD and regularization, then convnets, then transfer learning and modern architectures, then dense prediction and generative/visual-representation topics - the ordering reflects the fact that classification is where every training mechanism can be isolated and measured.",
+          "learning_objectives": [
+            "Assemble a training recipe for a new dataset (backbone, optimizer, schedule, augmentation, regularization) with justification per component.",
+            "Explain why LR and weight decay must be tuned jointly and how normalization choice interacts with batch size.",
+            "Implement mixed-precision training and describe loss scaling and its failure modes.",
+            "Diagnose a plateau or divergence using per-component ablation rather than architecture swap.",
+            "Apply transfer learning and evaluate whether it beats training from scratch under a compute budget.",
+            "Report a validation protocol that resists contamination and leaderboard overfitting, including calibration metrics."
+          ],
+          "prerequisites_strict": ["convolutional-architectures-operations-and-lineage", "optimization-for-neural-networks", "normalization-and-regularization-for-deep-networks", "model-selection-validation"],
+          "prerequisites_recommended": ["vision-transformer-and-hybrid-backbones", "self-supervised-visual-representation-learning", "statistical-inference"],
+          "related_concepts": ["object-detection-and-pose-estimation", "evaluation-benchmarking-in-computer-vision", "self-supervised-visual-representation-learning"],
+          "advanced_extensions": ["calibration-and-uncertainty-for-classification-outputs", "long-tail-and-class-imbalanced-training-recipes", "large-scale-pretraining-data-curation-and-scaling-analysis", "ema-and-weight-averaging-in-vision-training"],
+          "key_results_or_algorithms": ["Cross-entropy with softmax as the classification loss", "Recipe ablations (Huber et al.)", "Transfer learning from pretrained backbones (timm model zoo)", "RandAugment / MixUp / CutMix", "Cosine-with-warmup schedules", "Temperature scaling and ECE", "Class-balanced and logit-adjusted losses"],
+          "math_foundations": ["Softmax and cross-entropy gradients", "Calibration as distributional correctness", "Scaling-law style regression", "Class imbalance and reweighted risk"],
+          "applications": ["Every deployed vision system's starting point", "Benchmark reproduction and sanity checking", "Fine-tuning foundation models on domain data", "Choosing between training from scratch and transfer"],
+          "common_misconceptions": [
+            "Architecture choice dominates results (recipe, data, and compute usually dominate).",
+            "A recipe that worked for a convnet transfers to a ViT unchanged (optimizer/schedule/augmentation interactions are real).",
+            "Higher accuracy on a benchmark means a better model (contamination, protocol, and calibration are unmeasured).",
+            "Transfer learning always helps (it can underperform with large in-domain data and matched training)."
+          ],
+          "further_reading": [
+            { "title": "A Recipe for Training Image Classifiers", "authors": "Huber, Li, Godbole, Liang and others", "year": 2021, "type": "paper", "url": null },
+            { "title": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale", "authors": "Dosovitskiy et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "timm: PyTorch Image Models training recipes and mixed-precision documentation", "authors": "timm maintainers", "year": 2023, "type": "docs", "url": null },
+            { "title": "CS231n: Deep Learning for Computer Vision - assignments and notes", "authors": "Stanford Vision Lab", "year": 2017, "type": "course", "url": "https://cs231n.stanford.edu/" },
+            
+            { "title": "On Calibration of Modern Neural Networks", "authors": "Guo, Pleiss, Sun and Weinberger", "year": 2017, "type": "paper", "url": null }
+          ]
+        },
+        {
+          "slug": "object-detection-and-pose-estimation",
+          "name": "Object Detection and Keypoint Estimation: from R-CNN to DETR",
+          "difficulty": "advanced",
+          "definition": "Detection localizes and classifies multiple objects as boxes; the design space is region proposal versus dense prediction, anchor versus anchor-free boxes, and post-hoc NMS versus set prediction, with keypoint/pose estimation as the same machinery with a structured-output head.",
+          "explanation": "The conceptual difficulty is the output structure: a single image can contain an unknown number of objects of different classes at different scales and aspect ratios, so any detector needs (i) a feature hierarchy to see scales (the image pyramid, then VGG-style multi-stage maps, formalized as feature pyramid networks with top-down lateral connections and scale-aware heads, plus bi-directional FPN variants), (ii) a way to enumerate candidate locations (selective search and sliding windows, then Region Proposal Networks on anchor boxes), (iii) a per-candidate classifier and box regressor trained on IoU-thresholded label assignment, and (iv) duplicate suppression via NMS. R-CNN to Fast R-CNN to Faster R-CNN is a compute story (feature extraction per region, then shared backbone plus RoI pooling/align - the align layer quantization fix is a genuine example of an off-by-half detail changing accuracy), while SSD, RetinaNet and YOLO are the one-stage story (dense anchor prediction at multiple scales, focal loss to handle foreground/background imbalance by down-weighting easy negatives, and the anchor design question of matching aspect ratios to data statistics). Anchor-free models (FCOS, CenterNet, and later DETR-style) replaced hand-tuned anchors with per-pixel center/extent regression and, crucially, made label assignment itself a learning or matching problem. DETR's move is the most conceptually interesting: a Transformer encoder-decoder outputs a fixed-size set of object queries, trained with a Hungarian one-to-one matching loss, so there are no anchors and no NMS - the set-prediction formulation is what makes end-to-end detection principled, and its known weaknesses (slow convergence, weak small-object recall) drove Deformable-DETR (sparse deformable attention over sampled points), DINO, Conditional-DETR (queries conditioned on proposals), and the Co-DETR line. Simultaneous progress in the backbone (Swin, ConvNeXt, ViT with ViTDet using a dilated window or MAE-pretrained ViT plus an FPN-lite neck) and in assignment (SimOTA, TOOD and other dynamic label assignment) is what moved benchmarks. Human pose estimation is the structured-output cousin: bottom-up pipelines (OpenPose's part affinity fields, which make limb association a differentiable linking problem, and PIF's position-interval fields, which resolve overlapping limbs) versus top-down (person detector then per-person heatmap regression, the AlphaPose and HRNet high-resolution-multi-scale design that keeps a full-resolution heatmap branch for localization precision), with evaluation by OKS (object keypoint similarity - a per-keypoint Gaussian error normalized by scale, the COCO metric), the 'regress coordinates versus predict heatmaps' argument (heatmap soft-argmax is more precise, coordinate regression is faster and used by recent ViT-based coordinate-MLP decoders), multi-person ambiguity and scale handling, and whole-body/3D lifting (SMPL parametric mesh models, and mesh-fitting from image transformers). Remote-sensing and rotated-object detection is a legitimate application thread here: tiling/patch inference with overlap and merging (slicing-based inference, e.g. SOD for satellite imagery), oriented boxes, and cross-resolution generalization.",
+          "learning_objectives": [
+            "Contrast two-stage and one-stage detectors in terms of proposals, assignment, compute, and accuracy tradeoffs.",
+            "Explain why RoI Align (not pooling) matters and compute its sampling geometry.",
+            "Describe FPN's top-down pathway and why scale-aware assignment is needed.",
+            "Implement an IoU-based label assignment and explain focal loss's motivation from class imbalance.",
+            "Explain DETR's set prediction: Hungarian matching, query design, and why NMS disappears.",
+            "Compare bottom-up and top-down pose estimation and compute OKS for a predicted keypoint set.",
+            "Handle tiled inference for very large images (overlap, stitching, coordinate bookkeeping)."
+          ],
+          "prerequisites_strict": ["image-classification-recipes-and-modern-vision-training", "convolutional-architectures-operations-and-lineage"],
+          "prerequisites_recommended": ["transformer-block-internals-normalization-mlp-stacking", "vision-transformer-and-hybrid-backbones", "geometric-vision-camera-geometry-depth-sfm-and-slam", "supervised-learning-foundations"],
+          "related_concepts": ["segmentation-from-unet-to-sam", "evaluation-benchmarking-in-computer-vision", "optical-flow-tracking-and-video-understanding"],
+          "advanced_extensions": ["deformable-and-conditional-queries-in-set-prediction", "rotated-and-oriented-detection-for-remote-sensing", "dense-prediction-without-proposals-and-slicing-inference", "3d-human-mesh-recovery-from-monocular-images"],
+          "key_results_or_algorithms": ["R-CNN / Fast / Faster R-CNN", "RoI Align", "SSD and YOLO families", "RetinaNet + focal loss", "FPN / BiFPN", "FCOS, CenterNet (anchor-free)", "DETR, Deformable DETR, DINO, ViTDet", "OpenPose part affinity fields, HRNet, Coordinate-MLP", "OKS/AP/mAP@[IoU] metrics", "SOD-style tiled inference"],
+          "math_foundations": ["Bipartite matching (Hungarian algorithm)", "IoU and box parameterizations (cx,cy,w,h vs ltrb)", "Heatmap argmax and subpixel refinement", "Class imbalance and loss shaping"],
+          "applications": ["Autonomous driving perception", "Retail, industry, and counting systems", "Remote sensing and aerial imagery", "Motion capture, sports analytics, and avatar creation"],
+          "common_misconceptions": [
+            "DETR removed NMS for free (it pays in convergence time and small-object recall).",
+            "Anchors are just hyperparameters with no statistical content (their scale/aspect prior encodes dataset statistics).",
+            "Pose estimation is a classification problem (it is structured heatmap/coordinate regression with association).",
+            "mAP single number describes a detector (per-class, per-size, per-IoU breakdowns matter)."
+          ],
+          "further_reading": [
+            { "title": "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks", "authors": "Ren, He, Girshick and Sun", "year": 2015, "type": "paper", "url": null },
+            { "title": "Feature Pyramid Networks for Object Detection", "authors": "Lin, Dollar, Girshick, He, Hariharan and Belongie", "year": 2016, "type": "paper", "url": null },
+            { "title": "Focal Loss for Dense Object Detection", "authors": "Lin, Goyal, Girshick, He and Dollar", "year": 2017, "type": "paper", "url": null },
+            { "title": "End-to-End Object Detection with Transformers", "authors": "Carion, Massa, Synnaeve, Usunier, Kirillov and Zagoruyko", "year": 2020, "type": "paper", "url": null },
+            { "title": "Deformable DETR: Deformable Transformers for End-to-End Object Detection", "authors": "Zhu, Su, Lu et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "Simple Baselines for Human Pose Estimation and Tracking", "authors": "Xiao et al.", "year": 2018, "type": "paper", "url": null },
+            { "title": "Deep High-Resolution Representation Learning for Human Pose Estimation (HRNet)", "authors": "Sun, Xiao, Liu and Wang", "year": 2019, "type": "paper", "url": null },
+            { "title": "CS231n detection and COCO evaluation documentation (pycocotools)", "authors": "COCO team", "year": 2024, "type": "docs", "url": null }
+          ]
+        },
+        {
+          "slug": "segmentation-from-unet-to-sam",
+          "name": "Semantic, Instance, and Panoptic Segmentation: U-Net to SAM",
+          "difficulty": "advanced",
+          "definition": "Segmentation assigns class (semantic), identity (instance), or both (panoptic) to every pixel; the architectures range from fully convolutional encoder-decoders with skip connections to query-based mask decoders and promptable foundation segmenters.",
+          "explanation": "Semantic segmentation moved from conditional random fields and graph cuts as post-processing to fully convolutional networks (FCN: replace dense layers with convolutions, upsample with transposed convolution or bilinear+conv, and read out at multiple stages for a coarse-to-fine prediction) with three persistent problems and their fixes: downsampling loses localization (fixed by deconvolution/skip paths and by U-Net's symmetric encoder-decoder with feature concatenation, which is why U-Net became the medical imaging default - it trains on tiny datasets and preserves boundaries), limited context (fixed by atrous/dilated convolutions, DeepLab's ASPP parallel-rate module and its decoder, and by pyramid pooling), and class imbalance/boundary blur (fixed by lovasz/dice losses and boundary-aware losses). The U-Net lineage in medical imaging is worth its own treatment: V-Net and its Dice objective, nnU-Net's algorithm-tuned, self-configuring pipeline (which remains the strongest general-purpose medical segmentation method precisely because it optimizes recipe rather than novelty - a case study for the recipes topic), and prompt/adapter based adaptation of SAM to medical modalities where the visual prior mismatch (low contrast, no clear object boundary, unusual textures) makes zero-shot segmentation fail in specific, explainable ways. Instance segmentation decomposes differently: two-stage (Mask R-CNN adds a mask branch to Faster R-CNN plus RoI Align; SOLO/SOLOv2 predict mask coefficients per spatial location), bottom-up (centerness plus embedding clustering: MEInst, CenterMask, and polar-parameterized mask representations), and query-based (Mask2Former's unified 'masked attention' framework that treats semantic, instance and panoptic segmentation as the same set-of-queries-against-shared-embeddings problem). Panoptic segmentation (Kirillov et al. 2019) is the formal unification: things get instance IDs, stuff gets classes, and the metric is PQ = IoU-based stuff and things components combined, which is a real evaluation subtlety worth teaching. Then the foundation-model shift: SAM (Kirillov et al. 2023) trains a promptable segmenter - a ViT image encoder run once, a lightweight prompt encoder (points, boxes, masks), and a mask decoder with two tokens so you get ambiguous alternatives - on the Segment Anything Data Engine producing over a billion masks; its capabilities (open-world, label-agnostic 'segment the thing I pointed at') and its documented limits (poor masks for unusual scale/contrast, non-semantic outputs, weak on tiny structures, hallucinated segmentation of un-segmentable regions) should both be taught, and SAM 2 (Ravi et al., ICML 2024) extends the same architecture to video with a memory bank/stack over frames plus streaming propagation - which is where segmentation meets tracking. Dense-prediction evaluation is its own discipline: mIoU vs pixel accuracy vs boundary-F (BF-measure) vs Dice, and the fact that mIoU rewards large regions while ignoring thin structures.",
+          "learning_objectives": [
+            "Explain how FCN/U-Net recover spatial resolution and what skip connections actually prevent.",
+            "Implement dilation/ASPP and describe the receptive-field tradeoffs.",
+            "Contrast two-stage, bottom-up, and query-based instance segmentation.",
+            "Define panoptic segmentation and PQ, and explain why mIoU alone is misleading for thin structures.",
+            "Describe SAM's architecture split (image encoder / prompt encoder / mask decoder) and its known failure modes; explain SAM 2's memory mechanism for video.",
+            "Adapt a general segmenter to a medical dataset and predict where the domain gap bites."
+          ],
+          "prerequisites_strict": ["object-detection-and-pose-estimation", "convolutional-architectures-operations-and-lineage"],
+          "prerequisites_recommended": ["vision-transformer-and-hybrid-backbones", "vector-quantized-tokenizers-for-generation", "evaluation-benchmarking-in-computer-vision", "evaluation-benchmarking-in-computer-vision"],
+          "related_concepts": ["optical-flow-tracking-and-video-understanding", "evaluation-benchmarking-in-computer-vision", "vision-language-models-and-visual-reasoning"],
+          "advanced_extensions": ["masked-attention-unified-segmentation-frameworks", "promptable-and-adaptive-segmentation-for-domain-shift", "boundary-aware-uncertainty-and-loss-design-for-dense-prediction", "anomaly-and-change-detection-segmentation-in-imagery"],
+          "key_results_or_algorithms": ["FCN", "U-Net / V-Net", "DeepLabv3+ (ASPP)", "nnU-Net self-configuration", "Mask R-CNN + RoI Align", "SOLO / CenterMask", "Panoptic segmentation and PQ", "DETR/Mask2Former", "SAM and SAM 2", "mIoU/Dice/BF-measure evaluation"],
+          "math_foundations": ["Transposed convolution and checkerboard artifacts", "Set-to-set losses and matching", "Overlap metrics at pixel, object and panoptic level", "Dilated convolution receptive-field arithmetic"],
+          "applications": ["Medical image analysis (organs, lesions, cells)", "Autonomous driving scene parsing", "Remote sensing land cover and change detection", "Image editing, matting, and video VFX"],
+          "common_misconceptions": [
+            "Segmentation is classification per pixel with no extra issues (resolution, boundary precision, and object identity all change the design).",
+            "SAM replaces trained segmenters (it has no class semantics and fails on unusual contrast/scale).",
+            "mIoU is a sufficient metric (thin/ rare classes are effectively invisible).",
+            "Mask R-CNN's mask branch is a small detail (RoI Align precision is what makes masks work)."
+          ],
+          "further_reading": [
+            { "title": "Fully Convolutional Networks for Semantic Segmentation", "authors": "Long, Shelhamer and Darrell", "year": 2014, "type": "paper", "url": null },
+            { "title": "U-Net: Convolutional Networks for Biomedical Image Segmentation", "authors": "Ronneberger, Fischer and Brox", "year": 2015, "type": "paper", "url": null },
+            { "title": "nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation", "authors": "Isensee, Jaeger, Kohl, Petersen and Maier-Hein", "year": 2021, "type": "paper", "url": null },
+            { "title": "Panoptic Segmentation", "authors": "Kirillov, He, Girshick, Rother and Dollar", "year": 2019, "type": "paper", "url": null },
+            { "title": "Mask2Former for Unified Image and Video Segmentation", "authors": "Cheng, Schwing and Kirillov", "year": 2022, "type": "paper", "url": null },
+            { "title": "Segment Anything", "authors": "Kirillov, Mintun, Ravi, et al.", "year": 2023, "type": "paper", "url": null },
+            { "title": "SAM 2: Segment Anything in Images and Videos", "authors": "Ravi, Darji, et al.", "year": 2024, "type": "paper", "url": "https://arxiv.org/abs/2408.00714" },
+            { "title": "CS231n segmentation and COCO panoptic evaluation notes", "authors": "Stanford Vision Lab", "year": 2017, "type": "course", "url": "https://cs231n.stanford.edu/" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "motion-3d-and-video",
+      "name": "Motion, 3D, and Video Understanding",
+      "summary": "Temporal and spatial-structure perception: optical flow, tracking, video understanding, and learning on 3D representations with neural rendering.",
+      "topics": [
+        {
+          "slug": "optical-flow-tracking-and-video-understanding",
+          "name": "Optical Flow, Multi-Object Tracking, and Video Understanding",
+          "difficulty": "advanced",
+          "definition": "Optical flow estimates the per-pixel apparent motion field between frames; multi-object tracking associates detections across frames into trajectories; video understanding adds temporal aggregation for recognition, grounding, and prediction.",
+          "explanation": "Flow is the perception problem with the fewest assumptions: the brightness-constancy assumption gives the gradient constraint I_x u + I_y v + I_t = 0, one equation in two unknowns per pixel (the aperture problem), which is why regularization is mandatory - Horn-Schunk uses a global smoothness prior minimized by iterative relaxation, Black and Rangarajan's robust anisotropic regularization and intermediate-flow/multi-scale coarse-to-fine schemes are the classical solution, and large-displacement motion needs warping iterations or patch-based matching (DeepFlow's dense matchable patches). Learned flow (FlowNet to RAFT) changed the mechanism: RAFT iteratively refines a flow estimate by looking up features at the current warped position and passing the update through a shared GRU cell, which is a beautiful example of an unrolled optimization made learnable, is why it generalizes across datasets without fine-tuning, and is also why its failure cases (large untextured regions, motion blur, occlusions) are exactly the ones the classical literature names; modern evaluation uses EPE/Fl and the '1-pixel-out' metric on Sintel/KITTI/Middlebury, with occlusion-aware handling. Multi-object tracking is the association problem on top of detection: the classic pipeline is detect-then-track with Kalman or constant-velocity motion models, appearance embeddings and IoU/re-ID costs, and Hungarian assignment (SORT, then DeepSORT adding a Mahalanobis gate and appearance distance, and ByteTrack-style soft assignment that uses low-confidence detections to keep trajectories through occlusion); track-former style designs replace hand-tuned association with a transformer over track tokens, and MOT metrics (MOTA which penalizes identity switches, IDF1 which is a track-level F1, HOTA which factorizes detection, association and metric-precision) are a genuinely instructive case of how metric choice changes the ranking of methods - tracking evaluation is a taxonomy question, not just a number. Video understanding then has three lineages: classification/recognition (TSN temporal segment voting; SlowFast's two-pathway high-rate-motion/low-rate-appearance design; 3D convolution inflation from images, i.e. R(2+1)D factorization and I3D; ViViT's spatial-then-temporal tokenization with the quadratic-cost problem), self-supervised temporal learning (video contrastive and, importantly, VideoMAE-style masked autoencoding where a high masking ratio works because frames are highly correlated - an information-theoretically clean result), and dense/frame-level tasks (action detection and video instance segmentation, which unifies detection, segmentation and tracking as one query problem). The generative-adjacent case - video prediction models and world models - connects to the architecture topic on world models: temporal consistency is the shared difficulty, and in video generation it is handled with spatiotemporal attention, 3D VAE tokenizers, and consistency losses rather than by a per-frame generator.",
+          "learning_objectives": [
+            "Derive the brightness-constancy constraint, explain the aperture problem, and state why smoothness priors are required.",
+            "Explain coarse-to-fine warped-flow estimation and the role of robust/anisotropic regularization.",
+            "Describe RAFT's iterative GRU refinement and why it generalizes better than earlier architectures.",
+            "Implement a SORT-style tracker with Hungarian assignment and a Kalman motion model.",
+            "Contrast MOTA, IDF1 and HOTA and give a case where they disagree.",
+            "Compare TSN, SlowFast, inflated 3D convolutions and ViViT on cost and temporal sensitivity.",
+            "Explain why masked video autoencoding tolerates high masking ratios."
+          ],
+          "prerequisites_strict": ["object-detection-and-pose-estimation", "recurrent-networks-lstm-gru-seq2seq"],
+          "prerequisites_recommended": ["vision-transformer-and-hybrid-backbones", "self-supervised-visual-representation-learning", "geometric-vision-camera-geometry-depth-sfm-and-slam", "optimization-convex"],
+          "related_concepts": ["human-pose-estimation-and-body-reconstruction", "three-dimensional-representations-point-clouds-neural-rendering-gaussian-splatting", "evaluation-benchmarking-in-computer-vision"],
+          "advanced_extensions": ["scene-flow-and-egomotion-aware-motion-estimation", "learned-association-and-track-transformers", "long-form-video-token-compression-and-memory", "spatiotemporal-representation-learning-from-unlabeled-video"],
+          "key_results_or_algorithms": ["Horn-Schunk variational flow", "Coarse-to-fine warping with robust regularization", "DeepFlow", "RAFT", "Kalman filter + Hungarian assignment", "SORT / DeepSORT / ByteTrack", "TrackFormer style association", "MOTA/IDF1/HOTA", "TSN, I3D/R(2+1)D, SlowFast, ViViT", "VideoMAE"],
+          "math_foundations": ["PDE/variational regularization", "Linear assignment problem", "Bayesian filtering and motion models", "Tokenization cost of spatiotemporal grids"],
+          "applications": ["Autonomous driving motion perception", "Sports and surveillance analytics", "Video editing and segmentation propagation", "Action recognition and video retrieval", "Video generation consistency"],
+          "common_misconceptions": [
+            "Flow is velocity of objects (it is apparent image motion; occlusion and disocclusion make them differ).",
+            "Tracking quality is captured by detection AP (association errors are the dominant term).",
+            "MOTA is a sufficient tracking metric (it hides identity fragmentation; use IDF1/HOTA).",
+            "Video models need more parameters than image models (temporal aggregation is often the bottleneck, not capacity)."
+          ],
+          "further_reading": [
+            { "title": "Determining Optical Flow", "authors": "Horn and Schunck", "year": 1981, "type": "paper", "url": null },
+            { "title": "RAFT: Recurrent All-Pairs Field Transforms for Optical Flow", "authors": "Teed and Deng", "year": 2020, "type": "paper", "url": null },
+            { "title": "Simple Online and Realtime Tracking with a Deep Association Metric (DeepSORT)", "authors": "Wojke, Bewley and Paulus", "year": 2017, "type": "paper", "url": null },
+            { "title": "HOTA: A Higher Order Metric for Evaluating Multi-Object Tracking", "authors": "Luiten, Dendorfer, Hager, Torr and Leal-Taixe", "year": 2021, "type": "paper", "url": null },
+            { "title": "SlowFast Networks for Video Recognition", "authors": "Feichtenhofer, Fan, Malik and He", "year": 2019, "type": "paper", "url": null },
+            { "title": "VideoMAE: A Masked Autoencoder for Video Learning", "authors": "Tong et al.", "year": 2022, "type": "paper", "url": null },
+            { "title": "11-785 Introduction to Deep Learning: video understanding lectures", "authors": "Carnegie Mellon University", "year": 2023, "type": "course", "url": null }
+          ]
+        },
+        {
+          "slug": "three-dimensional-representations-point-clouds-neural-rendering-gaussian-splatting",
+          "name": "3D Representations: Point Clouds, Neural Radiance Fields, and Gaussian Splatting",
+          "difficulty": "advanced",
+          "definition": "3D vision chooses a data structure - unordered points, voxels, meshes, implicit fields, or explicit Gaussian primitives - and a learning or rendering method on it; neural radiance fields represent scenes as a continuous density/radiance function rendered by volume integration, and 3D Gaussian splatting represents them as anisotropic Gaussians rasterized differentiably.",
+          "explanation": "Point clouds are the native output of sensors (LiDAR, depth cameras, SfM) and their learning problem is permutation invariance plus non-uniform density: PointNet solves it with shared MLPs and a symmetric max-pool (with the T-Net for learned alignment and the documented weakness that the first layer is a bottleneck and neighborhood information is discarded), PointNet++ adds hierarchical ball-query grouping with multi-scale local aggregation, and subsequent designs use graph/convolutional or transformer tokenizations, kernel/voxel hybrids, or occupancy grids; typical tasks are classification/segmentation on S3DIS/ScanNet, part segmentation on ShapeNet, and registration (ICP classically, learned point-pair correspondence with a robust estimator now), with the practical issues of scale/normalization, density imbalance, and the domain gap between synthetic CAD and real scans. Volumetric and mesh representations buy structure at a cost: 3D convolutions are cubic in resolution and sparse/submanifold convolutions exist precisely to avoid that, mesh networks need connectivity assumptions, and none of them interpolate gracefully. Neural radiance fields changed the representation: a scene is F_theta(x, d) -> (sigma, c) queried along rays, and rendering is the classical volume-rendering integral of emitted radiance weighted by transmittance, T(t) = exp(-integral sigma), discretized as alpha-compositing over stratified samples - so color supervision on rendered pixels trains the geometry implicitly, with positional Fourier features (t -> sin/cos at multiple frequencies) providing the high-frequency spatial detail that a raw MLP cannot fit (a beautiful and quotable illustration of spectral bias). NeRF's real contributions and costs: view-consistent novel-view synthesis from sparse images, per-scene optimization (hours per scene), no editing, no semantics, and poor generalization from a single scene to a category - which drove generalizable NeRFs (pixelNeRF, Mip-NeRF's anti-aliasing analysis and its multi-sample approximation of the integral, NeRF++, and NeRF-in-the-wild methods that decouple appearance/embedding per image to handle exposure and background changes), and forward-rendering efficiency methods. 3D Gaussian Splatting (Kerbl et al., SIGGRAPH 2023) replaced the ray-marched implicit field with an explicit set of anisotropic 3D Gaussians optimized per scene and rendered by differentiable tile-based rasterization with alpha blending sorted front-to-back: it trains in minutes rather than hours, renders in real time, and matches or beats NeRF quality, at the cost of memory (millions of Gaussians), sensitivity to initialization, dependence on good SfM points, and known artifacts (needle-like Gaussians, floaters, and view-dependent aliasing). The 3D-generation connection to complete the picture: optimization-based generation (DreamFusion-style score distillation, which renders candidate geometry and back-propagates a 2D diffusion model's score (SDS) gradient - notoriously over-saturated and mode-collapsed because the SDS gradient is one-sided), feed-forward generation (feed-forward reconstruction transformers such as LRM and the Gaussian- or mesh-output families that followed), and the fact that reconstruction and generation share the representation question, since modern systems output Gaussian primitives or occupancy/SDF fields so that rendering stays differentiable.",
+          "learning_objectives": [
+            "Explain PointNet's symmetric aggregation and identify two task types where it underperforms; describe PointNet++'s hierarchical grouping.",
+            "Write the NeRF rendering integral, its discretized alpha-compositing form, and the transmittance expression.",
+            "Explain why positional encoding is necessary for NeRF using the spectral-bias argument.",
+            "Describe NeRF's per-scene optimization pipeline end to end (images + poses -> SfM -> MLP -> render -> loss).",
+            "Compare Mip-NeRF's anti-aliasing treatment with vanilla NeRF sampling.",
+            "Explain 3D Gaussian Splatting's rasterization, and its advantages and failure modes relative to NeRF.",
+            "Summarize score distillation sampling (SDS) and its documented pathologies."
+          ],
+          "prerequisites_strict": ["geometric-vision-camera-geometry-depth-sfm-and-slam", "image-classification-recipes-and-modern-vision-training"],
+          "prerequisites_recommended": ["score-matching-diffusion-theory", "fourier-analysis", "vision-transformer-and-hybrid-backbones", "graph-neural-networks-message-passing-expressiveness"],
+          "related_concepts": ["geometric-vision-camera-geometry-depth-sfm-and-slam", "flow-matching-rectified-and-discrete-diffusion", "self-supervised-visual-representation-learning"],
+          "advanced_extensions": ["differentiable-rasterization-and-splatting-derivations", "generalizable-nerf-and-multi-plane-planes-representations", "score-distillation-variants-and-denoising-diffusion-as-3d-loss", "occupancy-and-surface-representations-for-reconstruction-and-generation"],
+          "key_results_or_algorithms": ["PointNet / PointNet++", "Sparse and submanifold 3D convolution", "ICP and learned registration", "NeRF volume rendering", "Fourier/positional feature encoding", "Mip-NeRF / Mip-NeRF 360", "Instant-NGP hash-grid encoding", "3D Gaussian Splatting", "DreamFusion / SDS", "LRM-style feed-forward 3D generation"],
+          "math_foundations": ["Unordered-set statistics and permutation invariance", "Volume rendering as a line integral", "Alpha compositing and front-to-back ordering", "Fourier feature spectra and MLP learnability"],
+          "applications": ["Photorealistic novel view synthesis", "VR/AR scene capture", "Autonomous-driving perception (LiDAR/occupancy)", "3D asset generation and digital twins", "Robotics mapping and reconstruction"],
+          "common_misconceptions": [
+            "NeRF is a neural renderer with a mesh inside (it is an implicit density field; geometry is only defined by the integral).",
+            "Gaussian Splatting is a faster NeRF with the same representation (it is an explicit primitive set with different failure modes).",
+            "PointNet's max-pool captures local geometry (it discards neighborhood structure by design).",
+            "SDS gives unbiased 3D optimization from a diffusion prior (its gradient is one-sided and biases results)."
+          ],
+          "further_reading": [
+            { "title": "PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation", "authors": "Qi, Su, Mo and Guibas", "year": 2016, "type": "paper", "url": null },
+            { "title": "NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis", "authors": "Mildenhall, Srinivasan, Tancik, Barron, Ramamoorthi and Ng", "year": 2020, "type": "paper", "url": null },
+            { "title": "Mip-NeRF: A Multiscale Representation for Anti-Aliasing Neural Radiance Fields", "authors": "Barron, Mildenhall, Tancik, Hedman, Martin-Brualla and Srinivasan", "year": 2021, "type": "paper", "url": null },
+            { "title": "3D Gaussian Splatting for Real-Time Radiance Field Rendering", "authors": "Kerbl, Kopanas, Leimkuhler and Drettakis", "year": 2023, "type": "paper", "url": null },
+            { "title": "Instant Neural Graphics Primitives with a Multiresolution Hash Encoding", "authors": "Muller, Evans, Schied and Kelly", "year": 2022, "type": "paper", "url": null },
+            { "title": "DreamFusion: Text-to-3D using 2D Diffusion", "authors": "Poole, Jain, Barron and Mildenhall", "year": 2022, "type": "paper", "url": null },
+            { "title": "10-414 Deep Learning lecture notes", "authors": "Carnegie Mellon University", "year": 2023, "type": "lecture-notes", "url": null }
+          ]
+        },
+        {
+          "slug": "human-pose-estimation-and-body-reconstruction",
+          "name": "Human Pose Estimation and Body Reconstruction",
+          "difficulty": "advanced",
+          "definition": "Pose estimation recovers the 2D or 3D configuration of body keypoints (and, in body reconstruction, a full articulated mesh), formulated either as heatmap/coordinate regression of parts with association or as fitting a parametric template to image evidence.",
+          "explanation": "Structurally, pose is a many-object, many-part problem: K keypoints per person, N unknown persons, and the association between them. The bottom-up route (OpenPose) predicts per-keypoint heatmaps plus part-affinity-field vectors whose line integrals along limb segments score candidate connections, turning association into a differentiable geometric quantity; PIF instead predicts position-interval fields (1D probabilistic segments per axis), which resolves overlapping-limb ambiguity better, and later systems (later work refines the non-maximum-suppression and grouping stages. Top-down (AlphaPose and especially HRNet, which maintains a high-resolution representation stream through repeated multi-scale fusion rather than upsample-then-predict, and thus fixes the localization precision problem) runs a person detector and then per-person keypoint regression: better accuracy at per-person cost. The heatmap-vs-coordinate question is a real modeling insight: heatmaps discretize the spatial domain and yield smooth, precise sub-pixel soft-argmax estimates but are memory-hungry at high resolution, while direct regression (Coordinate MLPs in ViTs) is cheap and resolution-free but tends to average ambiguous configurations, and the 'which one wins' answer changed with token-based backbones. 3D lifting from a single monocular image is inherently ill-posed at the level of depth and scale, so it needs priors: a root-relative formulation, temporal context or kinematic constraints (bone length), and learned priors from mocap data (VideoPose3D's simple two-frame convolution over 2D detections was a striking result: most of the 3D error was temporal jitter, not model capacity). Full-body and mesh recovery uses SMPL - a linear blend-skinned parametric model with pose and shape parameters learned from registered scans - because a mesh template constrains the output space and makes photometric fitting possible (a camera is needed too, so methods jointly optimize or learn to predict the weak-perspective camera), with follow-on SMPL-X (hands/face), expressive/whole-body work, and multi-view fitting to mocap volumes; the modern direction is transformer-based, tokenized pose, and pose as a conditioning interface (Animate Anyone and similar use pose sequences as control signals for video generation, which is why pose estimation is now a component of generative pipelines). Evaluation deserves care: PCK/PCKh and OKS/AUC are tolerance-based and dataset-dependent; 3D uses MPJPE/PA-MPJPE (procrustes-aligned), and the field's benchmark choices (COCO keypoints, Human3.6M, MPII) carry known protocol confounds, plus the demographic and viewpoint bias of the training data being a documented real-world harm, which belongs in a serious curriculum.",
+          "learning_objectives": [
+            "Explain part-affinity fields and why they make association differentiable.",
+            "Compare bottom-up and top-down pipelines on accuracy, latency, and crowded-scene behavior.",
+            "Explain why HRNet's high-resolution stream matters for keypoint precision.",
+            "Derive the sub-pixel soft-argmax readout from a heatmap and discuss its failure with ambiguous limbs.",
+            "Explain why monocular 3D pose requires priors and state the two most useful ones.",
+            "Describe SMPL's pose/shape parameterization and what a template model buys.",
+            "Compute PCKh and MPJPE/PA-MPJPE for a prediction and explain what each hides."
+          ],
+          "prerequisites_strict": ["object-detection-and-pose-estimation", "segmentation-from-unet-to-sam"],
+          "prerequisites_recommended": ["vision-transformer-and-hybrid-backbones", "geometric-vision-camera-geometry-depth-sfm-and-slam", "three-dimensional-representations-point-clouds-neural-rendering-gaussian-splatting", "optical-flow-tracking-and-video-understanding"],
+          "related_concepts": ["optical-flow-tracking-and-video-understanding", "optical-flow-tracking-and-video-understanding", "evaluation-benchmarking-in-computer-vision"],
+          "advanced_extensions": ["tokenized-pose-and-transformer-decoders", "multi-view-and-4d-body-reconstruction", "pose-conditioned-video-generation-and-control", "population-and-viewpoint-bias-in-pose-benchmarks"],
+          "key_results_or_algorithms": ["OpenPose Part Affinity Fields", "Position Interval Functions", "AlphaPose", "HRNet", "Simple Baseline (deconvolved heatmaps)", "VideoPose3D temporal lifting", "SMPL / SMPL-X fitting", "Coordinate MLP pose decoders", "PCKh, OKS, MPJPE, PA-MPJPE"],
+          "math_foundations": ["Heatmap discretization and interpolation", "Rigid/skinning transforms and Lie-group pose parameterization", "Procrustes alignment", "Graph/kinematic constraints"],
+          "applications": ["Sports analytics and biomechanics", "Animation, AR avatars, and virtual try-on", "Gesture and sign-language interfaces", "Clinical gait analysis (with documented bias caveats)", "Pose-guided video generation"],
+          "common_misconceptions": [
+            "2D pose is a solved problem (occlusion and crowded scenes remain the dominant error sources).",
+            "Monocular 3D pose is depth-free (scale and depth ambiguity require priors).",
+            "Higher-resolution heatmaps always improve accuracy (cost grows and modern token-based methods decouple resolution).",
+            "Pose benchmarks are neutral (dataset demographics and viewpoint distributions bias deployed systems)."
+          ],
+          "further_reading": [
+            { "title": "Realtime Multi-Person 2D Pose Estimation using Part Affinity Fields", "authors": "Cao, Simon, Wei and Sheikh", "year": 2017, "type": "paper", "url": null },
+            { "title": "Deep High-Resolution Representation Learning for Human Pose Estimation (HRNet)", "authors": "Sun, Xiao, Liu and Wang", "year": 2019, "type": "paper", "url": null },
+            { "title": "SMPL: A Skinned Multi-Person Linear Model", "authors": "Loper, Mahmood, Romero, Pons-Moll and Black", "year": 2015, "type": "paper", "url": null },
+            { "title": "VideoPose3D: A Simple and Efficient Model for Human 3D Pose Estimation from Video", "authors": "Pavlo, Feichtenhofer, Mangla and Malik", "year": 2019, "type": "paper", "url": null },
+            { "title": "ETH Deep Visual Learning / CMU 11-785 pose estimation lecture material", "authors": "ETH Zurich and Carnegie Mellon University", "year": 2023, "type": "lecture-notes", "url": null }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "visual-representation-and-multimodal-learning",
+      "name": "Visual Representation Learning and Multimodal Vision",
+      "summary": "How visual features are learned without dense labels, how vision joins language, and how vision systems are measured and stress-tested.",
+      "topics": [
+        {
+          "slug": "self-supervised-visual-representation-learning",
+          "name": "Self-Supervised Visual Representation Learning: Contrastive, Masked, and Distillation",
+          "difficulty": "advanced",
+          "definition": "Self-supervised visual learning constructs its own supervision from unlabeled images - invariance to augmentations (contrastive), reconstruction of hidden content (masked image modeling), or agreement between teacher and student networks (distillation) - yielding features that transfer to labeled tasks.",
+          "explanation": "Contrastive methods define positive pairs (two augmented views of the same image) and negatives (other images) and optimize InfoNCE, which is a lower bound on the mutual information between the view representations up to a log-K term - so the estimator's quality depends on the number of negatives, the temperature tau (which controls how much hard positives/negatives dominate the gradient, and produces the uniformity-vs-alignment decomposition of Wang and Isola), and the augmentation policy that defines the invariances. SimCLR showed that a big batch, a projection head discarded at transfer time, and strong augmentation (color jitter plus crop) are what matter; MoCo solved the negative-count problem with a queue of past representations and an EMA momentum encoder; SimSiam and BYOL removed negatives entirely and still work, which is the field's most instructive result - collapse to a constant is prevented by the asymmetric stop-gradient plus predictor and EMA target, and later analyses (BYOL's variance-based argument and the 'negative-free methods are doing implicit regularization' line) refined rather than settled why. Non-contrastive and distillation approaches (SwAV's optimal-transport assignment to a learned codebook of prototypes, DINO's self-distillation with centering and sharpening whose emergent attention maps segment objects almost for free, and DINOv2's mixture plus curated 142M-image training) produced the features modern vision systems actually use, and are also where the codebook/prototype idea meets vector-quantized tokenization. Masked image modeling is the other pillar and a deliberate answer to contrastive methods' limitation - invariance discards information, whereas reconstruction keeps it: MAE masks 75% of ViT patches and decodes pixels with an asymmetric decoder, which works because vision is highly redundant, and BEiT targets discrete VQ tokens, SimMIM and MaskFeat target pixels/features, and data2vec a deep contextual target; the comparison with contrastive representations on dense tasks (where reconstruction-based features often win on segmentation and depth because they preserve spatial detail) is a required piece of understanding. Then the theory students should get: InfoNCE's bound and its dependence on K; uniformity/alignment as measurable diagnostics; the augmentation-invariance thesis and its cost (semantic-preserving transforms are a human judgment, and wrong invariances - rotation for text, horizontal flips for natural scenes - measurably hurt); the 'what information is discarded' framing that connects to JEPA-style latent prediction (predict an abstract representation rather than pixels, so the model does not waste capacity on unpredictable detail), and the current reality that these representation learners are the initialization for multimodal models, retrieval corpora, segmentation backbones, and generative tokenizers, so their biases propagate widely. Evaluation is linear-probe accuracy, k-NN, transfer to detection/segmentation, and fine-tuning - and the honest caveat that linear-probe numbers on ImageNet correlate only loosely with dense-task or downstream-application performance.",
+          "learning_objectives": [
+            "Derive InfoNCE, state its mutual-information bound and the role of temperature and number of negatives.",
+            "Explain the uniformity-alignment decomposition and how to measure both on a representation set.",
+            "Explain why BYOL/SimSiam do not collapse and what the stop-gradient and predictor each contribute.",
+            "Contrast SwAV's prototype/OT assignment with DINO's self-distillation centering and sharpening.",
+            "Explain why MAE can mask 75% of patches and what its asymmetry (decoder-only reconstruction) buys.",
+            "Compare contrastive vs masked representations on linear-probe and dense downstream tasks.",
+            "Critique an augmentation policy: which invariances are appropriate for the target domain?"
+          ],
+          "prerequisites_strict": ["self-supervised-learning", "image-classification-recipes-and-modern-vision-training", "vision-transformer-and-hybrid-backbones"],
+          "prerequisites_recommended": ["vector-quantized-tokenizers-for-generation", "information-theory", "statistical-learning-theory", "optimal-transport-and-assignment"],
+          "related_concepts": ["vision-language-models-and-visual-reasoning", "generative-model-landscape-likelihood-elbo-ebm", "evaluation-benchmarking-in-computer-vision"],
+          "advanced_extensions": ["latent-predictive-objectives-and-jepa-style-visual-pretraining", "multimodal-and-video-self-supervision-unification", "representation-probing-and-linear-vs-fine-tune-evaluation", "data-curation-and-scaling-for-visual-representation-learning"],
+          "key_results_or_algorithms": ["Instance discrimination (pathway origin)", "MoCo / MoCo v3", "SimCLR", "BYOL / SimSiam", "SwAV", "DINO / DINOv2", "MAE / BEiT / SimMIM / MaskFeat", "Data2vec", "I-JEPA", "Alignment/uniformity metrics"],
+          "math_foundations": ["Contrastive softmax and mutual information", "Optimal transport assignment (Sinkhorn)", "Stop-gradient semantics", "Redundancy and information content of image patches"],
+          "applications": ["Label-scarce domains (medical, remote sensing, industrial)", "Initialization for detection/segmentation and for VLMs", "Visual retrieval and deduplication of training data", "Emergent segmentation for annotation"],
+          "common_misconceptions": [
+            "Contrastive learning needs negatives (BYOL/SimSiam show asymmetry suffices, at least empirically).",
+            "Linear-probe accuracy is the correct measure of representation quality (dense and multimodal tasks can rank methods differently).",
+            "Masked image modeling is just BERT for vision (the asymmetry, masking ratio and target modality change the behavior).",
+            "Augmentation invariances are free (they encode semantic assumptions that can be wrong)."
+          ],
+          "further_reading": [
+            { "title": "A Simple Framework for Contrastive Learning of Visual Representations (SimCLR)", "authors": "Chen, Kornblith, Norouzi and Hinton", "year": 2020, "type": "paper", "url": null },
+            { "title": "Momentum Contrast for Unsupervised Visual Representation Learning (MoCo)", "authors": "He, Fan, Xie and Wu", "year": 2019, "type": "paper", "url": null },
+            { "title": "Bootstrap your Own Latent: A New Approach to Representations", "authors": "Grill, Strub, Altche, et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "Emerging Properties in Self-Supervised Vision Transformers (DINO)", "authors": "Caron, Touvron, Misra, et al.", "year": 2021, "type": "paper", "url": null },
+            { "title": "Masked Autoencoders Are Scalable Vision Learners (MAE)", "authors": "He, Chen, Xie, Li, Dollar and Girshick", "year": 2021, "type": "paper", "url": null },
+            { "title": "Understanding Contrastive Representation Learning through Alignment and Uniformity on the Hypersphere", "authors": "Wang and Isola", "year": 2020, "type": "paper", "url": null },
+            { "title": "DINOv2: Learning Robust Visual Features without Supervision", "authors": "Oquab, Darcet, et al.", "year": 2024, "type": "paper", "url": null },
+            { "title": "NYU Deep Learning: self-supervised representation learning lectures", "authors": "New York University", "year": 2023, "type": "course", "url": "https://atcold.github.io/NYU-DL-Lecun/" }
+          ]
+        },
+        {
+          "slug": "vision-language-models-and-visual-reasoning",
+          "name": "Vision-Language Models, Multimodal Alignment, and Visual Reasoning",
+          "difficulty": "advanced",
+          "definition": "Vision-language models couple visual encoders with text encoders or language models - by contrastive dual-encoder alignment, by fusion encoders, or by projecting visual tokens into an autoregressive LM - enabling retrieval, captioning, grounding, OCR, and instruction-following visual reasoning.",
+          "explanation": "Three architectures exhaust most of the space. (1) Dual-encoder contrastive: CLIP and SigLIP train an image encoder and a text encoder with a matching objective (CLIP's symmetric InfoNCE over an N x N similarity matrix with a learned temperature; SigLIP's pairwise sigmoid loss, which decouples batch-size scaling because it is not a softmax over the batch), so the joint embedding supports zero-shot classification by writing class names into prompts (and 'CoOp'-style learned prompt tuning) - but the representation is deliberately coarse (weak localization, poor counting, and an invariance profile set by the web-scale pairing), which explains why CLIP features are excellent for retrieval and mediocre for dense tasks. (2) Fusion encoders: ALBEF, BLIP and Flamingo-style cross-attention or perceiver-resampler token compression align and reason with visual evidence mid-network, giving strong grounding/VQA at moderate size. (3) Visual-token large language models: LLaVA/VILA/Qwen-VL/InternVL-style designs take a ViT (often CLIP- or SigLIP-trained), resample or interpolate its patch tokens, and bridge to an LLM with a learned projection (a linear layer or MLP - the observation that a trivial projector plus instruction tuning works is one of the field's practical surprises), then train for image captioning, OCR-with-reading-order (and document understanding where the 2D layout is an explicit sequence problem) and instruction-following. The failure modes are the most teachable part: hallucination (generating content absent from the image, which relates to language-prior dominance and to training data statistics rather than to perception capacity alone), weak spatial reasoning and counting (because patch-token representations lose metric information unless depth/pose/localization tokens are added), attribute binding and relation errors, resolution sensitivity (the number of visual tokens per image is a design choice, and tiling/dynamic-resolution schemes such as AnyRes-style approaches improve small-text accuracy), and the fact that 'visual reasoning' benchmarks conflate perception with language ability; compositional evaluation (CLEVR-style counting/relations, BLINK, MathVista, MMMU) is designed to separate them, and the results show that a model can pass on language-only shortcuts, which is why ablations with blurred or replaced images are the standard diagnostic. Also worth naming explicitly for a curriculum: image generation is the other direction of the same coupling (diffusion/flow text encoders are CLIP/T5 stacks), so a multimodal course should connect vision-language understanding to the conditioning pathways of generative models, and evaluation must include the honesty question - these models state uncertain content confidently, so calibration/uncertainty and refusal behavior belong with the metrics.",
+          "learning_objectives": [
+            "Derive CLIP's symmetric contrastive loss and SigLIP's pairwise sigmoid loss; explain batch-size scaling consequences.",
+            "Explain zero-shot classification via prompt templates and how prompt tuning changes it.",
+            "Describe a LLaVA-style architecture (encoder, token resampling, projector, LM) and its training stages.",
+            "Explain three causes of hallucination and how to measure them with image-ablated baselines.",
+            "Analyze why spatial counting and localization are hard for patch-token models and what fixes exist.",
+            "Explain document/OCR modeling with reading order and layout.",
+            "Design an evaluation protocol separating visual perception from language-only shortcuts."
+          ],
+          "prerequisites_strict": ["self-supervised-visual-representation-learning", "language-model-pretraining", "tokenization"],
+          "prerequisites_recommended": ["vision-transformer-and-hybrid-backbones", "score-matching-diffusion-theory", "evaluation-benchmarking-in-computer-vision", "statistical-inference"],
+          "related_concepts": ["self-supervised-visual-representation-learning", "segmentation-from-unet-to-sam", "diffusion-transformer-architecture"],
+          "advanced_extensions": ["interleaved-image-text-sequences-and-unified-token-models", "dynamic-resolution-and-visual-token-budget-design", "video-language-models-and-temporal-grounding", "visual-cryptography-and-grounding-benchmarks"],
+          "key_results_or_algorithms": ["CLIP (Radford et al.)", "SigLIP", "ALIGN / ALBEF / BLIP-2 (Q-former)", "Flamingo (perceiver resamplers)", "LLaVA / Qwen-VL / InternVL style", "Learned prompt tuning (CoOp)", "Grounding DINO and open-vocabulary detection", "CLEVR/BLINK/MMMU/MathVista evaluation"],
+          "math_foundations": ["Contrastive losses over cross-modal similarity matrices", "Token resampling and interpolation", "Cross-attention as query-based pooling", "Information-loss arguments for representation granularity"],
+          "applications": ["Image retrieval and classification with free-form labels", "Open-vocabulary detection and segmentation", "Document and chart understanding", "Instruction-following visual assistants", "Robotics and agent grounding"],
+          "common_misconceptions": [
+            "CLIP 'understands' its images (it performs matching-scale alignment; localization and counting are poor).",
+            "Hallucination is a data problem only (language-prior dominance and decoding both contribute).",
+            "More visual tokens always help (quadratic attention and projector bandwidth set the tradeoff).",
+            "Multimodal benchmark scores prove visual reasoning (language-only baselines often score materially)."
+          ],
+          "further_reading": [
+            { "title": "Learning Transferable Visual Models From Natural Language Supervision (CLIP)", "authors": "Radford, Kim, et al.", "year": 2021, "type": "paper", "url": null },
+            { "title": "Sigmoid Loss for Language Image Pre-Training (SigLIP)", "authors": "Zhai, Mustafa, Kolesnikov and Beyer", "year": 2023, "type": "paper", "url": null },
+            { "title": "Visual Instruction Tuning (LLaVA)", "authors": "Liu, Li, Wu and Lee", "year": 2023, "type": "paper", "url": null },
+            { "title": "BLIP-2: Bootstrapping Language-Image Pre-training with Frozen Image Encoders and Large Language Models", "authors": "Li, Li, Savarese and Hoi", "year": 2023, "type": "paper", "url": null },
+            { "title": "Flamingo: a Visual Language Model for Few-Shot Learning", "authors": "Alayrac et al.", "year": 2022, "type": "paper", "url": null },
+            { "title": "CLEVR: A Diagnostic Dataset for Compositional Visual Reasoning", "authors": "Johnson, Hariharan, van der Maaten, Fei-Fei, Zitnick and Girshick", "year": 2017, "type": "paper", "url": null },
+            { "title": "COS 529: Deep Learning Theory", "authors": "Princeton University (Arora)", "year": 2023, "type": "course", "url": null }
+          ]
+        },
+        {
+          "slug": "evaluation-benchmarking-in-computer-vision",
+          "name": "Evaluation, Benchmarking, Robustness, and Application-Critical Vision",
+          "difficulty": "advanced",
+          "definition": "Vision evaluation is the discipline of measuring task performance honestly: overlap-based metrics (IoU/AP/PQ/mIoU), retrieval and ranking metrics, calibration, out-of-distribution and adversarial robustness, and the dataset-curation practices that determine whether a reported number means anything.",
+          "explanation": "Metrics encode assumptions and should be chosen with them visible. Detection uses IoU-thresholded precision-recall, AP and its per-class/per-size breakdowns, and the COCO conventions (AP@[.5:.95] as a strict average, AR as a recall-oriented companion); segmentation uses mIoU/Dice/PQ with their known thin-structure blindness; pose uses OKS/PCKh; retrieval uses mAP/recall@k; and generation-adjacent vision uses FID, whose documented reference-set and resolution sensitivity means cross-paper comparisons are unsafe (see the generative-evaluation topic). Beyond the accuracy metric, a deployed system needs: calibration (ECE/reliability diagrams, and the fact that modern networks are overconfident), selective prediction/abstention (risk-coverage curves, AuC), and uncertainty that reflects the data (ensemble and predictive-uncertainty baselines often beat a fancy single-model estimator). Robustness then splits into three measurably different axes that get conflated. First, natural distribution shift - ImageNet-C corruption benchmarks, and the more rigorous 'shift in the wild' suites (WILDS:Camelyons/iWildCam, DomainBed-style evaluations), whose central finding is that a model's accuracy under shift is poorly predicted by its in-distribution accuracy and that evaluation must be on shifted test data. Second, adversarial robustness (Goodfellow et al.'s FGSM as the fast single-step linearization attack, PGD as the standard strong iterative attack with random restarts, CW as the confidence-based attack, and the practical transferability/black-box/patch attacks): the key theoretical content is that adversarial examples exist because high-dimensional decision boundaries are close to almost any point, and a small-norm perturbation can cross it; a further point rarely taught well is that gradient masking (non-differentiable or numerically unstable defenses) produces fake robustness, so an honest evaluation uses EOT/randomized-smoothing-style gradient estimation and checks whether the loss surface is genuinely flat rather than merely misleading. Defenses have mostly lost: adversarial training (Madry) remains the strongest general defense; randomized smoothing gives certified L2 bounds via a base-classifier confidence test (one of the few certificates with real theory); and the honest conclusion is that the field has not found a robust and accurate classifier for the strongest attacks. Third, distributional and demographic bias - training data curation (LAION/DataComp-style filtering, web-caption noise, duplicates leaking into test sets), and documented failures from unrepresentative sampling, which is a measurement problem before it is an ethics problem. Then the two application-critical domains that stress everything above in specific ways. Medical imaging: small and noisily labeled datasets, inter-observer variability that caps any metric (so ground truth is a distribution), site/scanner/protocol shift as the dominant failure, class imbalance with rare-event detection (so AUROC on pixels is misleading; use sensitivity at fixed FPR, or free-response ROC), regulatory and workflow constraints, and the practical toolkit - nnU-Net-style self-configuration, SAM/adapter adaptation, and the fundamental requirement of external validation. Remote sensing: images at 10^4-10^5 pixels per side requiring tiled inference with stitching, multi- and hyper-spectral and multi-temporal modalities with radiometric and atmospheric correction as preprocessing physics, georeferencing and CRS alignment before any comparison, class taxonomies that are application-defined, and benchmarks (BigEarthNet, SpaceNet/DOTA, SOD-style tiled detection) where train/test geographic leakage is a live and commonly-violated issue.",
+          "learning_objectives": [
+            "Compute IoU, precision-recall curves, AP and PQ, and explain what each metric can hide.",
+            "Measure calibration (ECE, reliability diagram) and explain why deep nets are overconfident.",
+            "Implement PGD and FGSM attacks and explain the role of step size, restarts, and the epsilon budget.",
+            "Identify gradient masking in a claimed defense and construct an evaluation that exposes it.",
+            "Explain how randomized smoothing yields a certified L2 radius and what it costs in accuracy.",
+            "Design a distribution-shift evaluation protocol that avoids in-distribution-only reporting.",
+            "For a medical or remote-sensing task, specify the metric, the leakage controls, and the shift test."
+          ],
+          "prerequisites_strict": ["image-classification-recipes-and-modern-vision-training", "model-selection-validation", "statistical-inference"],
+          "prerequisites_recommended": ["object-detection-and-pose-estimation", "segmentation-from-unet-to-sam", "self-supervised-visual-representation-learning", "statistical-learning-theory"],
+          "related_concepts": ["generative-evaluation-metrics-and-failure-modes", "self-supervised-visual-representation-learning"],
+          "advanced_extensions": ["dataset-curation-deduplication-and-contamination-audits", "certified-robustness-beyond-l2-and-input-space", "shift-robustness-predictability-and-model-selection-under-shift", "conformal-prediction-for-visual-detection-and-segmentation"],
+          "key_results_or_algorithms": ["COCO AP / mAP conventions", "PQ for panoptic evaluation", "ImageNet-C and WILDS shift benchmarks", "FGSM, PGD, CW attacks", "Adversarial training (Madry)", "Randomized smoothing", "ECE/reliability and risk-coverage evaluation", "nnU-Net external validation practice", "Tiled/sliced inference with overlap for very large imagery"],
+          "math_foundations": ["Overlap and set-agreement statistics", "Precision-recall under class imbalance", "Norm-balls and decision-boundary geometry", "Conformal coverage guarantees"],
+          "applications": ["Model selection for deployment", "Safety review of perception systems", "Medical device and geospatial product validation", "Reproducibility auditing of vision papers"],
+          "common_misconceptions": [
+            "Higher in-distribution accuracy predicts better robustness (often not).",
+            "A defense that defeats white-box attacks is robust (check gradient masking and transfer attacks first).",
+            "AUROC summarizes rare-event detection (use sensitivity at fixed false-positive rate).",
+            "Benchmarks are neutral (curation, leakage and protocol choices determine what a number means).",
+            "mIoU is sufficient for segmentation quality in medical/remote-sensing images."
+          ],
+          "further_reading": [
+            { "title": "Benchmarking Neural Network Robustness to Common Corruptions and Perturbations", "authors": "Hendrycks, Gimpel et al.", "year": 2019, "type": "paper", "url": null },
+            { "title": "WILDS: A Benchmark of in-the-wild Distribution Shifts", "authors": "Koh et al.", "year": 2021, "type": "paper", "url": null },
+            { "title": "Towards Deep Learning Models Resistant to Adversarial Attacks", "authors": "Madry, Makelov, Schmidt, Tsipras, Vladu and Wong", "year": 2017, "type": "paper", "url": null },
+            { "title": "Certified Adversarial Robustness via Randomized Smoothing", "authors": "Cohen, Rosenfeld and Kolter", "year": 2019, "type": "paper", "url": null },
+            { "title": "Explaining and Harnessing Adversarial Examples", "authors": "Goodfellow, Shlens and Szegedy", "year": 2014, "type": "paper", "url": null },
+            { "title": "Panoptic Segmentation", "authors": "Kirillov, He, Girshick, Rother and Dollar", "year": 2019, "type": "paper", "url": null },
+            { "title": "A critical appraisal of deep learning-based medical image segmentation (external validation and reporting practice)", "authors": "Liu et al.", "year": 2023, "type": "survey", "url": null },
+            { "title": "BigEarthNet: A New Benchmark Archive for Remote Sensing Image Understanding", "authors": "Yu et al.", "year": 2021, "type": "paper", "url": null }
+          ]
+        }
+      ]
+    }
+  ]
+}

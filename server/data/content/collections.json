@@ -1,0 +1,134 @@
+[
+  {
+    "slug": "collection-start-here",
+    "title": "Start here: the five resources worth your first month",
+    "description": "A deliberately short list. These five cover the fundamentals without redundancy, and each is free to read online. Work through them in order; the first two are the load-bearing ones.",
+    "kind": "must-read",
+    "items": [
+      {
+        "resourceSlug": "islr",
+        "note": "The gentlest rigorous introduction. Read it cover to cover if you are new; the exercises are the point, not the prose."
+      },
+      {
+        "resourceSlug": "d2l",
+        "note": "Executable from first principles. Every concept here is implemented, which is the fastest way to find out whether you actually understood it."
+      },
+      {
+        "resourceSlug": "esl",
+        "note": "The same material as ISLR with the mathematics kept in. Return to it once ISLR feels easy."
+      },
+      {
+        "resourceSlug": "mathematics-for-ml",
+        "note": "Reference rather than reading: use it to close specific gaps in linear algebra, probability and optimization as they appear."
+      },
+      {
+        "resourceSlug": "scikit-learn-user-guide",
+        "note": "The best-documented practical API in the field. Its user guide sections on model selection and preprocessing are worth reading independently of the library."
+      }
+    ]
+  },
+  {
+    "slug": "collection-transformer-trail",
+    "title": "The transformer, from source to present",
+    "description": "A reading trail in dependency order: the original architecture, a visual explanation, the two posts that make attention intuitive, the pretrained encoder that changed NLP, and the course that puts it all into practice.",
+    "kind": "survey-trail",
+    "items": [
+      {
+        "resourceSlug": "attention-is-all-you-need",
+        "note": "Read Section 3 slowly. The scaling argument in 3.2 and the multi-head definition in 3.2.2 are the two things everything else builds on."
+      },
+      {
+        "resourceSlug": "illustrated-transformer",
+        "note": "Read this first if the paper's tensor shapes are unclear; then go back to the paper."
+      },
+      {
+        "resourceSlug": "lilian-weng-attention",
+        "note": "The most complete single survey of attention variants, including the sub-quadratic families and their trade-offs."
+      },
+      {
+        "resourceSlug": "karpathy-rnn",
+        "note": "Pre-transformer but essential: it shows what attention replaced, and why fixed-length context was the bottleneck."
+      },
+      {
+        "resourceSlug": "bert-paper",
+        "note": "The pretrain-then-fine-tune paradigm. Compare its bidirectional objective with the causal one in the original transformer."
+      },
+      {
+        "resourceSlug": "hf-nlp-course",
+        "note": "Practical implementation with real code and checkpoints; the exercises make the theory concrete."
+      }
+    ]
+  },
+  {
+    "slug": "collection-deep-learning-theory",
+    "title": "Why deep networks work: the theory shelf",
+    "description": "Four references that treat deep learning as a mathematical object rather than an engineering recipe. These are dense; read them for the derivations, not for coverage.",
+    "kind": "research-topic",
+    "items": [
+      {
+        "resourceSlug": "deep-learning-book",
+        "note": "Chapters 6, 8 and 9 are the core: feedforward networks, optimization, and sequence modelling."
+      },
+      {
+        "resourceSlug": "resnet-paper",
+        "note": "Short and unusually clear. The residual identity path is the single most consequential architectural idea of the last decade."
+      },
+      {
+        "resourceSlug": "probabilistic-ml-murphy",
+        "note": "Use it to check the probabilistic reading of any loss function you encounter."
+      },
+      {
+        "resourceSlug": "boyd-convex-optimization",
+        "note": "Chapters 2-5 give the convex vocabulary that makes nonconvex results meaningful by contrast."
+      }
+    ]
+  },
+  {
+    "slug": "collection-reinforcement-learning",
+    "title": "Reinforcement learning, properly",
+    "description": "The canonical text plus three practical routes in. Reinforcement learning rewards patience: the theory chapter on temporal-difference learning is where most implementations either click or fail.",
+    "kind": "reading-list",
+    "items": [
+      {
+        "resourceSlug": "sutton-barto-rl",
+        "note": "The definitive text. Chapters 3-6 (MDPs, dynamic programming, TD learning) are the foundation for everything after."
+      },
+      {
+        "resourceSlug": "spinning-up-rl",
+        "note": "The best bridge from the textbook to working code, with honest notes about what does and does not transfer between environments."
+      },
+      {
+        "resourceSlug": "berkeley-deep-rl",
+        "note": "Lecture notes and assignments from a full graduate course; the assignments are the value."
+      },
+      {
+        "resourceSlug": "mathematics-for-ml",
+        "note": "Keep open for the probability and concentration results used in regret and policy-gradient bounds."
+      }
+    ]
+  },
+  {
+    "slug": "collection-vision-track",
+    "title": "Computer vision: lectures and lineage",
+    "description": "Stanford's lecture notes for the fundamentals, then the two papers that define the modern architectural lineage.",
+    "kind": "reading-list",
+    "items": [
+      {
+        "resourceSlug": "cs231n",
+        "note": "The convolutional network notes remain the clearest derivation of backpropagation through a conv layer."
+      },
+      {
+        "resourceSlug": "resnet-paper",
+        "note": "Read for the identity path and for the depth experiment that motivated it."
+      },
+      {
+        "resourceSlug": "deep-learning-book",
+        "note": "Chapter 9 for the convolution algebra and parameter-sharing argument."
+      },
+      {
+        "resourceSlug": "pytorch-docs",
+        "note": "The vision and autograd references; use the documentation as the authority on tensor semantics rather than blog posts."
+      }
+    ]
+  }
+]

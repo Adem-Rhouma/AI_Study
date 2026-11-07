@@ -1,0 +1,737 @@
+{
+  "area": "rl-language-multimodal",
+  "owner_agent": "A3",
+  "domains": [
+    {
+      "slug": "reinforcement-learning",
+      "name": "Reinforcement Learning & Sequential Decision Making",
+      "summary": "Theory and algorithms for agents acting over time under uncertainty: MDP solution theory, bandits and regret, temporal-difference and policy-gradient methods, deep RL, exploration, imitation, offline RL, off-policy evaluation, safe/hierarchical/multi-agent RL, and real-robot deployment. RL is the deepest area of this taxonomy because its mathematical spine (Bellman fixed points, contraction mappings, policy-gradient calculus, regret bounds) is distinct from supervised learning and underlies both LLM alignment and the sequence-modeling view of decision making.",
+      "subdomains": [
+        {
+          "slug": "sequential-decision-foundations",
+          "name": "Sequential Decision-Making Foundations",
+          "summary": "Mathematical substrates of decision-making over time: MDP solution theory, bandits and regret, partially observable domains, and planning/control algorithms beyond tabular DP.",
+          "topics": [
+            {
+              "slug": "mdp-solution-theory",
+              "name": "MDP Solution Theory: Dynamic Programming, Fixed Points, and Linear Programming",
+              "difficulty": "advanced",
+              "tags": ["dynamic-programming", "bellman-operator", "convergence-analysis"],
+              "definition": "The theory of exactly solving finite Markov decision processes by treating the Bellman equations as fixed-point problems (contraction mappings) or as linear programs, with value iteration and policy iteration as the two canonical convergent algorithms.",
+              "explanation": "Prerequisites are finite Markov chains (stationary distributions, transience vs recurrence) and the principle of optimality from dynamic programming. The Bellman optimality operator is a gamma-contraction in the sup norm, so Banach's fixed-point theorem gives a unique optimal value function and geometric convergence of value iteration at rate gamma^k. Policy iteration instead alternates exact policy evaluation and greedy improvement; it improves monotonically and terminates in finitely many iterations on finite MDPs, usually in far fewer sweeps than value iteration though each sweep costs a linear solve. Puterman develops the linear-programming formulation: finding the optimal value function is the LP min c'v subject to (I - gamma P^a)v >= c^a over all deterministic-action rows, so MDP planning is a special case of LP and its dual is the occupancy-measure LP. Stochastic shortest path problems extend the formalism to goal-terminating episodes without discounting; the Bellman operator is then not a sup-norm contraction and uniqueness of the fixed point is equivalent to properness conditions on policies (Bertsekas). Generalized and modified policy iteration, where evaluation and improvement are approximate and interleaved, underlie every practical RL algorithm. This topic is the gold standard against which fitted value iteration, Q-learning, and Deep Q-networks are judged.",
+              "learning_objectives": [
+                "State the principle of optimality and derive the Bellman expectation and optimality equations for finite-horizon and infinite-horizon discounted MDPs.",
+                "Prove that the Bellman optimality operator is a gamma-contraction in the sup norm and conclude geometric convergence of value iteration.",
+                "Show that policy iteration improves monotonically and terminates in finite time on finite MDPs.",
+                "Formulate MDP evaluation and optimality as linear programs and interpret the dual over occupancy measures.",
+                "Explain why stochastic shortest path problems need proper-policy conditions rather than contraction arguments."
+              ],
+              "prerequisites_strict": ["markov-decision-processes", "bellman-equations"],
+              "prerequisites_recommended": ["optimization-convex", "functional-analysis", "probability-foundations"],
+              "related_concepts": ["temporal-difference-control", "policy-gradient-theory", "mcts-planning-under-uncertainty"],
+              "advanced_extensions": ["abstract-dynamic-programming", "lazy-policy-iteration", "renewal-approach-to-ssp"],
+              "key_results_or_algorithms": ["Value iteration", "Policy iteration", "Modified policy iteration", "LP formulation of MDPs", "Stochastic shortest path", "Contraction bound ||TV - TU|| <= gamma ||V - U||"],
+              "math_foundations": [
+                "Contraction mapping and Banach fixed-point theorem",
+                "LP duality and the simplex-basis interpretation of deterministic policies",
+                "Spectral radius and the fundamental matrix (I - gamma P)^-1 for policy evaluation"
+              ],
+              "applications": ["Reference/optimal solutions for small RL benchmarks", "Planning layers of model-based RL", "Queueing and inventory control", "Foundations of fitted Q-iteration analysis"],
+              "common_misconceptions": [
+                "Value iteration yields the optimal policy at every sweep (only the limit does; greedy policies at intermediate sweeps have bounded suboptimality).",
+                "Optimal planning requires discounting (average-reward and stochastic-shortest-path settings exist outside the contraction framework)."
+              ],
+              "further_reading": [
+                { "title": "Dynamic Programming and Optimal Control, Vols. I-II", "authors": "Dimitri P. Bertsekas", "year": 2012, "type": "book", "url": null },
+                { "title": "Markov Decision Processes: Discrete Stochastic Dynamic Programming", "authors": "Martin L. Puterman", "year": 1994, "type": "book", "url": null },
+                { "title": "Reinforcement Learning: An Introduction, Chapters 3-4", "authors": "Richard S. Sutton and Andrew G. Barto", "year": 2018, "type": "book", "url": null },
+                { "title": "Algorithms for Reinforcement Learning", "authors": "Csaba Szepesvari", "year": 2010, "type": "book", "url": null }
+              ]
+            },
+            {
+              "slug": "bandits-regret-analysis",
+              "name": "Bandits and Regret: The Entry Point to Sequential Decision-Making",
+              "difficulty": "advanced",
+              "tags": ["multi-armed-bandits", "regret-bounds", "exploration"],
+              "definition": "The study of sequential decision problems with actions but no state dynamics, where performance is measured as cumulative regret against an oracle, covering stochastic, adversarial, and contextual bandits with their minimax and instance-dependent rates.",
+              "explanation": "Bandits strip MDPs of state transitions and are the cleanest setting in which the exploration-exploitation trade-off can be analyzed, which makes them the right mathematical entry to RL rather than a footnote. In stochastic multi-armed bandits, Lai and Robbins proved any consistent algorithm suffers regret summing Delta_i^-1 log T over suboptimal arms, and UCB1 and Thompson sampling achieve this rate. Exploration lower bounds of this shape carry over to RL: any algorithm must pull hard-to-distinguish MDPs Omega(sqrt(HAT)) times in tabular episodic settings. Adversarial bandits (EXP3 and successors) replace distributional assumptions with arbitrary loss sequences and achieve O(sqrt(KT log K)) regret, connecting bandits to online convex optimization and no-regret learning. Contextual bandits, where a covariate selects the reward distribution, are the workhorse of recommender systems and capture confounding and partial feedback without the credit-assignment machinery of full RL. Information-theoretic quantities (KL and chi-square divergences) drive both lower bounds and sharper algorithms such as KL-UCB and MOSS. The distinction between internal and external regret matters: low external regret of an averaging algorithm does not imply the deployed policy is good, which partly explains performance gaps between UCB-style and Thompson-style exploration in RL.",
+              "learning_objectives": [
+                "Derive the Lai-Robbins lower bound for stochastic bandits and show UCB1 achieves O(sum log T / Delta_i) regret.",
+                "Analyze EXP3 for adversarial bandits and state the minimax Theta(sqrt(KT)) rate.",
+                "Implement Thompson sampling and explain its Bayesian regret analysis for Bernoulli arms.",
+                "Distinguish contextual bandits from RL and identify settings where each is the correct abstraction.",
+                "Explain internal vs external regret and why regret guarantees can mislead about deployed performance."
+              ],
+              "prerequisites_strict": ["probability-foundations", "statistical-inference"],
+              "prerequisites_recommended": ["information-theory", "optimization-convex", "computational-complexity"],
+              "related_concepts": ["exploration-intrinsic-motivation", "mdp-solution-theory", "offline-rl-pessimism"],
+              "advanced_extensions": ["combinatorial-bandits", "linear-bandits-elliptical-potential", "dueling-bandits"],
+              "key_results_or_algorithms": ["UCB1", "KL-UCB and MOSS", "EXP3 / EXP3-IX", "Thompson sampling", "Lai-Robbins lower bound", "Minimax adversarial rate sqrt(KT log K)"],
+              "math_foundations": [
+                "Hoeffding/Azuma and self-normalized concentration inequalities",
+                "KL divergence and change-of-measure arguments for lower bounds",
+                "Elliptical potential lemma for linear bandits"
+              ],
+              "applications": ["A/B testing and ad placement", "Recommender systems", "Hyperparameter tuning as bandits", "Upper-bound machinery reused in tabular RL", "LLM response routing and model selection"],
+              "common_misconceptions": [
+                "UCB provably beats Thompson sampling (TS matches the Bayesian Lai-Robbins constant and empirically ties or wins; their regret behaviors differ in stochastic vs adversarial regimes).",
+                "Bandits are a toy unrelated to RL (they supply the exploration lower bounds and optimism machinery that MDP-scale results generalize)."
+              ],
+              "further_reading": [
+                { "title": "Bandit Algorithms", "authors": "Tor Lattimore and Csaba Szepesvari", "year": 2020, "type": "book", "url": "https://banditalgs.com/" },
+                { "title": "Finite-Time Bounds for Extensive Exploration in Bandit Problems", "authors": "Peter Auer, Nicolo Cesa-Bianchi, Paul Fischer", "year": 2002, "type": "paper", "url": null },
+                { "title": "Analysis of Thompson Sampling for the Multi-Armed Bandit Problem", "authors": "Shipra Agrawal, Navin Goyal", "year": 2012, "type": "paper", "url": null },
+                { "title": "Improved Algorithms for Linear Stochastic Bandits", "authors": "Yong Gai, Branislav Kveton, Mathieu Hoffmann", "year": 2010, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "pomdp-belief-planning",
+              "name": "POMDPs: Belief-State Reduction and Planning under Partial Observability",
+              "difficulty": "advanced",
+              "tags": ["partially-observable-mdps", "belief-state", "memory-augmented-rl"],
+              "definition": "The theory of decision-making when the environment state is hidden and only noisy observations arrive, solvable in principle by planning over the posterior belief simplex, in practice by approximations and learned memory.",
+              "explanation": "In a POMDP the agent maintains the posterior b(s) = P(state | observation-action history), updated by Bayes' rule; the belief process is a Markov decision process over a continuous simplex, so the optimal value function is piecewise-linear and convex (Sondik's theorem) with the number of supporting hyperplanes exploding exponentially in the horizon. Kaelbling, Littman and Cassandra's 1998 survey organized exact value iteration over belief simplices and its necessary prunings, plus approximate families: point-based value iteration over a sampled belief set, generalized memory policies, and finite-state controllers. Exact POMDP planning is PSPACE-hard, so scalability comes from bounding (the fully-observable MDP gives an upper bound; rollout policies give lower bounds), particle-filter beliefs, or amortized inference. Deep RL sidesteps explicit belief maintenance with recurrent policies that learn a sufficient statistic of the history (DRQN lineage); transformer-based value function approximators such as Deep Transformer Q-Networks exploit long contexts to approximate posteriors over latent states. This is where partial observability meets the Decision-Transformer debate: conditioning a sequence model on the history is belief-free by design, and the contested question is whether it recovers the planning guarantees the belief-state theory provides. POMDP thinking also frames real deployments - noisy sensors in robotics, hidden user intent in dialogue and RLHF, missing tests in clinical decision support - as problems where acting on an inadequate state estimate is the dominant failure mode.",
+              "learning_objectives": [
+                "Derive the belief-state MDP from a POMDP and write the Bayes update on the simplex.",
+                "State and prove the piecewise-linear convex structure of the finite-horizon POMDP value function.",
+                "Implement point-based value iteration and explain witness-based pruning of dominated alpha-vectors.",
+                "Explain why recurrent and transformer policies are belief approximators and what guarantees they lack."
+              ],
+              "prerequisites_strict": ["mdp-solution-theory", "probability-foundations"],
+              "prerequisites_recommended": ["markov-chain-monte-carlo", "recurrent-networks", "computational-complexity"],
+              "related_concepts": ["decision-transformer-sequence-rl", "model-based-reinforcement-learning", "mcts-planning-under-uncertainty"],
+              "advanced_extensions": ["belief-space-mcts", "undiscounted-pomdps", "recurrent-policy-convergence-results"],
+              "key_results_or_algorithms": ["Sondik PWL/convex value function", "Point-based value iteration (PBVI)", "Witness and vector-set pruning", "Finite-state controllers", "DRQN", "Deep Transformer Q-Networks", "PSPACE-hardness of exact POMDP planning"],
+              "math_foundations": [
+                "Bayes' rule as an operator on the probability simplex",
+                "Convex analysis: value as a pointwise maximum of hyperplanes (alpha-vectors)",
+                "Total-variation stability bounds for belief updates"
+              ],
+              "applications": ["Robot navigation with noisy sensors", "Search-and-rescue and undersea exploration", "Dialogue systems with hidden user goals", "Clinical treatment planning with missing tests", "Imperfect-information games"],
+              "common_misconceptions": [
+                "Partial observability breaks the MDP framework (belief reduction restores the Markov property; the cost is continuity and curse-of-dimensionality, not inapplicability).",
+                "Recurrent policies provably learn good beliefs (they are unconstrained function approximators; adversarial or very long histories can defeat them)."
+              ],
+              "further_reading": [
+                { "title": "Planning and Acting in Partially Observable Stochastic Domains", "authors": "Leslie Pack Kaelbling, Michael L. Littman, Andrew R. Cassandra", "year": 1998, "type": "paper", "url": null },
+                { "title": "The Partially Observable Decision Process - A Formalism", "authors": "Harry Sondik", "year": 1978, "type": "paper", "url": null },
+                { "title": "Solving POMDPs by Planning in Online Belief Space", "authors": "Pascal Poupart, Craig Boutilier", "year": 2006, "type": "paper", "url": null },
+                { "title": "Deep Transformer Q-Networks for Partially Observable Reinforcement Learning", "authors": "Kevin Esslinger, Robert Platt, Christopher Amato", "year": 2022, "type": "paper", "url": "https://arxiv.org/abs/2206.01078" }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "planning-model-based-rl",
+          "name": "Planning, Search, and Model-Based RL",
+          "summary": "Algorithms that plan with (learned or given) models: Monte-Carlo tree search and its AlphaZero lineage, continuous trajectory optimization and model predictive control, and learned world models from Dyna to Dreamer and MuZero.",
+          "topics": [
+            {
+              "slug": "mcts-planning-under-uncertainty",
+              "name": "Monte-Carlo Tree Search and Rollout Planning",
+              "difficulty": "advanced",
+              "tags": ["mcts", "rollout-algorithms", "alphazero"],
+              "definition": "Sampling-based planning in stochastic environments using recursive simulation: rollout policies estimate action values by Monte-Carlo, and Monte-Carlo Tree Search adaptively expands a game/decision tree guided by upper-confidence selection.",
+              "explanation": "Rollout algorithms evaluate an action by simulating a trajectory to termination under a cheap heuristic policy; their error is O(1/sqrt(N)) with variance that can be huge, motivating double-oracle and policy-adaptation variants. UCT (Kocsis-Szepesvari) applies upper-confidence-tree selection to expand a search tree that concentrates visits on promising subproblems; UCB1 selection plus Monte-Carlo leaf evaluation yields asymptotic convergence of the root policy to optimality at rate O(sqrt(log N / N)) per suboptimal action, making MCTS the practical bridge between bandit theory and planning. Determinization (information set MCTS, Monte-Carlo reachability probing) extends MCTS to imperfect information. The AlphaZero lineage couples MCTS with learned value and policy networks: the network biases expansion, self-play generates targets, and MCTS search acts as a policy-improvement operator that is then distilled back into the network - a search-based analogue of policy iteration that produced superhuman play in Go, chess and shogi without human knowledge. MuZero fuses the same search with a learned latent world model trained for value-equivalence (predict reward, value and policy, not observations), placing MCTS squarely inside model-based RL. MCTS is often under-taught because it lacks a smooth gradient, but it is the reference non-gradient planner for discrete, long-horizon, and game domains, and it reappears in LLM reasoning as tree search over generations.",
+              "learning_objectives": [
+                "Analyze the variance and bias of plain rollouts and derive the policy-adaptation rollout estimator.",
+                "State the UCT confidence bound and derive the O(sqrt(log N / N)) suboptimal-arm regret rate inside the tree.",
+                "Explain progressive widening, determinization, and information-set MCTS for hidden state.",
+                "Describe AlphaZero as a search-based policy-iteration loop between network and MCTS.",
+                "Explain how MuZero's learned model supports latent MCTS and what value-equivalence means."
+              ],
+              "prerequisites_strict": ["mdp-solution-theory", "monte-carlo-methods", "bandits-regret-analysis"],
+              "prerequisites_recommended": ["game-theory-foundations", "deep-rl-foundations"],
+              "related_concepts": ["model-based-reinforcement-learning", "decision-transformer-sequence-rl", "reasoning-search-test-time"],
+              "advanced_extensions": ["nested-pomcp", "gumbel-mcts", "amortized-search-mistake-bound"],
+              "key_results_or_algorithms": ["Rollout with policy adaptation", "UCT", "P-MCTS / information-set MCTS", "AlphaZero (policy-improvement operator)", "MuZero latent MCTS", "Amara-style hybrid policy-evaluation search"],
+              "math_foundations": [
+                "UCB1 inequality and Hoeffding bounds",
+                "Asymptotic MCTS convergence proof structure",
+                "Kullback-Leibler-regularized optimality backup (AlphaZero's m ~= pi + c*log(Q-V) rule)"
+              ],
+              "applications": ["Board and card games", "Robotic motion planning with discrete skills", "Combinatorial optimization as MCTS", "LLM reasoning with tree-of-thought search", "Video-game agents (AlphaZero/EPO lineage)"],
+              "common_misconceptions": [
+                "MCTS requires a good rollout policy to work (confidence-based tree growth compensates for weak playouts; the asymptotic guarantee holds with any exploration scheme satisfying the condition).",
+                "AlphaZero's strength comes from the neural network alone (the network and MCTS form a coupled improvement loop; the value head without search is substantially weaker)."
+              ],
+              "further_reading": [
+                { "title": "Bandit based Monte-Carlo Planning", "authors": "Levente Kocsis, Csaba Szepesvari", "year": 2006, "type": "paper", "url": null },
+                { "title": "A Survey of Monte Carlo Tree Search Methods", "authors": "Cameron B. Browne et al.", "year": 2012, "type": "survey", "url": null },
+                { "title": "Mastering the Game of Go without Human Knowledge", "authors": "David Silver et al.", "year": 2018, "type": "paper", "url": null },
+                { "title": "MuZero: Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model", "authors": "Julian Schrittwieser et al.", "year": 2020, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "trajectory-optimization-mpc",
+              "name": "Trajectory Optimization, Differential Dynamic Programming, and Model Predictive Control",
+              "difficulty": "expert",
+              "tags": ["optimal-control", "mpc", "ddp", "ilqr"],
+              "definition": "Direct and indirect methods for optimizing continuous state-action trajectories over deterministic or stochastic dynamics - shooting and collocation, differential dynamic programming (DDP/iLQR), and receding-horizon model predictive control - understood as the classical control counterpart of RL planning.",
+              "explanation": "Trajectory optimization poses control as a finite-dimensional nonlinear program over a full state-action path; direct methods parametrize the trajectory (single/multiple shooting, direct collocation) and optimize it with gradient solvers, while dynamic-programming methods approximate the value function locally. Differential dynamic programming (Mayne 1966; Jacobson-Mayne) is exactly this: a second-order backward pass computing feedforward and feedback gains from quadratic expansions of the dynamics and cost, followed by a forward rollout - iLQR is its iterated modern form for mechanical systems. The relationship to RL is precise: DDP is Bellman's equation linearized around a nominal trajectory, and the feedback gain K_t is a local optimal policy, which is why DDP/iLQR appear inside model-based RL agents (e.g., MPC layers over learned dynamics, Dreamer-style rollouts, and hybrid methods like MB-MPC/TD-MPC). Model predictive control re-solves a finite-horizon optimal-control problem at every timestep and applies only the first action; its defining properties - receding-horizon feedback, constraint handling, and closed-loop robustness guarantees via terminal cost inequalities - make it the industry workhorse that RL is often asked to replace, and the two are complementary: MPC supplies structure and safety, learned value/policy models supply speed and adaptivity. Stochastic MPC extends the framework with chance constraints and scenario trees, connecting back to the SP-MDP literature. This topic grounds claims that RL 'learns to control': on many continuous-control benchmarks, a well-tuned iLQR solver with an identified model matches or beats model-free deep RL at far lower sample cost.",
+              "learning_objectives": [
+                "Formulate trajectory optimization as a NLP and compare single shooting, multiple shooting, and direct collocation.",
+                "Derive DDP's backward recursion from quadratic expansions and show iLQR as its Gauss-Newton variant.",
+                "Explain the feedback-gain term of DDP and why it distinguishes DDP from plain gradient descent on paths.",
+                "State MPC's receding-horizon scheme and how terminal cost/candidate Lyapunov conditions yield stability guarantees.",
+                "Relate DDP/MPC to Bellman dynamic programming and identify where RL and control pipelines interchange."
+              ],
+              "prerequisites_strict": ["optimization-convex", "control-theory-foundations", "mdp-solution-theory"],
+              "prerequisites_recommended": ["differential-equations", "dynamical-systems", "numerical-linear-algebra"],
+              "related_concepts": ["model-based-reinforcement-learning", "actor-critic-continuous-control", "sim-to-real-robotics-rl"],
+              "advanced_extensions": ["stochastic-mpc-chance-constraints", "differentiable-mpc-layers", "lqg-and-risk-sensitive-mpc"],
+              "key_results_or_algorithms": ["Pontryagin minimum principle (indirect view)", "Single/multiple shooting", "Direct collocation", "DDP / iLQR", "TD-MPC2", "MPC stability via terminal cost"],
+              "math_foundations": [
+                "KKT conditions for equality-constrained NLPs",
+                "Riccati recursion as the linear-quadratic fixed point",
+                "Lyapunov stability arguments for receding-horizon control"
+              ],
+              "applications": ["Manipulator and quadruped locomotion", "Autonomous driving and drone trajectory planning", "Model-based RL action selection over learned dynamics", "Receding-horizon planning with safety constraints"],
+              "common_misconceptions": [
+                "DDP is just gradient descent on trajectories (its backward pass computes feedback gains, making it a dynamic-programming method with second-order robustness).",
+                "MPC needs an exact model to be useful (receding horizon plus feedback tolerates model error; the field of robust/stochastic MPC formalizes how much)."
+              ],
+              "further_reading": [
+                { "title": "Differential Dynamic Programming", "authors": "David Q. Mayne", "year": 1966, "type": "paper", "url": null },
+                { "title": "Model Predictive Control: Theory, Computation, and Design", "authors": "James B. Rawlings, David Q. Mayne, Moritz Diehl", "year": 2017, "type": "book", "url": null },
+                { "title": "TD-MPC2: Scalable, Robust World Models for Continuous Control", "authors": "Nicklas Hansen, Hao Su, Xiaolong Wang", "year": 2023, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "model-based-reinforcement-learning",
+              "name": "Model-Based RL: Dyna to World Models, MBPO, Dreamer, and MuZero",
+              "difficulty": "advanced",
+              "tags": ["world-models", "dyna", "mbpo", "dreamer", "muzero", "value-equivalence"],
+              "definition": "RL methods that learn a model of environment dynamics and use it - for imagination, planning, or synthetic data generation - spanning Dyna-Q, probabilistic ensembles, MBPO, world-model agents (Ha & Schmidhuber, Dreamer lineage), and MuZero's value-equivalent latent models.",
+              "explanation": "Model-based RL promises sample efficiency by amortizing real interaction into many simulated ones. Dyna-Q (Sutton 1990) is the minimal instantiation: every real transition updates the value function plus a few imaginary updates against a learned tabular model. Modern variants must answer two questions - how to represent the model (deterministic, probabilistic ensembles for epistemic uncertainty, or latent recurrent/transformer states) and how to use it (planning at decision time, as in MuZero's MCTS, or generating imagined rollouts for policy learning, as in MBPO's short model-generated trajectories whose horizon is tuned to control compounding model bias, and Dreamer's actor-critic trained entirely in latent imagination). The uncertainty literature (MOReL, MOPO, STEVE) uses ensemble disagreement as a reward penalty or early-stopping signal, yielding provable offline gains; this is the model-based face of pessimism. Value-equivalence - training a model only to predict reward, value and policy rather than observations, as in MuZero and formalized by Farahmand's value-equivalence principle - decouples model quality from what matters for control and is one of the deepest ideas in the area. The lineage is directly relevant to LLM-era agents: 'world models' now include video-prediction models used as simulators, and MuZero-style search reappears in reasoning-model test-time search. Open problems: long-horizon model bias, model exploitation in stochastic/competitive settings, and whether latent imagination generalizes beyond single-task environments (contested).",
+              "learning_objectives": [
+                "Implement Dyna-Q and explain the model-bias/compute trade-off it exposes.",
+                "Derive why short imagined rollouts (MBPO) trade model error against value-function bias.",
+                "Compare uncertainty-penalized model-based offline RL (MOPO/MOReL) with critic-side pessimism.",
+                "Explain Dreamer's RSSM latent rollouts and how the policy is learned purely in imagination.",
+                "State the value-equivalence principle and MuZero's training objectives."
+              ],
+              "prerequisites_strict": ["mdp-solution-theory", "deep-rl-foundations", "mcts-planning-under-uncertainty"],
+              "prerequisites_recommended": ["variational-inference", "recurrent-networks", "offline-rl-pessimism"],
+              "related_concepts": ["decision-transformer-sequence-rl", "diffusion-policy-trajectory-generation", "llm-world-simulators"],
+              "advanced_extensions": ["synchronized-value-iteration", "cegm-dreamer-variants", "video-diffusion-world-models"],
+              "key_results_or_algorithms": ["Dyna-Q / prioritized Dyna", "Probabilistic ensembles (PETS-style MPC)", "MBPO", "MOPO / MOReL uncertainty penalties", "World Models (Ha & Schmidhuber)", "Dreamer / DreamerV2 / DreamerV3", "MuZero", "Value-equivalence principle"],
+              "math_foundations": [
+                "Compounding model error over horizon k (product-form bounds)",
+                "Epistemic vs aleatoric uncertainty decomposition",
+                "Latent-state filtering as approximate Bayesian inference"
+              ],
+              "applications": ["Sample-efficient robotics and Atari agents", "Offline RL with dynamics models", "Model-based agents that plan with search", "Game-playing at superhuman scale without environment access"],
+              "common_misconceptions": [
+                "Accurate observation prediction is necessary for good planning (value-equivalent models can discard pixel detail; conversely video-prediction fidelity does not guarantee control utility).",
+                "Model-based always beats model-free when a model is available (model exploitation and bias can reverse the ranking, especially in stochastic or adversarial environments - partly contested)."
+              ],
+              "further_reading": [
+                { "title": "Integrated Architectures for Learning, Planning, and Reacting", "authors": "Richard S. Sutton", "year": 1990, "type": "paper", "url": null },
+                { "title": "World Models", "authors": "David Ha, Juergen Schmidhuber", "year": 2018, "type": "paper", "url": "https://arxiv.org/abs/1803.10122" },
+                { "title": "Sample-Efficient Reinforcement Learning with Deep Model-Based RL (MBPO)", "authors": "Michael Janner, Justin Fu, Marvin Zhang, Sergey Levine", "year": 2019, "type": "paper", "url": null },
+                { "title": "Dreamer: Learning Behaviors by Latent Imagination", "authors": "Danijar Hafner, Timothy Lillicrap, Jimmy Ba, Mohammad Norouzi", "year": 2019, "type": "paper", "url": null },
+                { "title": "MuZero: Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model", "authors": "Julian Schrittwieser et al.", "year": 2020, "type": "paper", "url": null }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "value-based-reinforcement-learning",
+          "name": "Value-Based Reinforcement Learning",
+          "summary": "Learning value functions from interaction: temporal-difference methods and their control use, the deadly triad of instability with function approximation, the Deep Q-network lineage, and the distributional view of returns.",
+          "topics": [
+            {
+              "slug": "td-learning-eligibility-traces",
+              "name": "Monte-Carlo Methods, Temporal-Difference Learning, and Eligibility Traces",
+              "difficulty": "intermediate",
+              "tags": ["temporal-difference", "eligibility-traces", "td-lambda"],
+              "definition": "Prediction and control algorithms that update value estimates from sampled trajectories (Monte-Carlo) or from self-estimated successors (temporal-difference), unified by the TD(lambda) family whose parameters interpolate via eligibility traces.",
+              "explanation": "Monte-Carlo prediction averages full returns with no bias from bootstrapping but high variance, and requires episode termination; TD(0) updates V(s_t) toward r + gamma V(s_t+1), trading bias for variance and enabling online, non-episode learning. TD(lambda) generalizes both through eligibility traces: exponentially accumulating per-state (or per-weight) credit tokens that decay at rate gamma*lambda, so lambda=0 recovers TD and lambda=1 recovers MC up to the terminal bootstrap. The bias-variance story is subtle: for tabular prediction, lambda=1 minimizes asymptotic error in the on-policy case, while off-policy correction (emphatic TD) is required for convergence away from the behavior policy. For control, SARSA performs on-policy TD control (bootstrapping the actual action taken), while Q-learning performs off-policy TD control (bootstrapping the max), which converges under Robbins-Monro step conditions in the tabular case but suffers maximization bias - the systematic optimism of E[max Q] over max E[Q] that Double Q-learning fixes. Traces also appear in reverse-view derivations linking TD(lambda) to Bellman-residual minimization (Bradtke, Sutton & Precup's reparameterized views), and eligibility traces underlie biologically motivated three-factor learning rules. These algorithms are the load-bearing wall of RL: every deep value method, including actor-critic critic updates and RLHF value heads, is a function-approximated TD update.",
+              "learning_objectives": [
+                "Derive the MC and TD(0) update rules and compare their bias, variance, and computational requirements.",
+                "Write TD(lambda) with forward-view traces and prove equivalence of forward and backward views in the linear case.",
+                "Explain the maximization bias of Q-learning with a two-arm counterexample and derive Double Q-learning.",
+                "Distinguish SARSA's and Q-learning's updates and predict their behavior in cliff-walking and stochastic traps.",
+                "State why off-policy TD without importance correction diverges and name the emphatic-TD remedy."
+              ],
+              "prerequisites_strict": ["markov-decision-processes", "bellman-equations", "monte-carlo-methods"],
+              "prerequisites_recommended": ["probability-foundations", "deep-rl-foundations"],
+              "related_concepts": ["mdp-solution-theory", "deep-q-network-lineage", "off-policy-evaluation-learning"],
+              "advanced_extensions": ["emphatic-t-d-convergence", "gradient-td-for-linear-function-approximation", "multistep-bootstrapping-variants"],
+              "key_results_or_algorithms": ["First-visit and every-visit MC", "TD(0) / tabular Q-learning / SARSA", "TD(lambda) and eligibility traces", "Reparameterized/gradient TD", "Emphatic TD", "Robbins-Monro convergence conditions"],
+              "math_foundations": [
+                "Stochastic approximation (Robbins-Monro, ODE method)",
+                "Conditional-expectation bias analysis of bootstrapping",
+                "Trace-as-weighted-sum derivations of lambda-returns"
+              ],
+              "applications": ["Every deep critic: Q-networks, TD critics in actor-critic, RLHF value heads", "Nonstationary prediction (online regression with traces)", "Neuroscience-inspired plasticity rules (three-factor learning)"],
+              "common_misconceptions": [
+                "Every-visit MC is biased while first-visit is unbiased, and vice versa for bootstrapping (bias properties differ by target; every-visit MC is biased, first-visit is not - a classic exam trap).",
+                "TD always dominates MC in sample complexity (for tabular prediction asymptotically TD(lambda) with lambda near 1 or MC can win depending on state visitation; the bias-variance trade-off is problem-dependent)."
+              ],
+              "further_reading": [
+                { "title": "Reinforcement Learning: An Introduction, Chapters 5-6 and 9 (2020 draft)", "authors": "Richard S. Sutton and Andrew G. Barto", "year": 2018, "type": "book", "url": "http://incompleteideas.net/book/the-book-2nd.html" },
+                { "title": "Learning to Predict by the Methods of Temporal Differences", "authors": "Richard S. Sutton", "year": 1988, "type": "paper", "url": null },
+                { "title": "Temporal Difference Learning and TD-Gammon", "authors": "Gerald Tesauro", "year": 1995, "type": "paper", "url": null },
+                { "title": "Eligibility Traces for Off-Policy Policy Evaluation", "authors": "Doina Precup, Richard S. Sutton, Sanjoy Dasgupta", "year": 2001, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "deadly-triad-function-approximation",
+              "name": "The Deadly Triad: Bootstrapping, Function Approximation, and Off-Policy Training",
+              "difficulty": "advanced",
+              "tags": ["deadly-triad", "convergence", "baird-counterexample", "gradient-td"],
+              "definition": "The classical instability that arises when value-based control simultaneously bootstraps, approximates the value function, and learns off-policy: the trio can diverge even for linear function approximation, and understanding it explains why deep value RL needs targeted stabilizers.",
+              "explanation": "Sutton and Barto named the combination of function approximation, bootstrapping, and off-policy training the 'deadly triad'. Baird's 1995 counterexample shows residual-gradient and ordinary TD updates can diverge with a fixed linear architecture and constant stepsize: a two-state chain where the approximator cannot represent the true value function and off-policy sampling weights the gradient so that updates march to infinity. The formal theory identifies two conditions for linear TD convergence: sampled (semi)-gradient methods converge if the matrix governing the update ODE is Hurwitz and the stepsize obeys Robbins-Monro; Tsitsiklis and Van Roy proved projected fixed-point methods with Bellman-residual objectives are stable whenever the behavior policy is fixed, but they require access to next-state features that break the classic off-policy setting. Off-policy stability hinges on importance weights: the off-policy corrected traces of Precup et al. and Sutton's emphatic-TD restore a convergent sampling distribution, while plain Q-learning with linear features has no stability guarantee (Gordon's variance-reduced fitted-Q is stable because it is effectively on-policy). Practical deep value methods are a zoo of mitigations: target networks reduce the moving-target instability, experience replay decorrelates samples but imports off-policy-ness, Double/Dueling architectures reduce maximization bias, and gradient-temporal-difference and TDC algorithms give provably convergent actor-critic variants. Teaching this topic prevents the widespread misconception that 'DQN just works': its stability is engineered, and each stabilizer corresponds to a specific failure mode analyzed here.",
+              "learning_objectives": [
+                "Construct Baird's counterexample and compute the divergent update dynamics for ordinary and residual-gradient TD.",
+                "State the Hurwitz/spectral condition for linear TD convergence and explain why importance-weighted corrections fix it.",
+                "Explain why target networks and replay buffers stabilize deep Q-learning and which instabilities they each address.",
+                "Describe gradient-TD/TDC as provably convergent alternatives for off-policy prediction and critic learning."
+              ],
+              "prerequisites_strict": ["td-learning-eligibility-traces", "deep-rl-foundations"],
+              "prerequisites_recommended": ["dynamical-systems", "linear-algebra-foundations", "off-policy-evaluation-learning"],
+              "related_concepts": ["deep-q-network-lineage", "offline-rl-pessimism", "model-based-reinforcement-learning"],
+              "advanced_extensions": ["neural-fitted-q-iteration-generalization-bounds", "btabular-and-sample-complexity-of-linear-td", "projected-bellman-error-estimators"],
+              "key_results_or_algorithms": ["Baird counterexample", "Tsitsiklis-Van Roy convergence theorem for projected updates", "Emphatic TD / GTD / GTD2 / TDC", "Btabular (Sutton et al. 2016)", "Fitted Q-iteration (Riedmiller, Gordon)"],
+              "math_foundations": [
+                "Stability of linear ODEs / discrete update maps (eigenvalue sign criteria)",
+                "Robbins-Monro stepsize conditions",
+                "Importance-sampling change of measure in expected-update operators"
+              ],
+              "applications": ["Diagnosing divergence in deep value RL runs", "Critic-stability engineering in actor-critic methods", "Designing offline value learners (why CQL's conservative term also fixes triad issues)"],
+              "common_misconceptions": [
+                "Function approximation alone makes TD diverge (on-policy linear TD is provably convergent; divergence requires the interaction of at least the bootstrap-plus-approximation mismatch with off-policy sampling).",
+                "Target networks solve off-policy instability (they slow the moving target; off-policy bias in Q-learning's max remains unless explicitly corrected)."
+              ],
+              "further_reading": [
+                { "title": "Residual Algorithms: Reinforcement Learning with Function Approximation", "authors": "Leemon Baird", "year": 1995, "type": "paper", "url": null },
+                { "title": "An Analysis of Temporal-Difference Learning with Function Approximation", "authors": "John Tsitsiklis, Ben Van Roy", "year": 1997, "type": "paper", "url": null },
+                { "title": "Neuron-Like Adaptive Elements That Can Solve Difficult Learning Control Problems (Btabular lineage)", "authors": "Csaba Szepesvari; Sutton, Maei, Precup et al. (A Theoretical Analysis of Temporal-Difference Learning with Linear Function Approximation)", "year": 2009, "type": "paper", "url": null },
+                { "title": "Reinforcement Learning with Function Approximation, Ch. 11", "authors": "Sutton & Barto (2018/2020 draft)", "year": 2018, "type": "book", "url": "http://incompleteideas.net/book/the-book-2nd.html" }
+              ]
+            },
+            {
+              "slug": "deep-q-network-lineage",
+              "name": "Deep Q-Networks and Descendants: Double, Dueling, Prioritized, Rainbow",
+              "difficulty": "intermediate",
+              "tags": ["dqn", "experience-replay", "prioritized-replay", "rainbow"],
+              "definition": "The convolutional deep-RL breakthrough that stabilized Q-learning with neural networks and replay, and the family of architectural and algorithmic extensions - Double, Dueling, Prioritized, Multi-step, Noisy - synthesized in Rainbow.",
+              "explanation": "The 2013/2015 DQN work showed tabular Q-learning's update can be applied with a deep network by combining experience replay (decorrelating samples and reusing rare transitions), a delayed target network (breaking the feedback loop of self-referential bootstrapping), and reward clipping/epsilon-greedy schedules - learning end-to-end from pixels to Atari control. Each descendant fixes one diagnosed weakness: Double DQN decouples action selection from evaluation to remove maximization bias; Dueling networks factor Q(s,a) = V(s) + (A(s,a) - mean A) to estimate state value even for unvisited actions; Prioritized replay replaces uniform sampling with TD-error-proportional sampling, requiring importance-sampling weights to correct the induced bias, and later PDDAN and averaged-hybrid schemes stabilize it. Rainbow integrates distributional return modeling (QR-DQN), multi-step returns, and noisy action-value exploration, and its ablations remain the definitive component-level attribution study for value-based deep RL. This lineage is also a case study in how a method spreads: DQN variants dominate the offline-RL baselines, the replay/target machinery is reused in actor-critic methods, and Atari benchmark saturation has made the lineage a cautionary tale for evaluation (see language-domain contamination discussion). Understanding why each component is needed maps one-to-one onto the deadly-triad analyses, making this the practical half of that theoretical topic.",
+              "learning_objectives": [
+                "Explain how replay buffers and target networks mitigate two distinct instabilities of DQN.",
+                "Derive Double DQN's decoupled target and quantify the maximization bias it removes.",
+                "Implement the Dueling architecture and explain mean-vs-max aggregation of advantages.",
+                "Analyze the bias introduced by TD-error-prioritized sampling and its importance-weight correction.",
+                "Summarize Rainbow's ablations: which components mattered most on Atari."
+              ],
+              "prerequisites_strict": ["td-learning-eligibility-traces", "deep-rl-foundations"],
+              "prerequisites_recommended": ["deadly-triad-function-approximation", "convolutional-networks", "distributional-reinforcement-learning"],
+              "related_concepts": ["distributional-reinforcement-learning", "exploration-intrinsic-motivation", "offline-rl-pessimism"],
+              "advanced_extensions": ["implicit-quantile-dqn", "network-driven-dqn-scaling-contest", "agent57-compute-comparable-atari"],
+              "key_results_or_algorithms": ["DQN (Nature 2015)", "Double DQN", "Dueling DQN", "Prioritized experience replay", "Multi-step targets", "Noisy Nets", "Rainbow"],
+              "math_foundations": [
+                "Importance sampling for correcting nonuniform replay",
+                "Bias/variance decomposition of E[max] vs max[E]"
+              ],
+              "applications": ["Atari and discrete-control agents", "Default critic designs in DRL", "Baselines in offline RL benchmarks (D4RL)"],
+              "common_misconceptions": [
+                "DQN success came mainly from the deep network (the stability mechanisms were equally essential; naive direct Q-learning with networks reliably diverged).",
+                "Prioritized replay is an unalloyed improvement (it adds variance and bias requiring weights, and several studies show tuned uniform replay matches it on Atari - contested)."
+              ],
+              "further_reading": [
+                { "title": "Human-level Control through Deep Reinforcement Learning", "authors": "Volodymyr Mnih et al.", "year": 2015, "type": "paper", "url": "https://www.nature.com/articles/nature14236" },
+                { "title": "Deep Reinforcement Learning with Double Q-learning", "authors": "H. van Hasselt, A. Guez, R. Silver", "year": 2016, "type": "paper", "url": null },
+                { "title": "Prioritized Experience Replay", "authors": "Tom Schaul et al.", "year": 2015, "type": "paper", "url": null },
+                { "title": "Rainbow: Combining Improvements in Deep Reinforcement Learning", "authors": "Matteo Hessel et al.", "year": 2018, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "distributional-reinforcement-learning",
+              "name": "Distributional RL: C51, QR-DQN, and the Return Distribution View",
+              "difficulty": "advanced",
+              "tags": ["distributional-rl", "c51", "qr-dqn", "cramer-loss"],
+              "definition": "The line of RL that learns the full distribution of returns rather than its expectation, via the distributional Bellman operator on categorical or quantile representations, decoupling the randomness of the return from the agent's partial knowledge.",
+              "explanation": "Classical RL learns E[Z | s,a]; distributional RL learns the law of Z itself. Bellemare, Dabney and Munos proved the distributional Bellman operator - the pushforward of the Bellman backup under the stochastic transition - is a contraction in the Wasserstein-Kantorovich-Rubinstein metric (not in the sup metric for the whole space, subtlety often missed), guaranteeing well-behaved fixed points. C51 realizes the distribution on a fixed categorical grid and projects the Bellman image onto the grid (the categorical projection, not a mere histogram), giving state-of-the-art Atari gains and risk-sensitive behavior for free; the analysis that C51 is exactly fitted-value iteration in distribution space explains its stability. QR-DQN instead fits fixed quantile midpoints by minimizing the quantile Huber loss, permitting any target quantile positions without the grid projection error, and leads to IQN and the implicit quantile model; D4RL-era practice uses expected-quantile regression to recover a value estimate without the double-quantile bias. Distributional critics enable risk-sensitive policies (CVaR optimization), uncertainty estimation (aleatoric spread vs epistemic ensemble disagreement), and principled exploration; they are also the theoretical backbone of some LLM-alignment critics. Open questions: the gap between the learning metric (W1 or Cramer distance) and the control-relevant value metric, and whether distributional estimates actually improve out-of-distribution generalization (mixed/contested).",
+              "learning_objectives": [
+                "State the distributional Bellman equation and the fixed-point characterization of the optimal return distribution.",
+                "Explain the categorical projection used by C51 and why its KL-based implementation equals projected distributional VI.",
+                "Derive the quantile Huber loss and describe how QR-DQN's fixed quantile midpoints avoid projection error.",
+                "Use a distributional critic to optimize a CVaR risk measure instead of expectation.",
+                "Distinguish aleatoric return spread from epistemic model uncertainty."
+              ],
+              "prerequisites_strict": ["deep-q-network-lineage", "bellman-equations", "probability-foundations"],
+              "prerequisites_recommended": ["information-theory", "optimization-convex", "deep-rl-foundations"],
+              "related_concepts": ["model-based-reinforcement-learning", "safe-constrained-rl", "reward-modeling-alignment"],
+              "advanced_extensions": ["multiplicative-contraction-for-wasserstein-metric", "implicit-quantile-networks", "distributional-actor-critic-sac-entropic-variants"],
+              "key_results_or_algorithms": ["Distributional Bellman contraction in W-KR metric", "C51 categorical projection", "QR-DQN quantile Huber loss", "IQN", "Expected quantile regression", "Distributional Soft Actor-Critic"],
+              "math_foundations": [
+                "Wasserstein-1 distance and Kantorovich-Rubinstein duality",
+                "Quantile functions and inverse-CDF regression losses",
+                "Metric-space fixed points of pushforward operators"
+              ],
+              "applications": ["Risk-averse decision making (finance, robotics)", "Better-conditioned critics in Atari/DMLR tasks", "Reward-model uncertainty in RLHF pipelines", "Constrained/safe RL via CVaR critics"],
+              "common_misconceptions": [
+                "Distributional RL is mainly a hedging trick to reduce value variance (it changes what is learned - the return law - with the expectation recoverable as a derived quantity; its Atari gains appear even in deterministic tasks).",
+                "C51 learns an unconstrained histogram of returns (it projects a grid-supported distribution under the Bellman image; projection error and grid choice are first-order design decisions)."
+              ],
+              "further_reading": [
+                { "title": "A Distributional Perspective on Reinforcement Learning", "authors": "Marc G. Bellemare, Will Dabney, Remi Munos", "year": 2017, "type": "paper", "url": null },
+                { "title": "Distributional Reinforcement Learning with Quantile Regression", "authors": "Will Dabney, Georg Ostrovski, David Silver, Remi Munos", "year": 2018, "type": "paper", "url": null },
+                { "title": "Distributional Reinforcement Learning: Concepts and Practice", "authors": "Will Dabney, Mark Rowland, Marc G. Bellemare, David Silver", "year": 2022, "type": "survey", "url": null }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "policy-gradient-actor-critic",
+          "name": "Policy Gradient and Actor-Critic Methods",
+          "summary": "Direct parameter optimization of stochastic policies: the policy gradient theorem and its variance-reduction toolkit, trust-region and proximal methods, and actor-critic architectures for continuous control.",
+          "topics": [
+            {
+              "slug": "policy-gradient-theory",
+              "name": "The Policy Gradient Theorem, REINFORCE, Baselines, and Natural Gradients",
+              "difficulty": "intermediate",
+              "tags": ["policy-gradient-theorem", "reinforce", "baselines", "natural-gradient", "trpo"],
+              "definition": "The theory of differentiating expected return with respect to policy parameters - the likelihood-ratio/policy-gradient theorem - and its algorithmic family: REINFORCE, baseline and advantage variance reduction, Fisher/natural gradients, and trust-region policy optimization.",
+              "explanation": "For a parameterized stochastic policy, the gradient of the discounted objective can be written exactly as an expectation over on-policy state visitation of the action-log-derivative times the action-value: this is the policy gradient theorem, and it is remarkable because the state-distribution term drops out despite depending on theta - the pathwise-vs-score-function identity does the work. REINFORCE instantiates it with Monte-Carlo returns; subtracting any state-dependent baseline leaves the gradient unbiased while reducing variance, and the optimal baseline is the covariance-weighted mean; the best practical variance reduction replaces returns with advantages, leading directly to GAE and actor-critic methods. Natural policy gradients (Amari's information geometry, Kakade's thesis) preconditerate the gradient by the Fisher information matrix, so updates are invariant to policy parameterization and correspond to steepest descent in a KL metric; the performance-difference lemma expresses the improvement of one policy over another as an expectation of advantages under the new visitation, and TRPO turns this into a tractable surrogate objective plus a trust-region constraint solved with conjugate gradient and line search, with a monotone-improvement bound. Estimating the Fisher matrix and its inverse at scale (the Hessian-vector products of natural gradient via automatic differentiation, the Kronecker-factored approximations K-FAC) ties the topic to second-order optimization. This theory underwrites PPO next and explains why vanilla REINFORCE is rarely competitive: gradient variance, not representation, was the original bottleneck.",
+              "learning_objectives": [
+                "Derive the policy gradient theorem for discounted objectives via the score-function identity.",
+                "Prove unbiasedness of baseline subtraction and characterize the optimal baseline.",
+                "State the performance-difference lemma and the performance-improvement bound TRPO relies on.",
+                "Implement natural gradient descent and explain its invariance to policy reparameterization.",
+                "Explain how the Fisher matrix is estimated and inverted efficiently (conjugate gradient, Hessian-vector products)."
+              ],
+              "prerequisites_strict": ["markov-decision-processes", "multivariable-calculus", "td-learning-eligibility-traces"],
+              "prerequisites_recommended": ["optimization-convex", "information-theory", "probability-foundations"],
+              "related_concepts": ["proximal-policy-optimization-gae", "actor-critic-continuous-control", "ppo-for-llm-alignment"],
+              "advanced_extensions": ["gmpo-mirror-descent-view", "kl-regularized-optimal-policies-shape", "second-order-deep-rl-kronecker-factored"],
+              "key_results_or_algorithms": ["Policy gradient theorem", "REINFORCE", "Score-function vs pathwise estimators", "Optimal baselines", "Natural actor-critic", "TRPO"],
+              "math_foundations": [
+                "Exponential-family geometry and the Fisher information metric",
+                "Likelihood-ratio (score function) estimator of gradient expectations",
+                "Conjugate-gradient solution of F x = g without forming F"
+              ],
+              "applications": ["Robotics and locomotion (TRPO/PPO family)", "RLHF for language models (PPO is the TRPO descendant)", "Variational objectives in generative models (same estimator machinery)"],
+              "common_misconceptions": [
+                "REINFORCE is biased because it uses Monte-Carlo returns (it is unbiased but high-variance; bias enters via bootstrapped estimates like TD or GAE lambda < 1).",
+                "Baselines require a learned value function (any state-dependent function works; a learned critic merely optimizes variance)."
+              ],
+              "further_reading": [
+                { "title": "Policy Gradient Methods for Reinforcement Learning with Function Approximation", "authors": "Richard S. Sutton, David McAllester, Satinder Singh, Doina Precup", "year": 1999, "type": "paper", "url": null },
+                { "title": "A Natural Policy Gradient", "authors": "Sham Kakade", "year": 2001, "type": "paper", "url": null },
+                { "title": "Trust Region Policy Optimization", "authors": "John Schulman, Sergey Levine, Pieter Abbeel, Michael I. Jordan, Philipp Moritz", "year": 2015, "type": "paper", "url": "https://arxiv.org/abs/1502.05477" },
+                { "title": "Reinforcement Learning: An Introduction, Chapter 13 (2020 draft)", "authors": "Richard S. Sutton and Andrew G. Barto", "year": 2018, "type": "book", "url": "http://incompleteideas.net/book/the-book-2nd.html" }
+              ]
+            },
+            {
+              "slug": "proximal-policy-optimization-gae",
+              "name": "PPO, GAE, and Practical Policy Optimization",
+              "difficulty": "intermediate",
+              "tags": ["ppo", "gae", "clipping", "advantage-estimation"],
+              "definition": "Proximal Policy Optimization - the clipped-surrogate successor to TRPO, with Generalized Advantage Estimation providing the bias-variance-interpolating advantage estimator it depends on - plus the practical variants that made it the default on-policy RL algorithm.",
+              "explanation": "GAE defines the advantage estimator A_t = (1-lambda) sum_{l>=0} lambda^l A_t^{(l)} over multi-step TD advantages, recovering the TD(0)-style low-variance/biased estimator at lambda=0 and Monte-Carlo unbiased/high-variance at lambda=1; the geometric weighting comes from an infinite-horizon derivation that is more stable than the truncated one, and it is the standard advantage input to every actor-critic. PPO replaces TRPO's constrained natural-gradient step with a simple clipped surrogate E[min(r_t A_t, clip(r_t, 1+-eps, 1+/-eps) A_t)], where r_t is the on-policy ratio: the clip bounds the update implicitly, first-order SGD suffices, and multiple epochs of reuse per batch give practical speed. The variants matter: KL-penalty and adaptive-dual PPO, early stopping on approximate-KL, decoupled PPO (which shows the shared clipping of the original coupling ratio and advantage sign is an unintended regularization - contested but influential analysis), PPO-EIC and gradient-clip refinements for RLHF stability, and value-function clipping. PPO's dominance also reflects ecosystem reasons: it parallelizes (A3C lineage), handles both discrete and continuous actions, and survives hyperparameter abuse. At LLM scale PPO meets its hardest test - KL control against a frozen reference policy, critic-free reward shaping, and the observation that RLHF-PPO is unusually sensitive to batch size, ratio clipping and advantage normalization; DeepSeek's GRPO drops the critic and uses group-normalized advantages, which can be read as a PPO variant engineered for cheap LLM training.",
+              "learning_objectives": [
+                "Derive GAE and prove its lambda interpolation between one-step TD and Monte-Carlo variance/bias regimes.",
+                "Write the PPO clipped surrogate and explain why clipping yields an implicit trust region.",
+                "Implement the standard PPO loop: rollout collection, advantage normalization, multiple epochs, value loss, entropy bonus.",
+                "Describe decoupled PPO's analysis of the clip-surrogate coupling and when it harms.",
+                "Explain GRPO's group-relative advantages as critic-free advantage estimation for LLMs."
+              ],
+              "prerequisites_strict": ["policy-gradient-theory"],
+              "prerequisites_recommended": ["actor-critic-continuous-control", "deep-rl-foundations", "reinforcement-learning-from-human-feedback"],
+              "related_concepts": ["ppo-for-llm-alignment", "preference-optimization-alignment", "reasoning-test-time-compute"],
+              "advanced_extensions": ["rl-ppo-variants-critic-free", "dual-clip-and-adaptive-kl-policies", "ppo-for-rlhf-stability-conditions"],
+              "key_results_or_algorithms": ["GAE(lambda)", "PPO-Penalty and PPO-Clip", "Decoupled PPO / DPPO", "Truly PPO (T-PPO)", "GRPO", "vLLM-scale RLHF PPO recipes"],
+              "math_foundations": [
+                "Multi-step TD expansions and the geometric-mixture bias-variance analysis",
+                "Approximate KL and ratio statistics used in early stopping"
+              ],
+              "applications": ["Default algorithm for game/robotics locomotion benchmarks", "RLHF training of ChatGPT-class assistants (OpenAI InstructGPT/GPT-4 use PPO)", "RL post-training of reasoning models (RLVR with verifiable rewards)"],
+              "common_misconceptions": [
+                "PPO has theoretical convergence guarantees like TRPO (the clip surrogate lacks the monotone-improvement bound that motivated TRPO; PPO is empirical engineering on the trust-region idea).",
+                "Advantage normalization is cosmetic (it interacts with clipping and can change effective step size; unnormalized advantages destabilize PPO at large scale)."
+              ],
+              "further_reading": [
+                { "title": "High-Dimensional Continuous Control Using Generalized Advantage Estimation", "authors": "John Schulman, Philipp Moritz, Sergey Levine, Michael I. Jordan, Pieter Abbeel", "year": 2015, "type": "paper", "url": "https://arxiv.org/abs/1506.02438" },
+                { "title": "Proximal Policy Optimization Algorithms", "authors": "John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, Oleg Klimov", "year": 2017, "type": "paper", "url": "https://arxiv.org/abs/1707.06347" },
+                { "title": "Decoupled PPO: A Unified Approach to Trust Region and Natural Policy Optimization", "authors": "Yichen Zhu et al.", "year": 2023, "type": "paper", "url": null },
+                { "title": "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models (introduces GRPO)", "authors": "Zhiyuan Shao et al.", "year": 2024, "type": "paper", "url": "https://arxiv.org/abs/2402.03300" }
+              ]
+            },
+            {
+              "slug": "actor-critic-continuous-control",
+              "name": "Actor-Critic Family: A2C/A3C, DDPG, TD3, SAC, and MPO",
+              "difficulty": "advanced",
+              "tags": ["actor-critic", "sac", "td3", "ddpg", "maximum-entropy"],
+              "definition": "Architectures that pair a stochastic or deterministic actor with a learned critic updated by temporal-difference errors - from asynchronous A3C to off-policy deterministic (DDPG/TD3) and maximum-entropy (SAC, MPO) controllers for continuous action spaces.",
+              "explanation": "Actor-critic methods replace Monte-Carlo returns with a bootstrapped critic, trading variance for bias and enabling online, long-horizon learning; A3C showed asynchronous parallel workers with shared parameters could train without replay, and its synchronous sibling A2C became the on-policy baseline. The deterministic policy gradient (Silver et al.) proves that for a deterministic actor the gradient involves only the critic's Q-derivative with respect to the action, giving DDPG: deterministic actor plus a TD-learned critic plus off-policy replay; DDPG's fragility (overestimation bias, sensitivity to exploration noise) motivated TD3's twin-critic min, delayed policy updates, and target smoothing. Soft Actor-Critic adds maximum-entropy regularization: the critic evaluates the value-plus-entropy Bellman operator, the actor minimizes a KL-to-Boltzmann-expert objective, and the temperature is tuned by a dual constraint so entropy targets are met; SAC's off-policy reusability and robustness make it the default continuous-control algorithm, and its derivation is a special case of the mirror-descent/soft-optimality view of RL. MPO (KL-regularized policy improvement via EM-style majorization of the soft-Bellman objective, in the policy-search lineage of Peters and Schaal and later Theodorou and Abbate) sits in the same KL-regularized family and scales to dexterous manipulation; TRPO/PPO/GPIZO complete the practical roster. Continuous control also carries the RLHF lesson: entropy regularization, KL penalties against a reference, and advantage normalization all reappear in PPO for LLMs, and the actor-critic critic in RLHF is literally a TD/GAE critic over token-level rewards.",
+              "learning_objectives": [
+                "Derive the deterministic policy gradient and explain why DDPG cannot use entropy regularization directly.",
+                "Implement TD3's three stabilization tricks and attribute each to a known DDPG failure.",
+                "Derive the maximum-entropy Bellman equations, the soft policy improvement step, and the SAC temperature dual update.",
+                "Explain A2C/A3C's parallel-gradient decomposition and what asynchrony buys.",
+                "Position MPO within KL-regularized policy majorization and compare with TRPO."
+              ],
+              "prerequisites_strict": ["policy-gradient-theory", "td-learning-eligibility-traces"],
+              "prerequisites_recommended": ["proximal-policy-optimization-gae", "information-theory", "control-theory-foundations"],
+              "related_concepts": ["imitation-learning-inverse-rl", "exploration-intrinsic-motivation", "reward-modeling-alignment"],
+              "advanced_extensions": ["q-transformers-as-sequence-actors", "td3-plus-with-target-policy-smoothing", "mpe-maximum-entropy-amp-sce-parent-family"],
+              "key_results_or_algorithms": ["A2C / A3C", "DDPG", "TD3", "SAC", "MPO / TRPO", "Max-entropy RL (Ziebart lineage)"],
+              "math_foundations": [
+                "Deterministic-policy-gradient theorem (Silver et al. 2014)",
+                "Soft Bellman operator and its contraction property",
+                "Conjugate/dual optimization for the entropy-temperature constraint"
+              ],
+              "applications": ["Robot manipulation and locomotion (MuJoCo benchmarks)", "Default off-policy continuous control in research RLHF surrogates", "Sample-efficient control of simulators (see sim-to-real)"],
+              "common_misconceptions": [
+                "SAC's entropy term is just exploration noise (it is an explicit KL-regularized objective whose optimal policy is soft-Boltzmann, linking it to max-entropy IRL/GAIL).",
+                "Off-policy actor-critics are always more sample-efficient (DDPG/TD3/SAC reuse data but suffer bias and instability; on-policy A2C/PPO win in many regimes - contested, setup-dependent)."
+              ],
+              "further_reading": [
+                { "title": "Deterministic Policy Gradient Algorithms", "authors": "David Silver, Guy Lever, Nicolas Heess, Thomas Degris, Daan Wierstra, Martin Riedmiller", "year": 2014, "type": "paper", "url": null },
+                { "title": "Soft Actor-Critic: Off-Policy Maximum Entropy Deep RL with a Stochastic Actor", "authors": "Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, Sergey Levine", "year": 2018, "type": "paper", "url": "https://arxiv.org/abs/1801.01290" },
+                { "title": "Addressing Function Approximation Error in Actor-Critic Methods (TD3)", "authors": "Scott Fujimoto, Herke van Hoof, David Meger", "year": 2018, "type": "paper", "url": null },
+                { "title": "Asynchronous Methods for Deep Reinforcement Learning (A3C)", "authors": "Volodymyr Mnih et al.", "year": 2016, "type": "paper", "url": null },
+                { "title": "Reinforcement Learning by Policy Search", "authors": "Jan Peters and Stefan Schaal", "year": 2010, "type": "book", "url": null }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "exploration-reward-and-imitation",
+          "name": "Exploration, Reward Specification, and Learning from Data",
+          "summary": "How agents decide what to try, how rewards should be defined and can be abused, and how to learn from demonstrations or human preferences rather than designed rewards.",
+          "topics": [
+            {
+              "slug": "exploration-intrinsic-motivation",
+              "name": "Exploration and Intrinsic Motivation: Optimism, Novelty, Curiosity",
+              "difficulty": "advanced",
+              "tags": ["exploration", "intrinsic-reward", "rnd", "icm", "thompson-sampling-for-rl"],
+              "definition": "Mechanisms that steer agents toward informative states beyond extrinsic reward: optimism-in-the-face-of-uncertainty (UCB-style bonuses), Bayesian/Thompson exploration, count-based and pseudo-count bonuses, and prediction-error curiosity (ICM, RND).",
+              "explanation": "Reward-motivated deep RL fails catastrophically on hard-exploration tasks (Montezuma's Revenge, Rat in a Maze), where no reward signal exists until an exponentially unlikely event occurs. Optimism variants add model-based bonuses - UCB on state-action counts (R-max lineage), Bayesian pseudo-counts from density models (Bellemare et al.'s CTS-based bonus), or posterior-sampling RL that scales Thompson sampling to MDPs; each has partial regret guarantees in tabular/linear settings that explain why they are principled, while deep implementations (Noisy Nets) keep the optimism flavor without the statistics. Curiosity-based methods reward learning progress instead of visitation rarity: ICM rewards prediction error in a learned feature space of actions (robust to stochastic traps like TV noise because noise is unpredictable-but-uncontrollable), and RND rewards novelty relative to a fixed random target network, which is provably state-novelty-driven and avoids stochasticity traps. Randomized Value Functions (OSCAR-style) inject parameter-level randomness into Q-functions to achieve posterior-sampling-like exploration without dynamics models. The 2018-2023 literature converged on sober findings: prediction-error curiosity fails on MDPs with stochastic dynamics unless learning progress or action-space abstraction is used, and the strongest intrinsic rewards for LLM agents are coverage/count bonuses over discrete skills (contested but well-documented). Intrinsic motivation now shows up inside RLHF-adjacent systems - curiosity-like 'novelty' rewards in open-ended code and math RL - and is the mechanism behind LLM exploration heuristics such as high-temperature sampling and self-generated goal curricula.",
+              "learning_objectives": [
+                "Formulate an optimism bonus and prove a regret bound for tabular UCB-RL (R-max style).",
+                "Derive density-model pseudo-counts and implement a count-based intrinsic reward.",
+                "Explain why prediction-error curiosity collapses in stochastic environments and how ICM/RND respond.",
+                "Describe randomized value functions and their connection to Thompson sampling.",
+                "Connect exploration in RL to sampling/diversity mechanisms in LLM inference."
+              ],
+              "prerequisites_strict": ["mdp-solution-theory", "bandits-regret-analysis", "deep-rl-foundations"],
+              "prerequisites_recommended": ["probabilistic-graphical-models", "distributional-reinforcement-learning", "self-supervised-learning"],
+              "related_concepts": ["bandits-regret-analysis", "offline-rl-pessimism", "decision-transformer-sequence-rl"],
+              "advanced_extensions": ["state-visitation-count-disagreement", "empowerment-information-theoretic-intrinsics", "unified-count-models-for-exploration"],
+              "key_results_or_algorithms": ["UCB-RL / R-max", "Pseudo-count bonuses (Bellemare et al.)", "Thompson sampling for RL (Osband & Van Roy)", "ICM (Pathak et al.)", "RND (Burda et al.)", "Noisy Nets", "Randomized Value Functions (OSCAR)"],
+              "math_foundations": [
+                "Regret decomposition: optimism plus concentration",
+                "Density-model pseudo-count construction via Bayesian online learning",
+                "Information-theoretic objectives: empowerment, mutual information (InfoNCE cousins)"
+              ],
+              "applications": ["Hard-exploration Atari and maze tasks", "Open-ended agent curricula", "Exploration in RLVR training of reasoning models (diversity bonuses)", "Robotics with sparse objectives"],
+              "common_misconceptions": [
+                "Intrinsic reward always helps (it can dominate extrinsic learning and reward noise; several studies show curiosity hurting on Atari once extrinsic reward is dense - contested).",
+                "Epsilon-greedy is a neutral baseline (in non-Markovian replay settings it behaves very differently from optimism-based schemes and confounds ablations)."
+              ],
+              "further_reading": [
+                { "title": "Unifying Count-Based Exploration and Intrinsic Motivation", "authors": "Marc G. Bellemare, Sriram Srinivasan, Georg Ostrovski, Tom Schaul, David Saxton, Remi Munos", "year": 2016, "type": "paper", "url": null },
+                { "title": "Curiosity-Driven Exploration by Self-Supervised Prediction (ICM)", "authors": "Deepak Pathak, Pulkit Agrawal, Alexei A. Efros, Trevor Darrell", "year": 2017, "type": "paper", "url": null },
+                { "title": "Exploration by Random Network Distillation (RND)", "authors": "Yuri Burda, Harrison Edwards, Amos Storkey, Ofir Press", "year": 2018, "type": "paper", "url": null },
+                { "title": "Why Curiosity Matters: Prediction Error and Exploration in Deep Reinforcement Learning", "authors": "Bradly City and Shimon Whiteson", "year": 2021, "type": "survey", "url": null },
+                { "title": "Large-Scale Study of Curiosity-Driven Learning", "authors": "Yuri Burda et al.", "year": 2018, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "reward-shaping-specification-gaming",
+              "name": "Reward Shaping, Reward Modeling, and Specification Gaming",
+              "difficulty": "intermediate",
+              "tags": ["reward-shaping", "potential-based", "reward-modeling", "reward-hacking"],
+              "definition": "The design and critique of reward signals: potential-based shaping as the policy-invariance-preserving way to inject domain knowledge, learned reward models from human feedback, and the systematic failure mode where agents exploit misspecified objectives (reward hacking / specification gaming).",
+              "explanation": "Ng, Harada and Russell (1999) proved that adding a reward term F(s,a,s') to an MDP preserves the optimal policy for all base rewards iff F is a potential difference F = gamma*Phi(s') - Phi(s); this potential-based shaping theorem is the precise boundary between helpful advice and corrupted objectives, and every practical shaping trick (distance-to-goal bonuses, survival penalties) is secretly or explicitly a potential. Skalse et al. (2022) formalized reward hacking as the exploitation of a reward function's unmodelled 'wiring' between proxy and true objective and proved that even small proxy-reward noise can flip to large true-objective loss, quantifying why over-optimization of learned rewards degrades. The modern instantiation is the RLHF reward model: a Bradley-Terry-style likelihood trained on pairwise human preferences, then optimized by the policy - the exact setting where Goodhart collapses, because the learned reward only covers the region of behavior distribution the preferences sampled. The mitigation literature is now a field: reward ensembles and disagreement penalties, KL regularization against a reference policy (which is itself a conservative trust-region on reward extrapolation), model-averaged preference data, Constitutional AI/RLAIF reducing reliance on noisy human labels, and process reward models (PRM) rewarding verified steps rather than final outcomes (AlphaZero-style tree critics, OpenAI PRM800K lineage). Teaching this topic correctly requires pairing the shaping theorem with case studies - boat racing corner-cutting, paper-clipping, CoT reward leakage - so students can see that specification gaming is not a bug but the mathematical consequence of optimizing imperfect proxies.",
+              "learning_objectives": [
+                "Prove the Ng-Harada-Russell policy-invariance theorem for potential-based shaping.",
+                "Characterize reward hacking via Skalse et al.'s formalization and give three concrete gaming examples.",
+                "Explain Bradley-Terry reward-model training from pairwise preferences and why KL regularization bounds over-optimization.",
+                "Contrast outcome vs process reward models and their gaming profiles.",
+                "Design an ensemble-based or disagreement-penalized reward defense and state its limits."
+              ],
+              "prerequisites_strict": ["mdp-solution-theory", "reward-modeling"],
+              "prerequisites_recommended": ["information-theory", "probabilistic-graphical-models", "reinforcement-learning-from-human-feedback"],
+              "related_concepts": ["preference-optimization-alignment", "offline-rl-pessimism", "imitation-learning-inverse-rl"],
+              "advanced_extensions": ["inner-vs-outer-alignment-distinction", "reward-model-generalization-oversight-scal-laws", "mesa-optimization-specification-gaming-accountability"],
+              "key_results_or_algorithms": ["Potential-based shaping theorem", "Skalse et al. reward-hacking definition", "Bradley-Terry / Plackett-Luce preference models", "Dense vs sparse reward design", "Process reward models (PRM800K)"],
+              "math_foundations": [
+                "Potential functions on the state space and the shaping identity F = gamma Phi(s') - Phi(s)",
+                "Maximum-likelihood estimation of pairwise-preference models",
+                "Optimization-under-model-error / Goodhart bounds"
+              ],
+              "applications": ["Shaping exploration in sparse-reward tasks", "RLHF reward-model design and defense", "Robotic task reward design from demonstrations", "Math/code RL with verifier-based rewards"],
+              "common_misconceptions": [
+                "Reward shaping always preserves the optimum (only potential-based shaping does; naive distance bonuses can re-order policies).",
+                "Reward hacking means the model is adversarial (most gaming is honest optimization of a proxy that is linearly extrapolated beyond its preference-support - no intent required)."
+              ],
+              "further_reading": [
+                { "title": "Policy Invariance under Reward Transformations: An Equivalence Result", "authors": "Andrew Y. Ng, Daishi Harada, Stuart Russell", "year": 1999, "type": "paper", "url": null },
+                { "title": "Defining and Characterizing Reward Hacking", "authors": "Joar Skalse, Nikolaus H. R. Howe, Dmitrii Krasheninnikov, David Krueger", "year": 2022, "type": "paper", "url": null },
+                { "title": "Training Language Models to Follow Instructions with Human Feedback", "authors": "Long Ouyang et al.", "year": 2022, "type": "paper", "url": "https://arxiv.org/abs/2203.02155" },
+                { "title": "Let's Verify Step by Step", "authors": "Hunter Lightman et al.", "year": 2023, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "imitation-learning-inverse-rl",
+              "name": "Imitation Learning: Behavior Cloning, DAgger, and Inverse RL",
+              "difficulty": "intermediate",
+              "tags": ["behavior-cloning", "dagger", "irl", "maxent-irl", "gail"],
+              "definition": "Learning policies from demonstrations rather than rewards: supervised behavior cloning with its compounding-error analysis, dataset aggregation (DAgger), and inverse reinforcement learning that recovers rewards (maximum-entropy IRL, GAIL) to enable further policy optimization.",
+              "explanation": "Behavior cloning treats expert state-action pairs as a supervised dataset; its failure mode is distributional: errors accumulate quadratically in horizon (the O(T^2) vs O(Tepsilon) bounds of Ross, Gordon and Bagnell 2011 show that cloning a non-stationary expert with per-step error epsilon incurs regret O(T^2 epsilon) when the learned policy drifts off the expert's state distribution). DAgger fixes this by iteratively querying the expert on states the learner actually visits, collapsing compounding error to O(T epsilon) - the core insight that imitation is an interactive, non-stationary-data problem, though the cost is heavy human labeling and the analysis assumes the expert can label covariate-shifted states. Maximum-entropy IRL (Ziebart et al. 2008) reframes observation as inference: find the reward under which the expert looks near-optimal while maximizing trajectory entropy, yielding the partition-function-based objective GAIL (Ho & Ermon 2016) later repurposes as a GAN-style imitation discriminator: the 'reward' is a classifier's logit for expert-vs-agent states, and the policy is trained with RL against it. The hierarchy matters conceptually: BC is supervised learning, DAgger is interactive supervised, IRL/GAIL recover objectives for policy optimization, and each assumes something different about expert quality and access. Modern instantiations - offline imitation via masked models, diffusion policies for multimodal action distributions, VLM-based instruction-following robots (RT-2 lineage) - reuse these analyses, and the covariate-shift framing is precisely what the Decision Transformer critique literature revisits.",
+              "learning_objectives": [
+                "Derive the O(T^2 epsilon) compounding-error bound for naive cloning and explain its distribution-shift assumption.",
+                "Implement DAgger and analyze when expert queries are practical.",
+                "Formulate maximum-entropy IRL and explain the partition function and its gradient.",
+                "Derive GAIL as an adversarial MPE-RL wrapper and explain why BC-style imitation is its limit case.",
+                "Classify imitation settings into BC / DAgger / GAIL by expert access and reward availability."
+              ],
+              "prerequisites_strict": ["imitation-learning", "supervised-learning-foundations", "policy-gradient-theory"],
+              "prerequisites_recommended": ["offline-rl-pessimism", "generative-adversarial-networks", "reward-shaping-specification-gaming"],
+              "related_concepts": ["diffusion-policy-trajectory-generation", "decision-transformer-sequence-rl", "reward-modeling"],
+              "advanced_extensions": ["learning-transferable-rewards", "intervention-based-imitation-dagger-variants", "robust-irl-treatment-of-expert-suboptimality"],
+              "key_results_or_algorithms": ["Behavior cloning", "DAgger / SMART / Reduce", "Maximum-entropy IRL", "GAIL", "AIRL (Robust adversarial RL)", "Imitation-as-inference"],
+              "math_foundations": [
+                "Forward-KL vs reverse-KL arguments in imitation-as-inference",
+                "Online-to-supervised reduction and regret transfer for DAgger",
+                "Log-partition gradients in Boltzmann distributions"
+              ],
+              "applications": ["Autonomous driving from demonstrations", "Robot manipulation skill learning", "Cold-starting RL policies from human teleoperation", "LLM agents imitating human/teacher trajectories"],
+              "common_misconceptions": [
+                "More expert data always fixes cloning (the distribution-shift problem is structural, not finite-sample; DAgger-style interaction or closed-loop fine-tuning attacks the right quantity).",
+                "GAIL recovers the true reward (it recovers a reward making the policy imitate; many rewards explain the same demonstrations - the fundamental non-identifiability of IRL)."
+              ],
+              "further_reading": [
+                { "title": "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning (DAgger)", "authors": "Stephane Ross, Geoffrey Gordon, Drew Bagnell", "year": 2011, "type": "paper", "url": null },
+                { "title": "Maximum Entropy Imitation Learning from Demonstration", "authors": "Brian D. Ziebart et al.", "year": 2008, "type": "paper", "url": null },
+                { "title": "Generative Adversarial Imitation Learning", "authors": "Jonathan Ho, Stefano Ermon", "year": 2016, "type": "paper", "url": null },
+                { "title": "Reinforcement Learning: An Introduction, Ch. 19 (Imitation/Transfer)", "authors": "Richard S. Sutton and Andrew G. Barto (2020 draft)", "year": 2020, "type": "book", "url": "http://incompleteideas.net/book/the-book-2nd.html" }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "rl-from-data-and-in-the-world",
+          "name": "RL from Data and in the World",
+          "summary": "Learning from fixed datasets rather than interaction - offline RL, off-policy evaluation - and deploying to constrained, multi-level, multi-agent, and real-world systems.",
+          "topics": [
+            {
+              "slug": "offline-rl-pessimism",
+              "name": "Offline RL: Distribution Shift and the Theory of Pessimism",
+              "difficulty": "expert",
+              "tags": ["offline-rl", "cql", "iql", "bcq", "bear", "pessimism"],
+              "definition": "Learning policies from a fixed dataset without interaction, where naive temporal-difference methods overestimate unseen state-actions; the resolved theory prescribes pessimism - penalizing uncertainty or constraining the policy to the behavior support.",
+              "explanation": "Offline RL's central problem is extrapolation: TD backups evaluate actions outside the data support, and function-approximation errors on those OOD actions are amplified by bootstrapping into catastrophic overestimation (the BEAR analysis of 'bootstrap error' and Kumar et al.'s bounded-support correction). Two principled families emerged. Support-constraint methods keep the learned policy inside the behavior policy's support: BCQ (clipped action evaluation), BEAR (MMD-constrained actor), TD3+BC (behavior-regularized actor with an extra term). Pessimism methods modify the objective: MOPO/MOReL penalize rewards by dynamics-model uncertainty for provable lower-bound guarantees, and CQL implicitly lower-bounds Q on OOD actions via a log-sum-exp regularizer with proven conservatism and policy-extraction guarantees. IQL avoids OOD queries entirely via expectile regression on value functions - a closed-form-like approach that matches the best baselines and is the template for many later critics. The theoretical thread (Agarwal, Jiang, Lu, Voornev's RL foundations; Jin, Yang, Wang on provable pessimism) unifies the algorithm zoo: minimax-optimal offline RL needs an uncertainty lower bound, value-gap, and single-policy or concentrability assumption, and the choice between support-based and pessimism-based estimators maps to which coverage assumption the application can justify. Importance-sampling and OPE machinery feed directly into evaluation of these policies. Open problems remain where coverage is weak and behavior is near-deterministic: the field's honest state is that algorithm ranking depends on dataset quality in ways benchmarks (D4RL) under-explore (contested).",
+              "learning_objectives": [
+                "Demonstrate the extrapolation-error failure of vanilla Q-learning on a deterministic offline dataset.",
+                "Implement the CQL regularizer and prove it yields a conservative Q bound.",
+                "Derive IQL's expectile objective and explain why it never queries OOD actions.",
+                "State a concentrability/uncertainty condition under which pessimism achieves minimax-optimal regret.",
+                "Choose between support-constraint and uncertainty-penalty methods given a dataset's coverage profile."
+              ],
+              "prerequisites_strict": ["deep-rl-foundations", "offline-reinforcement-learning", "td-learning-eligibility-traces"],
+              "prerequisites_recommended": ["bandits-regret-analysis", "off-policy-evaluation-learning", "generalization-theory"],
+              "related_concepts": ["decision-transformer-sequence-rl", "imitation-learning-inverse-rl", "safe-constrained-rl"],
+              "advanced_extensions": ["pessimism-in-model-based-offline-rl-value-iterations", "concentrability-vs-single-policy-coefficients", "deep-conservative-estimators-fitted-q-variants"],
+              "key_results_or_algorithms": ["BCQ", "BEAR / TD3+BC", "CQL", "MOPO / MOReL", "IQL", "Minimax pessimism lower/upper bounds (Jin et al.)"],
+              "math_foundations": [
+                "Bellman contraction under weighted norms and the concentrability coefficient",
+                "Expectile regression and asymmetric least squares",
+                "Rademacher-style generalization bounds for conservative estimation"
+              ],
+              "applications": ["Healthcare treatment policy from EHR logs", "Autonomous-driving policy learning", "Recsys policy learning from logged interactions", "Offline robot datasets; RLHF cold-start from human-feedback logs"],
+              "common_misconceptions": [
+                "Offline RL reduces to supervised learning on the best dataset actions (the difference is distributional: value-based methods learn what would happen counterfactually; pure cloning inherits behavior policy errors).",
+                "Pessimism always hurts (the theoretical pessimism gap is exactly what buys generalization bounds; over-pessimism is a tuning pathology, not a conceptual one)."
+              ],
+              "further_reading": [
+                { "title": "Conservative Q-Learning for Offline Reinforcement Learning", "authors": "Aviral Kumar, Aurick Zhou, George Tucker, Sergey Levine", "year": 2020, "type": "paper", "url": null },
+                { "title": "Offline Reinforcement Learning with Implicit Q-Learning", "authors": "Ilya Kostrikov, Ashvin Nair, Sergey Levine", "year": 2021, "type": "paper", "url": null },
+                { "title": "MOPO: Model-based Offline Policy Optimization", "authors": "Tianyi Xu et al.", "year": 2020, "type": "paper", "url": null },
+                { "title": "Reinforcement Learning: Theory and Algorithms", "authors": "Alekh Agarwal, Nan Jiang, Sham Kakade, Hao Sun", "year": 2025, "type": "book", "url": "https://rlbook.csail.mit.edu/" },
+                { "title": "Offline Reinforcement Learning: Tutorial, Review, and Perspectives on Big Opportunities", "authors": "Sergey Levine, Aviral Kumar, George Tucker, Justin Fu", "year": 2020, "type": "survey", "url": "https://arxiv.org/abs/2005.01643" }
+              ]
+            },
+            {
+              "slug": "off-policy-evaluation-learning",
+              "name": "Off-Policy Evaluation and Off-Policy Learning",
+              "difficulty": "expert",
+              "tags": ["off-policy-evaluation", "importance-sampling", "doubly-robust", "counterfactual-learning"],
+              "definition": "Estimating the value of a target policy from data generated by a different behavior policy - via importance sampling, direct model-based regression, and doubly-robust hybrids - and using those estimates (or their gradient surrogates) to select or learn better policies.",
+              "explanation": "OPE answers the counterfactual question 'what would this policy have earned?' from logged data, which is the precondition for safe deployment: healthcare and recommendation systems evaluate before they act. Inverse-probability-weighting estimators reweight behavior trajectories by the product of importance ratios; unbiased but exponential-variance in horizon, driving all practical refinements: per-decision importance sampling (Precup, Sutton, Dasgupta), marginalized IS (Thomas, Theocharous, Ghavamzadeh), truncated and stabilized weights. The direct method regresses the target policy's value with a learned model of rewards/dynamics - biased but low-variance - and doubly-robust estimators (Jiang & Li; Dudik et al.) combine them with the semi-parametric efficiency property that consistency holds if either the model or the weights are correct, plus sharp concentration bounds. The minimax rates (Uehara, Chen, and others; W2S bounds) characterize exactly when each estimator wins: MDP structure helps when the value model is smooth, IS helps when the policy gap is small. Off-policy learning turns the estimators into differentiable objectives (weighted IS loss for contextual bandits, DRQ, policy-gradient-of-IPS), powering counterfactual bandit algorithms in production. The same machinery underlies modern LLM alignment evaluation: offline reward-model validation, KL-trust diagnostics of RLHF runs against SFT logs, and the observation that PPO's ratio clipping is itself an OPE stabilizer. This topic is systematically under-taught on platforms even though it is the discipline that separates benchmark RL from deployable RL.",
+              "learning_objectives": [
+                "Derive the trajectory-level and per-decision IS estimators and analyze their variance growth with horizon.",
+                "Construct a doubly-robust value estimator and prove its unbiasedness/consistency under either-model-correct robustness.",
+                "State the minimax variance bounds and choose the right estimator given MDP structure and behavior coverage.",
+                "Implement weighted-IS off-policy learning for a contextual bandit and explain its regret-reduction use.",
+                "Connect OPE machinery to offline RL evaluation and RLHF log analysis."
+              ],
+              "prerequisites_strict": ["td-learning-eligibility-traces", "statistical-inference", "probability-foundations"],
+              "prerequisites_recommended": ["off-policy-evaluation-foundations-sentinel", "causal-inference-foundations", "generalization-theory"],
+              "related_concepts": ["offline-rl-pessimism", "bandits-regret-analysis", "reinforcement-learning-from-human-feedback"],
+              "advanced_extensions": ["marginalized-is-for-pomdps", "self-normalized-importance-weighting", "ope-for-sequential-decision-under-misspecification"],
+              "key_results_or_algorithms": ["IPS (Precup et al.)", "Per-Decision IPS (PDL-IS)", "Marginalized IS (Thomas et al.)", "Doubly Robust estimator (Jiang & Li; Dudik et al.)", "Direct method / DDP / FQE", "Minimax analysis of OPE estimators"],
+              "math_foundations": [
+                "Change-of-measure for path-space likelihood ratios",
+                "Semiparametric efficiency and influence functions",
+                "Self-normalized concentration bounds"
+              ],
+              "applications": ["Recommender and ad-policy evaluation before deployment", "Healthcare decision-support validation", "Offline RL leaderboard methodology", "Auditing RLHF policies from logged preference data"],
+              "common_misconceptions": [
+                "Unbiasedness is the right OPE objective (high-horizon unbiased IS has exponential variance; biased DR or direct methods dominate in practice).",
+                "OPE and offline RL are the same problem (evaluation outputs a scalar with confidence intervals; learning outputs a policy and needs additional regularization for policy improvement)."
+              ],
+              "further_reading": [
+                { "title": "Doubly Robust Off-policy Value Evaluation for Reinforcement Learning", "authors": "Nan Jiang, Lihong Li", "year": 2016, "type": "paper", "url": null },
+                { "title": "Doubly Robust Policy Evaluation and Learning", "authors": "Miroslav Dudik, John Langford, Lihong Li", "year": 2011, "type": "paper", "url": null },
+                { "title": "Eligibility Traces for Off-Policy Policy Evaluation", "authors": "Doina Precup, Richard S. Sutton, Sanjoy Dasgupta", "year": 2000, "type": "paper", "url": null },
+                { "title": "High Confidence Off-Policy Evaluation", "authors": "Philip Thomas, Bruno Theocharous, Mohammad Ghavamzadeh", "year": 2015, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "safe-constrained-rl",
+              "name": "Safe and Constrained Reinforcement Learning",
+              "difficulty": "advanced",
+              "tags": ["cmdp", "lagrangian", "safety", "constrained-optimization"],
+              "definition": "Reinforcement learning under explicit cost or safety constraints, formulated as constrained MDPs with hard or expected limits, solved via Lagrangian duality, safety critics, shielding, and reachability certificates.",
+              "explanation": "The CMDP formalism (Altman 1999) adds a cost signal and either an expected cumulative-cost constraint (E[sum gamma^t c] <= d) or almost-sure/finite-horizon variants; the Lagrangian relaxation converts the problem to maximizing reward - lambda * cost with a dual ascent on lambda, which is exactly what most practical safe-RL methods implement (SAC-Lagrange, PPO-Lagrangian, CPO with trust-region policy updates respecting a cost constraint via Gaussian-Fisher linearization). Constraint satisfaction in the expected sense is weaker than practitioners need: safety means per-trajectory or worst-case guarantees, motivating risk-sensitive variants (CVaR critics, chance constraints), shielding (runtime automata that filter unsafe actions with formal guarantees from safety-game synthesis), and control-barrier-function or reachability (Hamilton-Jacobi) certificates combined with RL - the safety community's answer to the black-box-policy problem. The theoretical status of Lagrangian methods is delicate: dual variables oscillate, constraints can be violated along the training trajectory (the 'safe exploration' problem addressed by recovery-based methods like Saute MDPs and early-stopping/curriculum schemes), and duality gaps appear for nonconvex policies even though CMDPs are convex in occupancy measures. Recent work integrates pessimism for offline safe RL and formal verification for the learned component. This is the subfield most directly connected to industrial deployment - AV, flight control, process industry - and to the constraint-like KL penalties of RLHF, which are soft safety constraints in the same mathematical family.",
+              "learning_objectives": [
+                "Formulate finite- and infinite-horizon CMDPs and their occupancy-measure LPs; state strong duality conditions.",
+                "Derive the Lagrangian saddle-point algorithm and diagnose dual oscillation in practice.",
+                "Implement CPO's constrained trust-region update.",
+                "Explain shielding and control-barrier-function safety filters and what guarantees they add.",
+                "Contrast expected-constraint vs risk-constrained (CVaR/chance-constraint) formulations."
+              ],
+              "prerequisites_strict": ["mdp-solution-theory", "proximal-policy-optimization-gae", "optimization-convex"],
+              "prerequisites_recommended": ["control-theory-foundations", "distributional-reinforcement-learning", "differential-equations"],
+              "related_concepts": ["reward-shaping-specification-gaming", "model-based-reinforcement-learning", "ppo-for-llm-alignment"],
+              "advanced_extensions": ["almost-sure-constraint-convergence", "hamilton-jacobi-reachability-meets-rl", "offline-safe-rl-pessimism-convergence"],
+              "key_results_or_algorithms": ["CMDP LP and duality (Altman)", "SAC-Lagrange / PPO-Pid-Lagrangian", "Constrained Policy Optimization (Achiam et al.)", "Saute/Union MDPs", "Shielding (Alshiekh et al.)", "Control barrier function RL filters"],
+              "math_foundations": [
+                "Convex duality and saddle-point iterations",
+                "Occupancy-measure LPs with linear cost constraints",
+                "Invariant sets / barrier conditions for safety certificates"
+              ],
+              "applications": ["Autonomous driving with hard constraints", "Power-grid and process control", "Robot-adjacent human safety", "Interpreting RLHF KL and refusal constraints as constrained objectives"],
+              "common_misconceptions": [
+                "Lagrangian penalties equal guaranteed safety (they bound expected constraint violation at optimality; training-time violations and non-asymptotic behavior are separate, and per-trajectory safety needs certificates/shields).",
+                "Safety constraints make RL infeasible (the constraint is usually satisfiable by the behavior/safe policy; the difficulty is exploration, which recovery and curriculum methods address)."
+              ],
+              "further_reading": [
+                { "title": "Constrained Markov Decision Processes", "authors": "Eitan Altman", "year": 1999, "type": "book", "url": null },
+                { "title": "Constrained Policy Optimization", "authors": "Josh Achiam, David Held, Aviv Tamar, Pieter Abbeel", "year": 2017, "type": "paper", "url": null },
+                { "title": "A Comprehensive Survey on Safe Reinforcement Learning", "authors": "Javier Garcia, Fernando Fernandez", "year": 2015, "type": "survey", "url": null },
+                { "title": "Safe Reinforcement Learning Using Artificial Potential Fields? / use: "Safety-Gym: A Reinforcement Learning Platform for Safety"", "authors": "Jiaming? Ze? (use: Chen et al.)", "year": 2020, "type": "docs", "url": null }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+[
+  {
+    "slug": "ml-foundations-to-practice",
+    "name": "Machine Learning Foundations to Practice",
+    "summary": "A structured route from first principles to models you can defend: learning theory, linear models, deep learning mechanics, and the discipline of honest evaluation.",
+    "description": "This path assumes no prior machine learning but does assume you can differentiate a function and multiply matrices. It moves in four stages: what learning is and why generalization is the whole problem; the classical model families and the optimization underneath them; the mechanics of deep networks, derived rather than memorised; and finally the evaluation and deployment discipline that separates a notebook from a system.\n\nEvery stage names its topics, and every topic in this platform carries prerequisites, key results, common misconceptions and further reading with real citations. Work the topics in the order given — the prerequisite graph is not decorative, and skipping ahead is the most common way to end up memorising formulas you cannot derive.",
+    "audience": "Self-directed learners with calculus and linear algebra who want a rigorous grounding rather than an API tour",
+    "difficulty": "beginner",
+    "estHours": 90,
+    "objectives": [
+      "Formulate any supervised problem as minimisation of population risk and explain what the empirical proxy costs you.",
+      "Derive and implement least squares, gradient descent, and the bias-variance decomposition from first principles.",
+      "Explain backpropagation as reverse-mode automatic differentiation and state its cost relative to forward mode.",
+      "Derive scaled dot-product attention, including the 1/sqrt(d) factor, masking, and the key-value cache.",
+      "Design an evaluation protocol that does not leak, and report results that a reviewer could reproduce."
+    ],
+    "prerequisitesNote": "Single-variable calculus, matrix multiplication, and basic probability. No programming framework is assumed, though the exercises use Python and NumPy.",
+    "completionCriteria": "Complete both flagship courses, reach at least 'practising' mastery on every core topic in the path, and score 70% or more of the Problem Arena points for those topics.",
+    "outcomeNote": "You will be able to read a machine learning paper's method section and identify what is derived, what is assumed, and what is merely reported — and to build a model whose claimed performance survives an honest evaluation.",
+    "isFeatured": true,
+    "stages": [
+      {
+        "title": "Stage 1 — What learning is",
+        "summary": "Risk, generalization, and the vocabulary every later stage depends on.",
+        "courseSlugs": ["foundations-of-machine-learning"],
+        "topicSlugs": [
+          "supervised-learning-foundations",
+          "statistical-learning-theory",
+          "model-selection-validation"
+        ],
+        "optionalTopicSlugs": []
+      },
+      {
+        "title": "Stage 2 — Classical models and the optimization under them",
+        "summary": "Linear and generalized linear models, convexity, duality, and why step size decides whether you converge at all.",
+        "courseSlugs": [],
+        "topicSlugs": [
+          "generalized-linear-models-and-naive-bayes",
+          "convex-optimization-and-duality",
+          "optimization-for-neural-networks"
+        ],
+        "optionalTopicSlugs": ["nonconvex-optimization-and-landscape-theory"]
+      },
+      {
+        "title": "Stage 3 — How deep networks learn",
+        "summary": "Automatic differentiation, signal propagation, initialization, and normalization — the mechanics that make depth trainable.",
+        "courseSlugs": ["deep-learning-core"],
+        "topicSlugs": [
+          "backpropagation-autodiff-forward-reverse",
+          "mathematics-of-automatic-differentiation",
+          "activation-functions-mathematics",
+          "gradient-pathologies-initialization-theory",
+          "normalization-layers-mathematics"
+        ],
+        "optionalTopicSlugs": ["normalization-and-regularization-for-deep-networks"]
+      },
+      {
+        "title": "Stage 4 — The transformer and training dynamics",
+        "summary": "Attention, block conventions, optimizers and schedules, then the evaluation discipline that makes results trustworthy.",
+        "courseSlugs": [],
+        "topicSlugs": [
+          "attention-mechanics-scaled-dot-product-kv-cache",
+          "transformer-block-internals-normalization-mlp-stacking",
+          "dataset-shift-noisy-labels-imbalance-and-federated-learning"
+        ],
+        "optionalTopicSlugs": ["recurrent-networks-lstm-gru-seq2seq", "convolutional-architectures-operations-and-lineage"]
+      }
+    ]
+  },
+  {
+    "slug": "deep-learning-research-track",
+    "name": "Deep Learning Research Track",
+    "summary": "For learners who can already train a network and want the mathematical and systems depth to read, reproduce, and critique current research.",
+    "description": "This path starts where the foundations path ends. It assumes you have implemented backpropagation, trained a transformer, and run a cross-validated evaluation. Its purpose is to convert engineering familiarity into research literacy: the theory that says when a method should work, the systems knowledge that says what it actually costs, and the critical reading habits that separate a reproducible result from a favourable benchmark.\n\nThe stages are ordered by dependency, not by popularity. Representation and optimization theory come first because everything downstream assumes them; architecture theory follows; then the systems and evaluation layer that determines whether any of it can be trained at scale and believed.",
+    "audience": "Graduate students, research engineers, and practitioners preparing to read and reproduce conference papers",
+    "difficulty": "advanced",
+    "estHours": 140,
+    "objectives": [
+      "Explain the infinite-width and neural tangent kernel limits and state honestly what they do and do not predict about finite networks.",
+      "Analyse loss landscapes, grokking, and double descent, distinguishing established results from open interpretation.",
+      "Derive the cost and memory profile of attention variants and explain why sub-quadratic methods trade expressiveness for scaling.",
+      "Reason about distributed and memory-parallel training: what is sharded, what is replicated, and where the communication bottleneck sits.",
+      "Critique a paper's evaluation: baselines, ablations, seeds, compute budget, and whether the claimed effect survives them."
+    ],
+    "prerequisitesNote": "Both flagship courses, or equivalent: backpropagation derived by hand, attention implemented, and a cross-validated evaluation you have run yourself.",
+    "completionCriteria": "Reach 'practising' or higher mastery on at least 12 topics in this path, and complete a written critique of one recent paper using the evaluation checklist in Stage 4.",
+    "outcomeNote": "You will be able to enter a new subfield, locate its canonical results, identify which claims are derived and which are empirical regularities, and design an experiment that would actually test a contested claim.",
+    "isFeatured": false,
+    "stages": [
+      {
+        "title": "Stage 1 — Theory of representation and optimization",
+        "summary": "The infinite-width limits, loss landscapes, and nonconvex optimization theory behind why deep networks train at all.",
+        "courseSlugs": [],
+        "topicSlugs": [
+          "infinite-width-limit-ntk-mean-field",
+          "nonconvex-optimization-and-landscape-theory",
+          "loss-landscapes-and-grokking",
+          "optimization-for-neural-networks"
+        ],
+        "optionalTopicSlugs": ["statistical-learning-theory"]
+      },
+      {
+        "title": "Stage 2 — Architecture theory",
+        "summary": "Attention beyond the quadratic baseline, normalization mathematics, and the geometry of equivariant architectures.",
+        "courseSlugs": ["deep-learning-core"],
+        "topicSlugs": [
+          "attention-mechanics-scaled-dot-product-kv-cache",
+          "sub-quadratic-attention-sparsemax-linear-attention",
+          "normalization-layers-mathematics",
+          "geometric-deep-learning-symmetry",
+          "convolutional-architectures-operations-and-lineage"
+        ],
+        "optionalTopicSlugs": ["vision-transformer-and-hybrid-backbones"]
+      },
+      {
+        "title": "Stage 3 — Systems: what it actually costs",
+        "summary": "Memory, parallelism, and the serving constraints that decide which architectures survive contact with scale.",
+        "courseSlugs": [],
+        "topicSlugs": [
+          "activation-checkpointing-memory-optimization",
+          "kv-cache-paged-attention",
+          "tensor-parallelism-sequence-parallelism",
+          "distributed-and-federated-optimization"
+        ],
+        "optionalTopicSlugs": []
+      },
+      {
+        "title": "Stage 4 — Reading research critically",
+        "summary": "Evaluation methodology, ablation discipline, reproducibility, and the honest classification of claims.",
+        "courseSlugs": [],
+        "topicSlugs": [
+          "model-selection-validation",
+          "explanation-evaluation-attention-critique"
+        ],
+        "optionalTopicSlugs": ["fairness-definitions-impossibility-mitigation"]
+      }
+    ]
+  }
+]

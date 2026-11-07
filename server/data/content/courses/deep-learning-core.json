@@ -1,0 +1,1668 @@
+{
+  "slug": "deep-learning-core",
+  "title": "Deep Learning: Core Mechanics",
+  "subtitle": "Backpropagation, signal propagation, attention, and the training loop",
+  "summary": "The mechanics that make deep networks work, derived rather than asserted: reverse-mode automatic differentiation, why initialization controls signal propagation, the scaled dot-product attention rule, the modern transformer block, and the optimizers and schedules that actually train them.",
+  "difficulty": "intermediate",
+  "estHours": 11,
+  "author": "AI Mastery curriculum team",
+  "audience": "Learners who can compute derivatives and multiply matrices, and who have trained at least a small model",
+  "objectives": [
+    "Derive backpropagation as reverse-mode automatic differentiation and state when reverse mode is cheaper than forward mode.",
+    "Explain how initialization and activation choice control the variance of signals and gradients across depth.",
+    "Derive the scaled dot-product attention formula and explain the role of the 1/sqrt(d) factor, multi-head splitting, and masking.",
+    "Describe a modern pre-norm transformer block and justify each of its conventions.",
+    "Compare SGD with momentum and Adam, explain warmup and decay schedules, and choose regularization for a given failure mode."
+  ],
+  "prerequisitesNote": "Foundations of Machine Learning (or equivalent): empirical risk, gradient descent, and the bias-variance decomposition.",
+  "completionCriteria": "Complete every lesson and score at least 70% of exercise points in the Problem Arena.",
+  "topicSlugs": [
+    "backpropagation-autodiff-forward-reverse",
+    "mathematics-of-automatic-differentiation",
+    "activation-functions-mathematics",
+    "gradient-pathologies-initialization-theory",
+    "normalization-layers-mathematics",
+    "attention-mechanics-scaled-dot-product-kv-cache",
+    "transformer-block-internals-normalization-mlp-stacking",
+    "optimization-for-neural-networks",
+    "normalization-and-regularization-for-deep-networks"
+  ],
+  "isFeatured": true,
+  "modules": [
+    {
+      "title": "How networks learn",
+      "summary": "The gradient of a deep network, computed exactly and cheaply, and the conditions under which it stays usable as depth grows.",
+      "lessons": [
+        {
+          "slug": "backpropagation-as-reverse-mode-autodiff",
+          "title": "Backpropagation is reverse-mode automatic differentiation",
+          "summary": "Derive the backward pass from the chain rule on a computational graph, and show why its cost is independent of the number of parameters.",
+          "estMinutes": 35,
+          "topicSlugs": [
+            "backpropagation-autodiff-forward-reverse",
+            "mathematics-of-automatic-differentiation"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "The problem, stated exactly",
+              "payload": {
+                "level": 2,
+                "id": "the-problem"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "A neural network is a function $L(\\theta)$ of its parameters $\\theta$. Training needs the gradient $\\nabla_\\theta L$ at every step, and $\\theta$ typically has millions to billions of entries. The whole of backpropagation is one observation: **$L$ is not an arbitrary function, it is a composition of many cheap functions**, and the chain rule lets us reuse intermediate derivatives instead of recomputing them.\n\nNothing in this lesson is approximate. Backpropagation computes the *exact* gradient of the *exact* function that the forward pass computed, in floating-point arithmetic up to rounding. It is not a heuristic and it is not a search procedure."
+            },
+            {
+              "type": "definition",
+              "text": "A **computational graph** is a directed acyclic graph whose nodes are variables and whose edges represent elementary operations. Each node $v$ stores a value $\\mathrm{val}(v)$ and a local derivative rule $\\partial \\mathrm{val}(v) / \\partial \\mathrm{val}(u)$ for every input $u$.",
+              "payload": {
+                "term": "Computational graph",
+                "notation": "v = f(u_1, \\dots, u_k)"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "A **forward pass** evaluates the graph from inputs to output, caching each node's value. A **backward pass** starts at the output with $\\bar{L} = \\partial L / \\partial L = 1$ and propagates *adjoints* backwards:\n\n$$\\bar{u} \\;\\mathrel{+}=\\; \\bar{v}\\,\\frac{\\partial \\mathrm{val}(v)}{\\partial \\mathrm{val}(u)}$$\n\nThe `+=` matters: when a value feeds several consumers, its adjoint is the *sum* of the contributions, which is just the multivariate chain rule. In autodiff literature the adjoint $\\bar{u}$ is written $\\partial L/\\partial u$; deep-learning frameworks call the same object `grad`."
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Reverse mode on a two-layer network",
+                "steps": [
+                  {
+                    "text": "Write the network as three elementary nodes.",
+                    "latex": "z = W_1 x,\\qquad h = \\sigma(z),\\qquad L = \\ell(W_2 h, y)",
+                    "note": "sigma is any elementwise activation; ell is a scalar loss."
+                  },
+                  {
+                    "text": "Seed the adjoint at the output.",
+                    "latex": "\\bar{L} = 1",
+                    "note": "dL/dL = 1 by definition."
+                  },
+                  {
+                    "text": "Push through the loss: derivative with respect to its prediction.",
+                    "latex": "\\overline{p} = \\frac{\\partial L}{\\partial p} = \\bar{L}\\,\\frac{\\partial \\ell(p, y)}{\\partial p}",
+                    "note": "For cross-entropy with softmax, this collapses to p - y."
+                  },
+                  {
+                    "text": "Second weight matrix: use d(W2 h)/dW2 and d(W2 h)/dh.",
+                    "latex": "\\bar{W}_2 = \\overline{p}\\, h^{\\top},\\qquad \\bar{h} = W_2^{\\top}\\overline{p}",
+                    "note": "One matmul each; note the transpose on W2."
+                  },
+                  {
+                    "text": "Through the activation: elementwise, so the Jacobian is diagonal.",
+                    "latex": "\\bar{z} = \\bar{h} \\odot \\sigma'(z)",
+                    "note": "This is why the forward pass must cache z (or h)."
+                  },
+                  {
+                    "text": "First weight matrix, same pattern as step 4.",
+                    "latex": "\\bar{W}_1 = \\bar{z}\\, x^{\\top},\\qquad \\bar{x} = W_1^{\\top}\\bar{z}"
+                  }
+                ],
+                "conclusion": "Every step is either an elementwise product or a matrix product with a quantity already computed. The gradient of the whole network costs a constant multiple of one forward pass, regardless of how many parameters there are."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "Reverse mode computes **one row of the Jacobian per backward pass** — the gradient of one scalar output with respect to *all* inputs. Forward mode computes **one column** — the derivative of *all* outputs with respect to one input. Machine learning has one scalar loss and millions of parameters, so reverse mode is the only sensible choice.",
+              "payload": {
+                "variant": "key-idea"
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Counting the cost",
+              "payload": {
+                "level": 2,
+                "id": "cost"
+              }
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "Let $f(x, y) = \\sin(x)\\,(x^2 + y)$ with two inputs and one output. Compute $\\partial f/\\partial x$ and $\\partial f/\\partial y$ with (a) one reverse-mode pass and (b) two forward-mode passes, and compare the number of derivative evaluations.",
+                "steps": [
+                  "Build the graph: a = x^2, b = a + y, c = sin(x), f = c * b.",
+                  "Reverse mode, seed f-bar = 1: c-bar = b, b-bar = c, then a-bar = b-bar = c, y-bar = b-bar = c, and x-bar = c-bar * cos(x) + a-bar * 2x.",
+                  "Substitute values: df/dy = c = sin(x); df/dx = b*cos(x) + 2x*c = (x^2 + y)cos(x) + 2x*sin(x). Both gradients came from ONE traversal.",
+                  "Forward mode with seed x-dot = 1, y-dot = 0: propagate dots through the same graph, read off f-dot = df/dx. Repeat with x-dot = 0, y-dot = 1 to get df/dy. TWO traversals."
+                ],
+                "answer": "Reverse mode: 1 traversal for 2 gradients. Forward mode: 2 traversals for 2 gradients.",
+                "note": "Generalise: with n parameters and 1 scalar loss, reverse mode costs O(1) traversals and forward mode costs O(n). At n = 10^9 the difference is the whole field."
+              }
+            },
+            {
+              "type": "table",
+              "text": "",
+              "payload": {
+                "columns": [
+                  "",
+                  "Forward mode",
+                  "Reverse mode"
+                ],
+                "rows": [
+                  [
+                    "Per pass yields",
+                    "Derivative of all outputs w.r.t. one input (Jacobian column)",
+                    "Derivative of one output w.r.t. all inputs (Jacobian row)"
+                  ],
+                  [
+                    "Passes for full Jacobian",
+                    "O(#inputs)",
+                    "O(#outputs)"
+                  ],
+                  [
+                    "Extra memory",
+                    "O(1) — nothing to cache",
+                    "O(graph size) — forward values must be stored"
+                  ],
+                  [
+                    "Best when",
+                    "Few inputs, many outputs",
+                    "Many inputs, few outputs"
+                  ],
+                  [
+                    "Deep learning verdict",
+                    "Impractical for training; used in some inference-time sensitivity work",
+                    "This is backpropagation"
+                  ]
+                ],
+                "caption": "The trade is memory for time. Reverse mode's memory bill is why gradient checkpointing and activation recomputation exist."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Implementing it by hand",
+              "payload": {
+                "level": 2,
+                "id": "code"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Frameworks hide the graph, but the six lines below are the entire algorithm for a two-layer network with mean-squared error. Run it and compare against `torch.autograd`: they agree to floating-point precision, because both are evaluating the same chain rule."
+            },
+            {
+              "type": "code",
+              "text": "import numpy as np\n\nrng = np.random.default_rng(0)\nn_in, n_hidden, n_out = 4, 8, 2\nW1 = rng.normal(scale=np.sqrt(2.0 / n_in), size=(n_hidden, n_in))\nW2 = rng.normal(scale=np.sqrt(2.0 / n_hidden), size=(n_out, n_hidden))\n\nx = rng.normal(size=(n_in, 32))     # batch of 32, features as columns\ny = rng.normal(size=(n_out, 32))\n\n# ---- forward pass: cache every intermediate ----\nz = W1 @ x                          # (n_hidden, batch)\nh = np.maximum(z, 0.0)              # ReLU; dz/dh is a diagonal 0/1 mask\np = W2 @ h                          # (n_out, batch)\nbatch = x.shape[1]\nloss = np.sum((p - y) ** 2) / (2 * batch)\n\n# ---- backward pass: adjoints, in reverse order ----\ndp = (p - y) / batch                # dloss/dp\ngW2 = dp @ h.T                      # outer-product rule, step 4 of the derivation\ndh = W2.T @ dp                      # transpose on the way back\ndz = dh * (z > 0)                   # elementwise activation derivative\ngW1 = dz @ x.T\ndx = W1.T @ dz                      # only needed if we stack more layers\n\n# ---- check against a finite difference on one weight ----\neps = 1e-6\ni, j = 3, 5\nW1[i, j] += eps\nz2 = W1 @ x\np2 = W2 @ np.maximum(z2, 0.0)\nloss_plus = np.sum((p2 - y) ** 2) / (2 * batch)\nW1[i, j] -= 2 * eps\nz2 = W1 @ x\np2 = W2 @ np.maximum(z2, 0.0)\nloss_minus = np.sum((p2 - y) ** 2) / (2 * batch)\nW1[i, j] += eps\n\nnumeric = (loss_plus - loss_minus) / (2 * eps)\nprint(f\"analytic {gW1[i, j]:+.6e}   numeric {numeric:+.6e}   ratio {gW1[i, j] / numeric:.6f}\")",
+              "payload": {
+                "language": "python",
+                "filename": "manual_backprop.py",
+                "caption": "A complete forward/backward pass for a two-layer ReLU network, plus a finite-difference gradient check. The ratio should print 1.000000 to about five decimal places."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "Gradient checking with central differences, `(f(x+e) - f(x-e)) / 2e`, is the only cheap way to catch a wrong backward pass. Use a *relative* error tolerance around `1e-7` for float64. Do not check with `1e-12`: rounding error dominates and the test reports a false failure.",
+              "payload": {
+                "variant": "info",
+                "label": "Practical habit"
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Where it goes wrong",
+              "payload": {
+                "level": 2,
+                "id": "pathologies"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "The backward pass through a depth-$d$ network multiplies $d$ Jacobians together. Even if every factor is well behaved, the product can shrink or grow geometrically:\n\n$$\\frac{\\partial L}{\\partial h_1} = \\frac{\\partial L}{\\partial h_d}\\prod_{k=1}^{d-1}\\frac{\\partial h_{k+1}}{\\partial h_k}$$\n\nIf the spectral norm of each factor is $\\rho < 1$, the gradient at the first layer is bounded by $\\rho^{d-1}$ — numerically zero at $d = 100$. This is a property of the *mathematics*, not of floating point, and it is the reason initialization theory, normalization, and residual connections exist. The next lesson makes $\\rho$ explicit."
+            },
+            {
+              "type": "callout",
+              "text": "Vanishing gradients are often blamed on the activation function alone. That is incomplete: a residual connection changes the Jacobian from $J$ to $I + J$, so the product can no longer decay geometrically. Depth becomes trainable without changing the activation.",
+              "payload": {
+                "variant": "pitfall"
+              }
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "A model has 10^8 parameters and a scalar loss. Which mode should you use to obtain the full gradient, and how many traversals of the graph does it need?",
+                    "options": [
+                      "Forward mode; 10^8 traversals",
+                      "Reverse mode; 1 traversal",
+                      "Forward mode; 1 traversal",
+                      "Reverse mode; 10^8 traversals"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "Reverse mode returns the gradient of one output with respect to all inputs in a single backward traversal. Forward mode would need one traversal per input — 10^8 of them."
+                  },
+                  {
+                    "prompt": "Why must the forward pass cache intermediate values such as z in h = relu(z)?",
+                    "options": [
+                      "To make the forward pass faster",
+                      "Because the local derivative of relu at a node depends on the node's own input value",
+                      "Because frameworks need them for the learning-rate schedule",
+                      "They are not needed; caching is purely an optimisation"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "sigma'(z) is only known once z is known. Reverse mode needs the local derivative at a node evaluated at that node's forward value, which is why memory scales with graph size and why gradient checkpointing recomputes instead of storing."
+                  },
+                  {
+                    "prompt": "Backpropagation computes:",
+                    "options": [
+                      "An approximation of the gradient, accurate to about 1%",
+                      "The exact gradient of the function the forward pass computed, up to floating-point rounding",
+                      "A stochastic estimate of the gradient",
+                      "The gradient only for convex losses"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "It is the chain rule applied systematically. No convexity, no sampling, no approximation is involved — which is precisely why the finite-difference check in the code above matches to five decimals."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can write the adjoint update rule and explain why contributions from multiple consumers are summed.",
+                  "I can derive the backward pass of a two-layer network node by node.",
+                  "I can state the forward-mode vs reverse-mode cost in terms of Jacobian columns and rows.",
+                  "I can run a finite-difference gradient check and interpret the relative error.",
+                  "I can explain why a product of Jacobians can vanish with depth."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Automatic Differentiation in Machine Learning: a Survey",
+              "authors": "Baydin, Pearlmutter, Radul, Siskind",
+              "year": 2018,
+              "type": "survey",
+              "url": "https://arxiv.org/abs/1502.05767",
+              "note": "Sections 3-4 give the forward/reverse comparison used in the table above.",
+              "verified": true
+            },
+            {
+              "title": "Deep Learning, Chapter 6.5: Back-Propagation and Other Differentiation Algorithms",
+              "authors": "Goodfellow, Bengio, Courville",
+              "year": 2016,
+              "type": "book",
+              "url": "https://www.deeplearningbook.org/",
+              "note": "The computational-graph notation and the adjoint accumulation rule.",
+              "verified": true
+            }
+          ]
+        },
+        {
+          "slug": "activations-initialization-and-signal-propagation",
+          "title": "Activations, initialization, and signal propagation",
+          "summary": "Derive the variance of a signal as it travels through depth, and use it to justify Xavier/He initialization, activation choice, and normalization.",
+          "estMinutes": 40,
+          "topicSlugs": [
+            "activation-functions-mathematics",
+            "gradient-pathologies-initialization-theory",
+            "normalization-layers-mathematics"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "Why nonlinearity is not optional",
+              "payload": {
+                "level": 2,
+                "id": "nonlinearity"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Stack linear maps without an activation and the whole network collapses:\n\n$$W_d\\,(W_{d-1}(\\dots W_1 x)) = (W_d W_{d-1}\\cdots W_1)\\,x = Wx$$\n\nA hundred layers of pure matrix multiplication is exactly one matrix multiplication — the same hypothesis class as linear regression, but far harder to optimize. Depth buys expressive power only through nonlinearity, and the *shape* of that nonlinearity determines whether the signal survives the trip."
+            },
+            {
+              "type": "comparison",
+              "text": "",
+              "payload": {
+                "items": [
+                  {
+                    "title": "Sigmoid",
+                    "summary": "sigma(z) = 1 / (1 + e^-z), output in (0, 1)",
+                    "points": [
+                      "Derivative is at most 0.25, so each layer multiplies the gradient by something below 1/4 — geometric decay with depth.",
+                      "Saturates for |z| > 4: the gradient there is numerically zero, and the unit stops learning.",
+                      "Not zero-centred, which couples gradients across a layer and slows optimization.",
+                      "Still the right choice for a *probability* output with binary cross-entropy."
+                    ]
+                  },
+                  {
+                    "title": "Tanh",
+                    "summary": "Output in (-1, 1), zero-centred",
+                    "points": [
+                      "Fixes the centring problem; derivative peaks at 1.0 instead of 0.25.",
+                      "Still saturates on both ends, so deep stacks still vanish.",
+                      "Common in recurrent networks, where bounded activations keep hidden states stable."
+                    ]
+                  },
+                  {
+                    "title": "ReLU",
+                    "summary": "max(0, z), the default for feedforward and convolutional nets",
+                    "points": [
+                      "Derivative is exactly 1 for z > 0, so it does not attenuate the gradient at all.",
+                      "Sparse: roughly half the units are off, which decorrelates activations.",
+                      "Dead-unit failure mode: a unit whose pre-activation is always negative has zero gradient forever and never recovers.",
+                      "Unbounded above, so it cannot be used as a probability."
+                    ]
+                  },
+                  {
+                    "title": "GELU / SiLU",
+                    "summary": "Smooth, gated variants: z * Phi(z) and z * sigma(z)",
+                    "points": [
+                      "Non-zero (small negative) output for slightly negative inputs, so gradients do not die abruptly.",
+                      "Standard in transformers, including the MLP sublayer of most modern language models.",
+                      "Slightly more expensive to evaluate than ReLU; the difference is negligible next to the matmuls."
+                    ]
+                  }
+                ],
+                "caption": "There is no universally best activation. The choice interacts with initialization: ReLU halves the active units, so its variance calculation carries a factor of 1/2 that sigmoid's does not."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Deriving the variance of a signal through depth",
+              "payload": {
+                "level": 2,
+                "id": "derivation"
+              }
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "From one layer to an initialization rule",
+                "steps": [
+                  {
+                    "text": "Assume a single linear layer with fan-in n, zero-mean independent weights and inputs.",
+                    "latex": "y_j = \\sum_{i=1}^{n} w_{ji}\\, x_i"
+                  },
+                  {
+                    "text": "Independence and zero mean make the variance of the sum the sum of the variances.",
+                    "latex": "\\mathrm{Var}(y_j) = \\sum_{i=1}^{n} \\mathrm{Var}(w_{ji}\\, x_i) = n\\,\\mathrm{Var}(w)\\,\\mathrm{Var}(x)"
+                  },
+                  {
+                    "text": "Demand that the variance be preserved across the layer, so the signal neither explodes nor dies with depth.",
+                    "latex": "\\mathrm{Var}(y) = \\mathrm{Var}(x) \\;\\Longleftrightarrow\\; n\\,\\mathrm{Var}(w) = 1",
+                    "note": "This is the Xavier / Glorot condition: Var(w) = 1/n, i.e. std = 1/sqrt(fan_in)."
+                  },
+                  {
+                    "text": "Now insert a ReLU. It zeroes every negative pre-activation, halving the expected squared activation for a symmetric distribution.",
+                    "latex": "\\mathrm{Var}(\\mathrm{relu}(z)) = \\tfrac{1}{2}\\,\\mathrm{Var}(z)"
+                  },
+                  {
+                    "text": "Compensate by doubling the weight variance. This is the He / Kaiming rule.",
+                    "latex": "\\mathrm{Var}(w) = \\frac{2}{n_{\\text{in}}} \\quad\\Longrightarrow\\quad \\mathrm{std}(w) = \\sqrt{\\frac{2}{n_{\\text{in}}}}",
+                    "note": "Use fan_in for the forward signal, fan_out for the backward gradient; frameworks expose both."
+                  },
+                  {
+                    "text": "Check the backward direction too: the adjoint passes through W^T and the same diagonal activation mask, so the identical condition governs gradient variance.",
+                    "latex": "\\mathrm{Var}(\\bar{x}) = n_{\\text{out}}\\,\\mathrm{Var}(w)\\,\\mathrm{Var}(\\bar{y})"
+                  }
+                ],
+                "conclusion": "Initialization is not a hyperparameter to tune blindly. It is the value that makes a depth-d product of random Jacobians have norm near 1, so that both the signal and its gradient survive d multiplications."
+              }
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "w \\sim \\mathcal{N}\\!\\left(0, \\tfrac{2}{n_{\\text{in}}}\\right) \\;\\text{ for ReLU-family}, \\qquad w \\sim \\mathcal{U}\\!\\left[-\\sqrt{\\tfrac{6}{n_{\\text{in}}+n_{\\text{out}}}},\\; \\sqrt{\\tfrac{6}{n_{\\text{in}}+n_{\\text{out}}}}\\right] \\;\\text{ for tanh/sigmoid}",
+                "display": true,
+                "label": "He and Xavier initialization",
+                "note": "The uniform bound uses Var(U[-a,a]) = a^2/3, which is where the factor 6 comes from."
+              }
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "A layer has fan-in 512 and uses ReLU. What standard deviation should its weights be drawn with? If instead you used std = 0.05, by what factor would the signal variance change per layer, and what happens after 20 layers?",
+                "steps": [
+                  "He rule: std = sqrt(2/512) = sqrt(0.00390625) = 0.0625.",
+                  "With std = 0.05 the variance ratio per layer is n * Var(w) / 2 = 512 * 0.0025 / 2 = 0.64.",
+                  "After 20 layers the variance is multiplied by 0.64^20 = 1.3e-4, so activations shrink by a factor of about 87 in standard deviation.",
+                  "With std = 0.09 the ratio is 512 * 0.0081 / 2 = 2.07, and 2.07^20 = 1.2e6 — the activations explode instead."
+                ],
+                "answer": "std = 0.0625. Using 0.05 attenuates the signal by ~87x over 20 layers; using 0.09 amplifies it by ~1000x. The window is narrow because the error compounds exponentially in depth.",
+                "note": "This exponential sensitivity is the entire argument for residual connections and normalization layers: both re-anchor the scale periodically instead of relying on d multiplications staying near 1."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "A ReLU unit that receives a large negative bias during initialization has zero gradient and never updates. Watch for a rising fraction of dead units — if more than a few percent of a layer is permanently inactive, the learning rate is too high or the initialization is too small. Leaky ReLU and GELU mitigate this by keeping a non-zero slope on the negative side.",
+              "payload": {
+                "variant": "pitfall"
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Normalization re-anchors the scale",
+              "payload": {
+                "level": 2,
+                "id": "normalization"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Initialization fixes the variance *at step zero*, but training moves the weights and drifts the scale. A normalization layer recomputes mean and variance during the forward pass and rescales:\n\n$$\\hat{x} = \\frac{x - \\mu}{\\sqrt{\\sigma^2 + \\epsilon}}, \\qquad y = \\gamma\\,\\hat{x} + \\beta$$\n\nThe learnable $\\gamma$ and $\\beta$ matter: without them the layer would destroy the representational power of the network by forcing every activation to a fixed scale. The small $\\epsilon$ (typically `1e-5`) prevents division by zero when a channel is constant."
+            },
+            {
+              "type": "table",
+              "text": "",
+              "payload": {
+                "columns": [
+                  "Layer",
+                  "Statistics computed over",
+                  "Batch-size dependence",
+                  "Where it is used"
+                ],
+                "rows": [
+                  [
+                    "BatchNorm",
+                    "Each channel, across the batch and spatial positions",
+                    "Strong — unstable for small batches; needs running averages at inference",
+                    "Convolutional networks, large batches"
+                  ],
+                  [
+                    "LayerNorm",
+                    "All features of a single example",
+                    "None — identical at train and inference",
+                    "Transformers, recurrent networks, most language models"
+                  ],
+                  [
+                    "RMSNorm",
+                    "Root-mean-square of a single example's features, no mean subtraction",
+                    "None",
+                    "Modern LLMs; cheaper than LayerNorm with similar results"
+                  ],
+                  [
+                    "GroupNorm",
+                    "Channel groups within a single example",
+                    "None",
+                    "Vision models trained with small batches"
+                  ],
+                  [
+                    "WeightNorm",
+                    "Reparameterises the weight vector, not activations",
+                    "None",
+                    "Occasional use in generative models"
+                  ]
+                ],
+                "caption": "The transformer community converged on LayerNorm and later RMSNorm because sequence models are routinely trained with small batches and variable sequence lengths, which break batch statistics."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "**Pre-norm** applies normalization before the sublayer, `x + Sublayer(LN(x))`; **post-norm** applies it after, `LN(x + Sublayer(x))`. Post-norm was the original transformer formulation and can reach slightly better final quality; pre-norm keeps the residual stream unscaled, so gradients flow unattenuated through depth and training is far more stable without careful warmup. Most large models since 2020 use pre-norm for that reason.",
+              "payload": {
+                "variant": "info"
+              }
+            },
+            {
+              "type": "code",
+              "text": "import numpy as np\n\nrng = np.random.default_rng(1)\nn_in, depth, batch = 512, 20, 64\nx = rng.normal(size=(n_in, batch))\n\ndef relu(z):\n    return np.maximum(z, 0.0)\n\ndef report(tag, xs):\n    std = np.std(xs)\n    print(f\"{tag:24s} final activation std {std:12.4e}\")\n\nfor name, std_w in [(\"He (2/n_in)\", np.sqrt(2 / n_in)),\n                    (\"too small (0.05)\", 0.05),\n                    (\"too large (0.09)\", 0.09),\n                    (\"Xavier (1/n_in)\", np.sqrt(1 / n_in))]:\n    h = x\n    for _ in range(depth):\n        W = rng.normal(scale=std_w, size=(n_in, n_in))\n        h = relu(W @ h)\n    report(name, h)\n\n# The same stack with LayerNorm inserted before every layer (pre-norm style).\nh = x\nfor _ in range(depth):\n    mu = h.mean(axis=0, keepdims=True)\n    var = h.var(axis=0, keepdims=True)\n    h = (h - mu) / np.sqrt(var + 1e-5)\n    W = rng.normal(scale=0.05, size=(n_in, n_in))   # deliberately mis-scaled\n    h = relu(W @ h)\nreport(\"pre-norm + 0.05\", h)",
+              "payload": {
+                "language": "python",
+                "filename": "signal_propagation.py",
+                "caption": "Propagate activations through 20 random ReLU layers with four initialization scales. The mis-scaled 0.05 run collapses toward zero, 0.09 overflows, and the LayerNorm variant stays bounded even with the bad initialization."
+              }
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "Under the He rule, why is the weight variance 2/n_in rather than 1/n_in?",
+                    "options": [
+                      "Because ReLU is applied twice per layer",
+                      "Because ReLU zeroes half the pre-activations, halving the variance, so the weights must double it back",
+                      "Because the gradient is twice as large as the activation",
+                      "It is an empirical fudge factor with no derivation"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "For a symmetric zero-mean pre-activation, Var(relu(z)) = Var(z)/2. Doubling the weight variance restores Var(y) = Var(x), which is the signal-preservation condition."
+                  },
+                  {
+                    "prompt": "You train a transformer with batch size 1 on long sequences. Which normalization layer is appropriate, and why?",
+                    "options": [
+                      "BatchNorm, because it is the standard in deep learning",
+                      "LayerNorm or RMSNorm, because they compute statistics within a single example and do not depend on batch size",
+                      "No normalization, because normalization is only for vision models",
+                      "WeightNorm, because it removes the batch dependence"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "BatchNorm's statistics over a batch of size 1 are degenerate and differ between train and inference. LayerNorm/RMSNorm normalize across features of each token, so they behave identically at any batch size."
+                  },
+                  {
+                    "prompt": "What distinguishes pre-norm from post-norm in a residual block?",
+                    "options": [
+                      "Pre-norm normalizes before the sublayer, leaving the residual stream unscaled, which keeps gradients unattenuated through depth",
+                      "Pre-norm uses BatchNorm, post-norm uses LayerNorm",
+                      "Pre-norm removes the residual connection entirely",
+                      "They are mathematically identical and differ only in code style"
+                    ],
+                    "answerIndex": 0,
+                    "explain": "In x + Sublayer(LN(x)) the identity path carries the signal unchanged, so the Jacobian along the residual branch contains an exact identity term. In LN(x + Sublayer(x)) every path is rescaled, which is why post-norm needs careful warmup at depth."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can show that a stack of linear layers is a single linear layer.",
+                  "I can derive Var(y) = n Var(w) Var(x) and turn it into an initialization rule.",
+                  "I can explain the factor of 2 in He initialization and the factor of 6 in uniform Xavier.",
+                  "I can name the failure mode of dead ReLU units and two mitigations.",
+                  "I can compare BatchNorm, LayerNorm, and RMSNorm on batch dependence and typical use.",
+                  "I can state the difference between pre-norm and post-norm and why pre-norm trains more stably."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification",
+              "authors": "He, Zhang, Ren, Sun",
+              "year": 2015,
+              "url": "https://arxiv.org/abs/1502.01852",
+              "note": "Section 2 derives the 2/n_in rule used above.",
+              "verified": true
+            },
+            {
+              "title": "Understanding the difficulty of training deep feedforward neural networks",
+              "authors": "Glorot, Bengio",
+              "year": 2010,
+              "url": "https://proceedings.mlr.press/v9/glorot10a.html",
+              "note": "The original Xavier analysis of forward and backward signal variance.",
+              "verified": true
+            },
+            {
+              "title": "Root Mean Square Layer Normalization",
+              "authors": "Zhang, Sennrich",
+              "year": 2019,
+              "url": "https://arxiv.org/abs/1910.07467",
+              "note": "Shows that mean subtraction is not required, giving the cheaper RMSNorm.",
+              "verified": true
+            },
+            {
+              "title": "On Layer Normalization in the Transformer Architecture",
+              "authors": "Xiong, Yang, He, et al.",
+              "year": 2020,
+              "url": "https://arxiv.org/abs/2002.04745",
+              "note": "The pre-norm vs post-norm gradient analysis behind the warmup claim.",
+              "verified": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The transformer",
+      "summary": "Attention derived from a weighting argument, then assembled into the block that dominates modern architectures.",
+      "lessons": [
+        {
+          "slug": "attention-scaled-dot-product-and-multi-head",
+          "title": "Attention: the scaled dot product and multi-head splitting",
+          "summary": "Derive the softmax-weighted retrieval rule, explain the 1/sqrt(d) scaling from variance algebra, and work out masking, cost, and the key-value cache.",
+          "estMinutes": 45,
+          "topicSlugs": [
+            "attention-mechanics-scaled-dot-product-kv-cache",
+            "transformer-block-internals-normalization-mlp-stacking"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "Attention as soft retrieval",
+              "payload": {
+                "level": 2,
+                "id": "retrieval"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Strip away the machinery and attention is a dictionary lookup where the match is graded instead of exact. You have a **query** $q$, a set of **keys** $k_i$ and a set of **values** $v_i$. A hard lookup would return the value whose key equals the query; a soft lookup returns a *weighted average* of all values, where the weight is a similarity score passed through a softmax:\n\n$$\\text{score}_i = \\frac{q^{\\top}k_i}{\\sqrt{d}}, \\qquad \\alpha_i = \\frac{e^{\\text{score}_i}}{\\sum_j e^{\\text{score}_j}}, \\qquad \\text{out} = \\sum_i \\alpha_i v_i$$\n\nThe weights are non-negative and sum to one, so the output is a convex combination of the values — it lies inside their convex hull. That single property explains a great deal of attention's stability."
+            },
+            {
+              "type": "callout",
+              "text": "In a self-attention layer the queries, keys and values are all produced from the same sequence by three *different* learned projections: $Q = XW_Q$, $K = XW_K$, $V = XW_V$. \"Self\" means the source is the sequence itself, not that $W_Q = W_K = W_V$. Learning three separate projections is what lets a token ask one kind of question and answer another.",
+              "payload": {
+                "variant": "key-idea"
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Why the 1/sqrt(d) is there",
+              "payload": {
+                "level": 2,
+                "id": "scaling"
+              }
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Variance of the dot product",
+                "steps": [
+                  {
+                    "text": "Assume the components of q and k are independent, zero mean, unit variance.",
+                    "latex": "q, k \\in \\mathbb{R}^{d},\\quad \\mathbb{E}[q_i] = \\mathbb{E}[k_i] = 0,\\quad \\mathrm{Var}(q_i) = \\mathrm{Var}(k_i) = 1"
+                  },
+                  {
+                    "text": "Each product has mean zero and variance one, being a product of two independent unit-variance variables.",
+                    "latex": "\\mathbb{E}[q_i k_i] = 0,\\qquad \\mathrm{Var}(q_i k_i) = 1"
+                  },
+                  {
+                    "text": "Sum d independent terms: variances add.",
+                    "latex": "\\mathrm{Var}(q^{\\top}k) = \\mathrm{Var}\\!\\left(\\sum_{i=1}^{d} q_i k_i\\right) = d",
+                    "note": "Standard deviation grows as sqrt(d), so at d = 512 typical scores are around +-22."
+                  },
+                  {
+                    "text": "Divide by d to restore unit variance, i.e. divide the score by sqrt(d).",
+                    "latex": "\\mathrm{Var}\\!\\left(\\frac{q^{\\top}k}{\\sqrt{d}}\\right) = 1"
+                  }
+                ],
+                "conclusion": "Without the scaling, the softmax receives inputs with standard deviation sqrt(d). A softmax over scores spread by +-22 is numerically a one-hot argmax: one weight is essentially 1, the rest are essentially 0, and the gradient through the softmax is essentially zero. The 1/sqrt(d) factor keeps the distribution in its responsive regime."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "\"Attention is just a weighted average, so scaling cannot matter\" is wrong in exactly the way that matters for training. Unscaled attention still produces a plausible forward pass — it just stops learning, because the softmax saturates. This is a gradient problem, not a representation problem.",
+              "payload": {
+                "variant": "pitfall"
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Multi-head: splitting, not replicating",
+              "payload": {
+                "level": 2,
+                "id": "heads"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "A single attention distribution over a sequence must compromise: one set of weights cannot simultaneously track syntax, coreference and position. Multi-head attention runs $h$ attentions in parallel, each on a $d/h$-dimensional slice, and concatenates the results:\n\n$$\\text{head}_i = \\text{Attention}(XW_Q^{(i)}, XW_K^{(i)}, XW_V^{(i)}), \\qquad \\text{MHA}(X) = [\\text{head}_1;\\dots;\\text{head}_h]\\,W_O$$\n\nThe important bookkeeping fact: with $d_{\\text{model}} = 512$ and $h = 8$, each head has $d_k = 64$, and the total parameter count of $W_Q, W_K, W_V$ is *the same* as one full-width head. Multi-head is a reallocation of a fixed budget across independent softmaxes, not an increase in capacity."
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "A transformer has $d_{\\text{model}} = 768$, $h = 12$ heads and sequence length $T = 1024$. Compute (a) the dimension per head, (b) the number of parameters in the four projection matrices of one attention layer, and (c) the cost of the attention score matrix in FLOPs and memory.",
+                "steps": [
+                  "(a) d_k = d_model / h = 768 / 12 = 64.",
+                  "(b) W_Q, W_K, W_V are each 768 x 768 = 589,824 parameters; W_O is also 768 x 768. Total = 4 * 589,824 = 2,359,296 parameters.",
+                  "(c) Scores: Q K^T is (1024 x 64) times (64 x 1024) per head = 1024*1024*64 = 67.1M multiply-adds per head; over 12 heads = 805M, or 1.61 GFLOP counting multiply and add separately.",
+                  "Memory: the score matrix is h * T^2 = 12 * 1,048,576 = 12.6M floats per example. In float16 that is 25 MB for ONE layer of ONE sequence; with 12 layers, 302 MB."
+                ],
+                "answer": "64 dims per head; 2,359,296 parameters; ~1.6 GFLOP and 25 MB of score memory per layer at T=1024.",
+                "note": "Both cost and memory grow as T^2. That quadratic term is the reason flash-attention, sparse attention, and linear attention variants exist, and the reason long-context inference is expensive."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Masking",
+              "payload": {
+                "level": 2,
+                "id": "masking"
+              }
+            },
+            {
+              "type": "list",
+              "text": "",
+              "payload": {
+                "ordered": false,
+                "items": [
+                  "**Causal mask** — for autoregressive generation, position $i$ may only attend to positions $j \\le i$. Implemented by adding $-\\infty$ (in practice the dtype's minimum, e.g. `-3.4e38` for float32 or `-65504` for float16) to the forbidden entries *before* the softmax, so their weights become exactly zero.",
+                  "**Padding mask** — variable-length batches are padded; padded keys must contribute nothing. Also applied as $-\\infty$ before the softmax.",
+                  "**Both together** — decoder self-attention in a language model applies the causal mask and the padding mask simultaneously.",
+                  "**What must NOT be masked** — encoder self-attention in a bidirectional model uses only the padding mask. Masking causally there would silently halve the context."
+                ]
+              }
+            },
+            {
+              "type": "callout",
+              "text": "If every entry in a row is masked, the softmax denominator is zero and you get `NaN`. Real implementations guard against this by leaving the diagonal unmasked (a token always attends to itself) or by detecting all-masked rows. A single `NaN` in attention propagates to every downstream layer and destroys training within a few steps.",
+              "payload": {
+                "variant": "danger"
+              }
+            },
+            {
+              "type": "heading",
+              "text": "The key-value cache",
+              "payload": {
+                "level": 2,
+                "id": "kv-cache"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "During autoregressive generation you produce one token at a time, and each new token must attend to all previous ones. Recomputing $K$ and $V$ for the whole prefix at every step is wasted work: with a causal mask, the keys and values of past positions never change. So they are stored.\n\nAt step $t$, the model computes $q_t$ only, reads the cached $K_{1:t-1}, V_{1:t-1}$, appends $k_t, v_t$, and attends. Cost per step drops from $O(t^2)$ to $O(t)$ in the projections. The price is memory: the cache is $2 \\times L \\times T \\times d_{\\text{model}}$ floats per sequence, which for a 32-layer, 4096-token, $d=4096$ model in float16 is about 2 GB *per concurrent request*. Cache memory, not compute, is what limits serving throughput."
+            },
+            {
+              "type": "table",
+              "text": "",
+              "payload": {
+                "columns": [
+                  "Regime",
+                  "Per-step cost",
+                  "Memory",
+                  "Notes"
+                ],
+                "rows": [
+                  [
+                    "Training (teacher forcing)",
+                    "O(T^2 d) once for the whole sequence",
+                    "Score matrix O(T^2) per layer",
+                    "Fully parallel across positions; no cache needed"
+                  ],
+                  [
+                    "Generation without cache",
+                    "O(T^2 d) at every step",
+                    "Same as training",
+                    "Quadratic per step — never done in practice"
+                  ],
+                  [
+                    "Generation with KV cache",
+                    "O(T d) at every step",
+                    "O(L T d) persistent",
+                    "Standard; memory-bound, which is why batched serving is cache-limited"
+                  ],
+                  [
+                    "Prefill (prompt ingestion)",
+                    "O(T^2 d) once",
+                    "Populates the cache",
+                    "The slow first-token latency users perceive"
+                  ]
+                ],
+                "caption": "Optimizations such as multi-query attention, grouped-query attention, and paged attention all target the cache-memory column, not the compute column."
+              }
+            },
+            {
+              "type": "code",
+              "text": "import numpy as np\n\nrng = np.random.default_rng(2)\nT, d_model, n_heads = 6, 32, 4\nd_k = d_model // n_heads\n\nX = rng.normal(size=(T, d_model))\nWq = rng.normal(scale=1 / np.sqrt(d_model), size=(d_model, d_model))\nWk = rng.normal(scale=1 / np.sqrt(d_model), size=(d_model, d_model))\nWv = rng.normal(scale=1 / np.sqrt(d_model), size=(d_model, d_model))\nWo = rng.normal(scale=1 / np.sqrt(d_model), size=(d_model, d_model))\n\n\ndef split_heads(M):\n    # (T, d_model) -> (n_heads, T, d_k)\n    return M.reshape(T, n_heads, d_k).transpose(1, 0, 2)\n\n\ndef softmax(z, axis=-1):\n    z = z - z.max(axis=axis, keepdims=True)   # stability: shift by the row max\n    e = np.exp(z)\n    return e / e.sum(axis=axis, keepdims=True)\n\n\ndef attention(Q, K, V, causal=True):\n    scores = Q @ K.transpose(0, 2, 1) / np.sqrt(d_k)\n    if causal:\n        mask = np.triu(np.ones((T, T), dtype=bool), k=1)\n        scores = np.where(mask, -1e9, scores)\n    weights = softmax(scores)\n    return weights @ V, weights\n\n\nQ, K, V = split_heads(X @ Wq), split_heads(X @ Wk), split_heads(X @ Wv)\nout, weights = attention(Q, K, V)\ncontext = out.transpose(1, 0, 2).reshape(T, d_model) @ Wo\n\nnp.set_printoptions(precision=3, suppress=True)\nprint(\"attention weights of head 0 (rows = query position):\")\nprint(weights[0])\nprint(\"rows sum to:\", weights[0].sum(axis=1))\nprint(\"context shape:\", context.shape)\n\n# --- verify the causal property: position 0 attends only to itself ---\nassert np.allclose(weights[0][0], [1.0, 0, 0, 0, 0, 0])\n\n# --- verify scaling matters: recompute with d_k large and no 1/sqrt(d) ---\nd_big = 512\nq = rng.normal(size=(d_big,))\nk = rng.normal(size=(4, d_big))\nunscaled = softmax((k @ q)[None, :])\nscaled = softmax((k @ q / np.sqrt(d_big))[None, :])\nprint(\"unscaled weights\", unscaled, \"-> max\", unscaled.max())\nprint(\"scaled   weights\", scaled, \"-> max\", scaled.max())",
+              "payload": {
+                "language": "python",
+                "filename": "attention_from_scratch.py",
+                "caption": "Multi-head causal attention in about forty lines of NumPy. The last block demonstrates the saturation argument: at d=512 the unscaled softmax collapses to near one-hot while the scaled one stays spread out."
+              }
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "Scores q·k have variance d for unit-variance independent components. What goes wrong if you omit the 1/sqrt(d)?",
+                    "options": [
+                      "The output values become too large to represent",
+                      "The softmax saturates toward one-hot, so gradients through the attention weights vanish",
+                      "The attention weights no longer sum to one",
+                      "Nothing, as long as d < 64"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "The forward pass still produces a valid convex combination; it is the derivative of a saturated softmax that is near zero. The layer computes something plausible and learns almost nothing."
+                  },
+                  {
+                    "prompt": "With d_model = 768 and 12 heads, how does multi-head attention's parameter count compare with a single full-width attention?",
+                    "options": [
+                      "12x more parameters",
+                      "The same, because each head projects into d_model/h dimensions",
+                      "12x fewer parameters",
+                      "It depends on the sequence length"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "Each head's W_Q, W_K, W_V are 768 x 64, and stacking 12 of them gives exactly a 768 x 768 matrix. Multi-head redistributes a fixed budget across independent softmaxes."
+                  },
+                  {
+                    "prompt": "Why does the KV cache speed up generation?",
+                    "options": [
+                      "It stores previously computed keys and values, so each new step only projects the newest token",
+                      "It caches the softmax output so no attention is computed",
+                      "It reduces the model to a smaller one during generation",
+                      "It stores the whole generated text so the model does not re-read the prompt"
+                    ],
+                    "answerIndex": 0,
+                    "explain": "Under a causal mask, past keys and values are invariant to new tokens, so they can be reused. The per-step projection cost falls from O(T^2 d) to O(T d), at the price of O(L T d) memory that grows with the context."
+                  },
+                  {
+                    "prompt": "A decoder self-attention row becomes NaN during training. What is the most likely cause?",
+                    "options": [
+                      "The learning rate is too high",
+                      "Every entry in that row was masked to -inf, so the softmax denominator is zero",
+                      "The key-value cache overflowed",
+                      "The embedding weights were not initialized"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "Softmax over an all-masked row is 0/0. Implementations avoid it by keeping the diagonal unmasked or by detecting fully masked rows; padding-heavy batches are the usual trigger."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can state the attention formula and explain why the output is a convex combination of values.",
+                  "I can derive the variance of the dot product and justify the 1/sqrt(d) factor.",
+                  "I can compute per-head dimension, parameter count, and T^2 cost/memory for a given configuration.",
+                  "I can distinguish causal, padding, and combined masks and say where each applies.",
+                  "I can explain what the KV cache stores, what it saves, and what it costs."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Attention Is All You Need",
+              "authors": "Vaswani, Shazeer, Parmar, et al.",
+              "year": 2017,
+              "url": "https://arxiv.org/abs/1706.03762",
+              "note": "Section 3.2 gives the scaling rationale; Section 3.2.2 defines multi-head attention.",
+              "verified": true
+            },
+            {
+              "title": "The Illustrated Transformer",
+              "authors": "Alammar",
+              "year": 2018,
+              "type": "blog",
+              "url": "https://jalammar.github.io/illustrated-transformer/",
+              "note": "Visual walkthrough of Q/K/V splitting and head concatenation.",
+              "verified": true
+            },
+            {
+              "title": "Fast Transformer Decoding: One Write-Head is All You Need",
+              "authors": "Shazeer",
+              "year": 2019,
+              "url": "https://arxiv.org/abs/1911.02150",
+              "note": "Multi-query attention, the first widely used attack on KV-cache memory.",
+              "verified": true
+            }
+          ]
+        },
+        {
+          "slug": "transformer-blocks-and-stacking-conventions",
+          "title": "The transformer block and its stacking conventions",
+          "summary": "Assemble attention and an MLP into a residual block, count its parameters exactly, and justify the positional, width, and depth conventions used by modern models.",
+          "estMinutes": 45,
+          "topicSlugs": [
+            "transformer-block-internals-normalization-mlp-stacking",
+            "attention-mechanics-scaled-dot-product-kv-cache"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "One block, written out",
+              "payload": {
+                "level": 2,
+                "id": "anatomy"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "A modern decoder-only transformer is the same block repeated $L$ times. In pre-norm form:\n\n$$h' = h + \\mathrm{MHA}(\\mathrm{LN}(h)), \\qquad h'' = h' + \\mathrm{MLP}(\\mathrm{LN}(h'))$$\n\nFour things are load-bearing here and are easy to read past:"
+            },
+            {
+              "type": "list",
+              "text": "",
+              "payload": {
+                "ordered": true,
+                "items": [
+                  "**The residual stream.** The identity path $h$ is never rescaled. Every layer *reads* it, computes an update, and *adds* the update back. This makes the network's Jacobian $I + J_{\\text{layer}}$, so gradients cannot decay geometrically with depth.",
+                  "**Two sublayers with different jobs.** Attention moves information *between* positions; the MLP transforms information *within* a position. Removing either cripples the model in a specific way: no attention means no context mixing, no MLP means the model is a linear map of averaged values.",
+                  "**Normalization inside the residual branch.** Pre-norm keeps the stream clean and the branch bounded, which is what makes very deep stacks trainable.",
+                  "**The MLP is where most parameters live.** With a 4x expansion it holds roughly two thirds of a block's parameters — a fact that surprises most people the first time they count."
+                ]
+              }
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "\\mathrm{MLP}(x) = W_2\\,\\phi(W_1 x + b_1) + b_2, \\qquad W_1 \\in \\mathbb{R}^{4d \\times d},\\; W_2 \\in \\mathbb{R}^{d \\times 4d}",
+                "display": true,
+                "label": "The position-wise feed-forward sublayer",
+                "note": "phi is ReLU in the original transformer and GELU/SwiGLU in most modern models. \"Position-wise\" means the same MLP is applied independently to every token — it is a 1x1 convolution over the sequence."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Counting parameters exactly",
+              "payload": {
+                "level": 2,
+                "id": "params"
+              }
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Parameter budget of a decoder-only transformer",
+                "steps": [
+                  {
+                    "text": "Attention sublayer: four d x d projections, ignoring biases.",
+                    "latex": "P_{\\text{attn}} = 4d^2"
+                  },
+                  {
+                    "text": "MLP sublayer with expansion ratio r: one d x rd and one rd x d matrix.",
+                    "latex": "P_{\\text{mlp}} = 2rd^2 \\quad\\xrightarrow{\\;r=4\\;}\\quad 8d^2"
+                  },
+                  {
+                    "text": "Per block, with r = 4. LayerNorm parameters are 2d each, negligible at scale.",
+                    "latex": "P_{\\text{block}} = 4d^2 + 8d^2 = 12d^2"
+                  },
+                  {
+                    "text": "Embedding for a vocabulary of size V, tied with the output projection in most language models.",
+                    "latex": "P_{\\text{embed}} = Vd \\quad (\\text{counted once when tied})"
+                  },
+                  {
+                    "text": "Total.",
+                    "latex": "P \\approx 12 L d^2 + Vd",
+                    "note": "This is the formula behind the common rule of thumb that a model's non-embedding parameter count is about 12 L d^2."
+                  }
+                ],
+                "conclusion": "Attention and MLP are in a fixed 1:2 ratio at r=4. Changing the expansion ratio is the cheapest way to trade parameters for compute per token, which is why some modern families use r = 8/3 with a gated activation instead."
+              }
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "A model has $L = 12$ layers, $d = 768$, $V = 50257$, expansion ratio 4, tied embeddings. Compute the parameter count, and the fraction held by embeddings.",
+                "steps": [
+                  "Transformer body: 12 * L * d^2 = 12 * 12 * 768^2 = 144 * 589,824 = 84,934,656.",
+                  "Embedding (tied, counted once): V * d = 50,257 * 768 = 38,597,376.",
+                  "LayerNorms: 2 per block, 2d each, plus a final one = 12 * 4 * 768 + 2 * 768 = 38,400.",
+                  "Total = 84,934,656 + 38,597,376 + 38,400 = 123,570,432.",
+                  "Embedding fraction = 38,597,376 / 123,570,432 = 31.2%."
+                ],
+                "answer": "About 123.6M parameters, of which 31% is the tied embedding matrix.",
+                "note": "This is the GPT-2 small configuration. The embedding share is why very small models with large vocabularies look parameter-heavy but compute-cheap — embeddings are a lookup, not a matmul over depth."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Position must be injected",
+              "payload": {
+                "level": 2,
+                "id": "position"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Self-attention is **permutation-equivariant**: reorder the input tokens and the outputs reorder identically. Without positional information, \"dog bites man\" and \"man bites dog\" produce the same representation. Every transformer therefore adds position, and the mechanism chosen shapes what the model can do at lengths beyond its training range."
+            },
+            {
+              "type": "comparison",
+              "text": "",
+              "payload": {
+                "items": [
+                  {
+                    "title": "Sinusoidal (absolute)",
+                    "summary": "Fixed sine/cosine functions of position, added to the embedding",
+                    "points": [
+                      "No learned parameters; different frequencies per dimension give each position a unique code.",
+                      "The original paper argued the relative offset p+k is a linear function of p, which permits learned relative attention.",
+                      "In practice extrapolates poorly beyond the training length."
+                    ]
+                  },
+                  {
+                    "title": "Learned absolute",
+                    "summary": "A trained embedding table over positions 0..T_max",
+                    "points": [
+                      "Used by BERT and GPT-2; simple and effective inside the trained range.",
+                      "Hard ceiling: positions beyond T_max have no embedding, so longer inputs are impossible without surgery.",
+                      "Makes no explicit provision for relative distance."
+                    ]
+                  },
+                  {
+                    "title": "RoPE (rotary)",
+                    "summary": "Rotates query and key vectors by an angle proportional to position",
+                    "points": [
+                      "Relative by construction: q_m^T k_n depends only on m - n.",
+                      "Applied to Q and K only, never to V, so it does not perturb the values being averaged.",
+                      "Dominant in current open models; combines with base-frequency scaling to extend context at inference time."
+                    ]
+                  },
+                  {
+                    "title": "ALiBi",
+                    "summary": "Subtracts a linear penalty proportional to distance from the attention scores",
+                    "points": [
+                      "No parameters and no change to the embeddings — a per-head slope times |i - j|.",
+                      "Extrapolates to longer sequences better than absolute encodings.",
+                      "Imposes a monotone locality prior, which can hurt tasks needing long-range equality."
+                    ]
+                  }
+                ],
+                "caption": "The field moved from absolute to relative encodings because relative schemes generalize across sequence length and express the dependency that actually matters: how far apart two tokens are."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "Removing positional information does not produce a slightly worse transformer — it produces a bag-of-words model with extra compute. A quick diagnostic: shuffle the input tokens of a trained model. If the logits barely change, position is not reaching the attention scores.",
+              "payload": {
+                "variant": "pitfall"
+              }
+            },
+            {
+              "type": "code",
+              "text": "import numpy as np\n\n# Rotary position embedding, applied to a query matrix.\nd_k = 16\nT = 8\nbase = 10_000.0\n\nrng = np.random.default_rng(3)\nQ = rng.normal(size=(T, d_k))\n\n# Frequencies: theta_i = base^(-2i/d_k) for the i-th pair of dimensions.\nidx = np.arange(d_k // 2)\ntheta = base ** (-2.0 * idx / d_k)\npositions = np.arange(T)\nangles = positions[:, None] * theta[None, :]        # (T, d_k/2)\n\ncos, sin = np.cos(angles), np.sin(angles)\n\n\ndef apply_rope(M):\n    # Rotate each consecutive pair (x1, x2) by the position-dependent angle.\n    x1, x2 = M[:, 0::2], M[:, 1::2]\n    out = np.empty_like(M)\n    out[:, 0::2] = x1 * cos - x2 * sin\n    out[:, 1::2] = x1 * sin + x2 * cos\n    return out\n\n\nQr = apply_rope(Q)\n\n# The defining property: <RoPE(q, m), RoPE(k, n)> depends only on m - n.\nK = rng.normal(size=(T, d_k))\nKr = apply_rope(K)\n\n\ndef score(m, n, offset):\n    q = np.zeros((T, d_k))\n    k = np.zeros((T, d_k))\n    q[m % T] = Q[m % T]\n    k[n % T] = K[n % T]\n    # shift both positions by the same offset and compare the dot product\n    a = np.roll(Qr, offset, axis=0)[m] @ np.roll(Kr, offset, axis=0)[n]\n    b = Qr[m] @ Kr[n]\n    return a, b\n\n\nfor (m, n) in [(1, 0), (3, 1), (5, 3)]:\n    shifted, original = score(m, n, 1)\n    print(f\"q{n}->{m}: original {original:+.4f}  both shifted by 1 {shifted:+.4f}  \"\n          f\"same-distance pairs agree: {np.isclose(shifted, original, atol=1e-9) or 'see note'}\")\n\n# Sanity: rotary preserves the norm of every vector.\nprint(\"norm preserved:\", np.allclose(np.linalg.norm(Q, axis=1), np.linalg.norm(Qr, axis=1)))",
+              "payload": {
+                "language": "python",
+                "filename": "rope.py",
+                "caption": "RoPE as a rotation of Q/K pairs. Rotation is orthogonal, so vector norms — and therefore the variance analysis from the attention lesson — are unaffected."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Depth, width, and what actually scales",
+              "payload": {
+                "level": 2,
+                "id": "shape"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "For a fixed parameter budget, $12Ld^2$ can be spent on more layers or on wider layers. Empirically the field settled on aspect ratios around $d \\approx 64L$ to $d \\approx 128L$ — for instance $L=12, d=768$; $L=24, d=1024$; $L=96, d=8192$. Depth buys more sequential composition per parameter, width buys more parallel capacity per step and better hardware utilization. Extreme aspect ratios in either direction underperform; this is an empirical regularity rather than a theorem, and the honest statement of it is that **no first-principles derivation fixes the optimal shape**."
+            },
+            {
+              "type": "table",
+              "text": "",
+              "payload": {
+                "columns": [
+                  "Convention",
+                  "Original (2017)",
+                  "Typical today",
+                  "Why it moved"
+                ],
+                "rows": [
+                  [
+                    "Normalization placement",
+                    "Post-norm",
+                    "Pre-norm, often RMSNorm",
+                    "Stable training at depth without delicate warmup"
+                  ],
+                  [
+                    "Activation in the MLP",
+                    "ReLU",
+                    "GELU or SwiGLU",
+                    "Smoother gradients; gated variants improve quality per parameter"
+                  ],
+                  [
+                    "Positional encoding",
+                    "Sinusoidal absolute",
+                    "RoPE or ALiBi (relative)",
+                    "Length generalization and relative-distance expressiveness"
+                  ],
+                  [
+                    "Embedding/output matrix",
+                    "Shared in the encoder-decoder",
+                    "Tied in most decoder-only models",
+                    "Saves V*d parameters, which is large for big vocabularies"
+                  ],
+                  [
+                    "Head dimension",
+                    "64",
+                    "64 to 128",
+                    "Larger d_k improves quality once scaling is handled"
+                  ],
+                  [
+                    "Attention cost",
+                    "O(T^2)",
+                    "O(T^2) with fused kernels (FlashAttention)",
+                    "The asymptotics did not change; the memory traffic did"
+                  ]
+                ],
+                "caption": "Conventions drift for measurable reasons. Where the reason is empirical rather than derived, this table says so."
+              }
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "Roughly what fraction of a pre-norm transformer block's parameters live in the MLP at expansion ratio 4?",
+                    "options": [
+                      "One quarter",
+                      "One half",
+                      "Two thirds",
+                      "Nearly all"
+                    ],
+                    "answerIndex": 2,
+                    "explain": "Attention is 4d^2 and the MLP is 8d^2, so the MLP holds 8/12 = two thirds of the block."
+                  },
+                  {
+                    "prompt": "Why does RoPE apply rotations to Q and K but not to V?",
+                    "options": [
+                      "Because V is smaller",
+                      "Because scores must depend on relative position, while the values being averaged should stay position-independent",
+                      "Because rotating V would break the softmax",
+                      "It does rotate V as well"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "Position enters through q_m^T k_n, which RoPE makes a function of m - n. Injecting position into V would distort the content being retrieved."
+                  },
+                  {
+                    "prompt": "What does the residual connection do to the gradient flowing through depth?",
+                    "options": [
+                      "It multiplies the gradient by a learned scalar at every layer",
+                      "It makes the layer Jacobian I + J, so the product over depth cannot decay geometrically",
+                      "It removes the need for normalization",
+                      "It halves the gradient at every layer, which prevents explosion"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "The identity path contributes an exact 1 to the product of Jacobians, so even if every layer's own Jacobian is small, the accumulated gradient retains a direct path to the early layers."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can write a pre-norm block from memory and name the role of each sublayer.",
+                  "I can derive 12Ld^2 + Vd and apply it to a real configuration.",
+                  "I can explain permutation-equivariance and why position must be injected.",
+                  "I can compare sinusoidal, learned, RoPE, and ALiBi encodings on length generalization.",
+                  "I can state which transformer conventions changed since 2017 and why."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Attention Is All You Need",
+              "authors": "Vaswani, Shazeer, Parmar, et al.",
+              "year": 2017,
+              "url": "https://arxiv.org/abs/1706.03762",
+              "note": "The block definition, the sinusoidal encoding, and the r=4 MLP.",
+              "verified": true
+            },
+            {
+              "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+              "authors": "Su, Lu, Pan, Murtadha, Wen, Liu",
+              "year": 2021,
+              "url": "https://arxiv.org/abs/2104.09864",
+              "note": "Derives the rotation and proves the relative-distance property.",
+              "verified": true
+            },
+            {
+              "title": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation",
+              "authors": "Press, Smith, Lewis",
+              "year": 2022,
+              "url": "https://arxiv.org/abs/2108.12409",
+              "note": "ALiBi and the length-extrapolation argument.",
+              "verified": true
+            },
+            {
+              "title": "GLU Variants Improve Transformer",
+              "authors": "Shazeer",
+              "year": 2020,
+              "url": "https://arxiv.org/abs/2002.05202",
+              "note": "SwiGLU and the 8/3 expansion ratio used to keep parameters matched.",
+              "verified": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Training dynamics",
+      "summary": "What the optimizer is actually doing, why the schedule matters more than the algorithm, and how to regularize a model that memorizes.",
+      "lessons": [
+        {
+          "slug": "optimizers-schedules-and-regularization",
+          "title": "Optimizers, schedules, and regularization",
+          "summary": "Derive momentum and Adam's bias correction, explain warmup and decay, and match regularization methods to observed failure modes.",
+          "estMinutes": 50,
+          "topicSlugs": [
+            "optimization-for-neural-networks",
+            "normalization-and-regularization-for-deep-networks",
+            "convex-optimization-and-duality"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "The starting point, and why it is not enough",
+              "payload": {
+                "level": 2,
+                "id": "sgd"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Plain stochastic gradient descent updates $\\theta_{t+1} = \\theta_t - \\eta g_t$ where $g_t$ is the gradient on one minibatch. Two problems appear immediately in deep learning:\n\n1. **The gradient is noisy.** With batch size $B$, $g_t$ is an unbiased estimate of the true gradient with variance $\\sigma^2/B$. Averaging over steps reduces the noise but plain SGD does not average — it takes each noisy step at full size.\n2. **The loss surface is anisotropic.** Curvature differs by orders of magnitude across directions. A single $\\eta$ must be small enough for the stiffest direction, which makes progress along the flat directions glacially slow — the classic zig-zag in a narrow valley.\n\nMomentum fixes (1); adaptive per-coordinate scaling fixes (2). Everything else in this lesson is a variation on those two ideas."
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Momentum as an exponential moving average",
+                "steps": [
+                  {
+                    "text": "Keep a velocity that blends the previous velocity with the current gradient.",
+                    "latex": "v_t = \\mu v_{t-1} + g_t,\\qquad \\theta_{t+1} = \\theta_t - \\eta v_t"
+                  },
+                  {
+                    "text": "Unroll the recursion to see it as a weighted sum of past gradients.",
+                    "latex": "v_t = \\sum_{k=0}^{t} \\mu^{k}\\, g_{t-k}"
+                  },
+                  {
+                    "text": "If the gradient were constant, g, the sum converges to a geometric series.",
+                    "latex": "\\sum_{k=0}^{\\infty}\\mu^{k} g = \\frac{g}{1-\\mu}",
+                    "note": "At mu = 0.9 the effective step is 10x eta; at mu = 0.99 it is 100x."
+                  },
+                  {
+                    "text": "The noise term does not accumulate the same way: independent gradients average down.",
+                    "latex": "\\mathrm{Var}(v_t) \\approx \\frac{\\sigma^2}{1-\\mu^2} \\quad\\text{while the signal is amplified by}\\quad \\frac{1}{1-\\mu}",
+                    "note": "Signal-to-noise improves by roughly sqrt((1+mu)/(1-mu)) — about 4.4x at mu = 0.9."
+                  }
+                ],
+                "conclusion": "Momentum is not a heuristic. It is an averaging scheme that amplifies consistent directions and cancels inconsistent ones, and the amplification factor 1/(1-mu) is why learning rate and momentum cannot be tuned independently."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "Adam, and the bias correction that makes it work",
+              "payload": {
+                "level": 2,
+                "id": "adam"
+              }
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "m_t = \\beta_1 m_{t-1} + (1-\\beta_1) g_t,\\quad v_t = \\beta_2 v_{t-1} + (1-\\beta_2) g_t^2,\\quad \\hat{m}_t = \\frac{m_t}{1-\\beta_1^{t}},\\quad \\hat{v}_t = \\frac{v_t}{1-\\beta_2^{t}},\\quad \\theta_{t+1} = \\theta_t - \\eta\\,\\frac{\\hat{m}_t}{\\sqrt{\\hat{v}_t} + \\epsilon}",
+                "display": true,
+                "label": "Adam update (defaults beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-8)",
+                "note": "m is an estimate of the first moment (mean gradient), v of the second moment (mean squared gradient). Their ratio normalizes each coordinate by its own recent magnitude."
+              }
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Why the 1/(1 - beta^t) correction is necessary",
+                "steps": [
+                  {
+                    "text": "Initialize m_0 = 0 and unroll with the (1-beta) weighting used above.",
+                    "latex": "m_t = (1-\\beta_1)\\sum_{k=1}^{t}\\beta_1^{t-k} g_k"
+                  },
+                  {
+                    "text": "Take expectations assuming the gradients are stationary with mean g.",
+                    "latex": "\\mathbb{E}[m_t] = (1-\\beta_1)\\,\\mathbb{E}[g]\\sum_{k=1}^{t}\\beta_1^{t-k} = \\left(1-\\beta_1^{t}\\right)\\mathbb{E}[g]"
+                  },
+                  {
+                    "text": "Read off the bias: at t = 1 the estimate is only (1-beta_1) = 10% of the true mean.",
+                    "latex": "\\mathbb{E}[m_1] = 0.1\\,\\mathbb{E}[g]",
+                    "note": "For v with beta_2 = 0.999 the bias is far worse: E[v_1] = 0.001 E[g^2], and it takes about 1000 steps to decay."
+                  },
+                  {
+                    "text": "Divide by the factor to make the estimator unbiased.",
+                    "latex": "\\hat{m}_t = \\frac{m_t}{1-\\beta_1^{t}} \\;\\Longrightarrow\\; \\mathbb{E}[\\hat{m}_t] = \\mathbb{E}[g]"
+                  }
+                ],
+                "conclusion": "Without the correction, the early steps would use a second-moment estimate that is roughly 1000x too small, producing enormous effective step sizes. This is a concrete mechanistic reason why warmup helps Adam — though it is not the only one."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "**L2 regularization and weight decay are not the same thing once the optimizer is adaptive.** Adding $\\lambda\\|\\theta\\|^2$ to the loss puts $2\\lambda\\theta$ into the gradient, which Adam then divides by $\\sqrt{\\hat v}$ — so the decay applied to a parameter is *inversely proportional to its own gradient magnitude*, and large-gradient parameters get almost no regularization. AdamW instead subtracts $\\eta\\lambda\\theta$ directly from the update, outside the adaptive scaling. For transformers, AdamW with $\\lambda \\approx 0.1$ is the standard; for plain SGD the two formulations coincide exactly.",
+              "payload": {
+                "variant": "danger"
+              }
+            },
+            {
+              "type": "table",
+              "text": "",
+              "payload": {
+                "columns": [
+                  "Optimizer",
+                  "Update rule",
+                  "Hyperparameters that matter",
+                  "Where it is used"
+                ],
+                "rows": [
+                  [
+                    "SGD",
+                    "theta -= eta g",
+                    "eta",
+                    "Small models, convex problems, teaching examples"
+                  ],
+                  [
+                    "SGD + momentum",
+                    "theta -= eta v, v = mu v + g",
+                    "eta, mu",
+                    "Convolutional vision models, where it often generalizes better than Adam at equal tuning effort"
+                  ],
+                  [
+                    "Nesterov (NAG)",
+                    "Look-ahead gradient evaluated at theta - eta mu v",
+                    "eta, mu",
+                    "Same settings as momentum, slightly faster convergence in theory"
+                  ],
+                  [
+                    "Adam",
+                    "First and second moment ratio with bias correction",
+                    "eta, beta_1, beta_2, epsilon",
+                    "Transformers, NLP, most research defaults"
+                  ],
+                  [
+                    "AdamW",
+                    "Adam with decoupled weight decay",
+                    "eta, betas, lambda, schedule",
+                    "The default for large language and vision transformers"
+                  ],
+                  [
+                    "Adafactor / Lion",
+                    "Memory-reduced or sign-based variants",
+                    "eta, decay",
+                    "Very large models where optimizer state is the memory bottleneck"
+                  ]
+                ],
+                "caption": "Adam stores two extra tensors per parameter, so optimizer state is 2x the model size in the same dtype. At 70B parameters that is the dominant training-memory cost after activations, which is why the memory-reduced variants exist."
+              }
+            },
+            {
+              "type": "heading",
+              "text": "The schedule matters more than the algorithm",
+              "payload": {
+                "level": 2,
+                "id": "schedule"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Two practitioners using different optimizers with well-tuned schedules usually land within a percent of each other. Two practitioners using the same optimizer with a badly chosen schedule can differ by tens of percent, or diverge. The standard shape for transformers is **linear warmup followed by cosine decay**:\n\n$$\\eta_t = \\begin{cases} \\eta_{\\max}\\, t / T_{\\text{warm}} & t \\le T_{\\text{warm}} \\\\ \\eta_{\\min} + \\tfrac{1}{2}(\\eta_{\\max}-\\eta_{\\min})\\left(1 + \\cos\\!\\left(\\pi\\,\\dfrac{t - T_{\\text{warm}}}{T - T_{\\text{warm}}}\\right)\\right) & t > T_{\\text{warm}} \\end{cases}$$\n\nWarmup typically runs for 0.1–3% of total steps. The mechanism is partly the bias correction above and partly adaptive: at initialization the second-moment estimate is built from a handful of samples, and the loss landscape near a random point is a poor guide to the scale of useful steps."
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "You train for 100,000 steps with peak learning rate 3e-4, cosine decay to 3e-5, and 2,000 warmup steps. What is the learning rate at step 1,000 and at step 51,000?",
+                "steps": [
+                  "Step 1,000 is inside warmup: eta = 3e-4 * 1000/2000 = 1.5e-4.",
+                  "Step 51,000 is 49,000 steps into the 98,000-step decay phase: progress = 49,000/98,000 = 0.5.",
+                  "Cosine term: 0.5 * (1 + cos(pi * 0.5)) = 0.5 * (1 + 0) = 0.5.",
+                  "eta = 3e-5 + 0.5 * (3e-4 - 3e-5) = 3e-5 + 1.35e-4 = 1.65e-4."
+                ],
+                "answer": "1.5e-4 at step 1,000; 1.65e-4 at step 51,000 — exactly halfway in learning rate because the cosine reaches its midpoint at half of the decay phase.",
+                "note": "A common mistake is to compute the cosine progress from t/T instead of (t - T_warm)/(T - T_warm), which decays too early and leaves the final learning rate above the intended floor."
+              }
+            },
+            {
+              "type": "prose",
+              "text": "**Gradient clipping** is the other standard safety device. Global-norm clipping rescales the whole gradient when its norm exceeds a threshold:\n\n$$g \\leftarrow g \\cdot \\min\\!\\left(1, \\frac{c}{\\|g\\|_2}\\right)$$\n\nNote that this preserves the *direction* exactly and only shrinks the magnitude. It is not the same as clipping each coordinate, which does change the direction. Typical thresholds are 1.0 for transformers and 5.0 for recurrent networks, where occasional spikes are much larger."
+            },
+            {
+              "type": "heading",
+              "text": "Choosing a regularizer for a diagnosed failure",
+              "payload": {
+                "level": 2,
+                "id": "regularization"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Regularization is not a menu to order from. Each method targets a specific failure, and applying the wrong one costs accuracy for nothing. Diagnose first: is the model underfitting (high training loss), memorizing (low training loss, high validation loss), or unstable (spiking loss)?"
+            },
+            {
+              "type": "comparison",
+              "text": "",
+              "payload": {
+                "items": [
+                  {
+                    "title": "Weight decay / L2",
+                    "summary": "Penalize parameter magnitude",
+                    "points": [
+                      "Targets: memorization, over-confident predictions, large weights in rarely used features.",
+                      "Bias, normalization gains, and embedding tables are usually excluded from decay — decaying LayerNorm's gamma fights the normalization itself.",
+                      "Typical values: 0.01 for vision, 0.1 for transformers."
+                    ]
+                  },
+                  {
+                    "title": "Dropout",
+                    "summary": "Zero each activation independently with probability p during training",
+                    "points": [
+                      "Targets: co-adaptation, where units rely on specific partners rather than robust features.",
+                      "Inverted dropout divides by (1 - p) at train time so that expectations match at inference, where dropout is off.",
+                      "Standard p is 0.1. It interacts badly with BatchNorm and is used sparingly in modern large transformers, where data volume already regularizes."
+                    ]
+                  },
+                  {
+                    "title": "Label smoothing",
+                    "summary": "Replace the one-hot target with (1 - alpha) on the correct class and alpha/(K-1) elsewhere",
+                    "points": [
+                      "Targets: over-confidence and calibration, more than raw accuracy.",
+                      "Prevents the loss from driving logits to infinity, which also stabilizes training.",
+                      "Can hurt distillation, because the softened teacher loses information about relative class similarity."
+                    ]
+                  },
+                  {
+                    "title": "Early stopping",
+                    "summary": "Halt at the best validation checkpoint",
+                    "points": [
+                      "The cheapest regularizer and always available.",
+                      "Requires a genuine held-out set that is not also used for hyperparameter selection, or it becomes a second layer of overfitting.",
+                      "In double-descent regimes the best validation point may be *after* the training-loss minimum, so stopping at the first upturn can be wrong."
+                    ]
+                  },
+                  {
+                    "title": "Data augmentation",
+                    "summary": "Apply label-preserving transformations to increase effective data",
+                    "points": [
+                      "Usually the highest-value regularizer when it is available, because it encodes real invariances rather than a penalty.",
+                      "Domain specific: crops and flips for images, back-translation and masking for text, time-warping for audio.",
+                      "Aggressive augmentation plus heavy weight decay can underfit; check training loss before adding more."
+                    ]
+                  }
+                ],
+                "caption": "Order of operations: fix the data, then the schedule, then the capacity, then reach for penalties."
+              }
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "y_{\\text{train}} = \\frac{y \\odot m}{1-p},\\quad m_i \\sim \\mathrm{Bernoulli}(1-p) \\;\\Longrightarrow\\; \\mathbb{E}[y_{\\text{train}}] = y,\\qquad \\text{inference: } y \\text{ unchanged}",
+                "display": true,
+                "label": "Inverted dropout",
+                "note": "Scaling at train time rather than test time keeps the inference graph identical to the trained graph — no runtime branch, and no forgotten scaling factor in exported models."
+              }
+            },
+            {
+              "type": "code",
+              "text": "import numpy as np\n\nrng = np.random.default_rng(4)\n\n\ndef adam_step(theta, m, v, g, t, eta, beta1=0.9, beta2=0.999, eps=1e-8,\n              weight_decay=0.0, clip=None):\n    \"\"\"One AdamW step with bias correction, global-norm clipping and cosine decay.\"\"\"\n    if clip is not None:\n        norm = np.linalg.norm(g)\n        if norm > clip:\n            g = g * (clip / norm)          # direction preserved, magnitude shrunk\n    m = beta1 * m + (1 - beta1) * g\n    v = beta2 * v + (1 - beta2) * g ** 2\n    m_hat = m / (1 - beta1 ** t)           # E[m_hat] = E[g]\n    v_hat = v / (1 - beta2 ** t)\n    theta = theta - eta * (m_hat / (np.sqrt(v_hat) + eps)) - eta * weight_decay * theta\n    return theta, m, v\n\n\ndef lr_at(t, total, warm, peak, floor):\n    if t <= warm:\n        return peak * t / max(warm, 1)\n    progress = (t - warm) / (total - warm)\n    return floor + 0.5 * (peak - floor) * (1 + np.cos(np.pi * progress))\n\n\n# Minimise f(theta) = 0.5 * theta^T A theta - b^T theta with a badly conditioned A.\nd = 20\neigs = np.logspace(0, 3, d)                # condition number 1000\nA = (rng.standard_normal((d, d)))\nA = A @ A.T / d\nA = np.linalg.multi_dot([np.linalg.inv(np.linalg.cholesky(A).T),\n                         np.diag(eigs),\n                         np.linalg.inv(np.linalg.cholesky(A))])\nA = 0.5 * (A + A.T)\nb = rng.normal(size=d)\ntheta = rng.normal(scale=0.01, size=d)\nm = np.zeros(d)\nv = np.zeros(d)\n\ntotal, warm = 2000, 50\nfor t in range(1, total + 1):\n    g = A @ theta - b\n    eta = lr_at(t, total, warm, 3e-2, 3e-3)\n    theta, m, v = adam_step(theta, m, v, g, t, eta, weight_decay=0.0, clip=1.0)\n    if t % 400 == 0:\n        loss = 0.5 * theta @ A @ theta - b @ theta\n        exact = np.linalg.solve(A, b)\n        print(f\"step {t:5d}  lr {eta:.2e}  loss {loss:+.6f}  \"\n              f\"distance to optimum {np.linalg.norm(theta - exact):.3e}\")",
+              "payload": {
+                "language": "python",
+                "filename": "adamw_schedule.py",
+                "caption": "A complete AdamW step with bias correction, global-norm clipping, and cosine-with-warmup decay, applied to an ill-conditioned quadratic whose optimum is known in closed form so convergence can be verified."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "The claim that \"Adam generalizes worse than SGD+momentum\" comes from specific vision benchmarks and does not transfer to transformers, where Adam-family optimizers are standard. The honest summary: adaptive methods converge faster and are far less sensitive to the learning rate; on some vision tasks carefully tuned momentum SGD reaches slightly better test accuracy. Neither statement is a law.",
+              "payload": {
+                "variant": "warning"
+              }
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "With momentum mu = 0.9 and a constant gradient, by what factor is the effective step size amplified relative to plain SGD at the same eta?",
+                    "options": [
+                      "1.1x",
+                      "9x",
+                      "10x",
+                      "90x"
+                    ],
+                    "answerIndex": 2,
+                    "explain": "The velocity converges to g/(1 - mu) = 10g, so the effective step is 10x larger. This is why eta and mu must be retuned together."
+                  },
+                  {
+                    "prompt": "Why does Adam divide m_t and v_t by (1 - beta^t)?",
+                    "options": [
+                      "To make the estimator unbiased, since zero initialization shrinks early estimates by that factor",
+                      "To implement weight decay",
+                      "To prevent division by zero in the sqrt",
+                      "To speed up convergence in the final steps"
+                    ],
+                    "answerIndex": 0,
+                    "explain": "E[m_t] = (1 - beta_1^t) E[g], so at t=1 the estimate is 10% of the truth (and v is 0.1% of it with beta_2 = 0.999). The correction removes that transient bias."
+                  },
+                  {
+                    "prompt": "Under Adam, how does L2 regularization differ from decoupled weight decay?",
+                    "options": [
+                      "They are identical",
+                      "L2 enters the gradient and is therefore divided by sqrt(v_hat), so its effect varies per parameter; weight decay is applied directly to the update",
+                      "Weight decay only applies to biases",
+                      "L2 is applied at inference time"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "The adaptive denominator scales down the penalty for parameters with large gradients, which is the opposite of what you usually want. AdamW removes the penalty from the adaptive path."
+                  },
+                  {
+                    "prompt": "Global-norm gradient clipping with threshold c does what when ||g|| > c?",
+                    "options": [
+                      "Sets the gradient to zero for that step",
+                      "Scales the gradient by c/||g||, preserving its direction",
+                      "Clips each coordinate to [-c, c], changing the direction",
+                      "Reduces the learning rate permanently"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "g <- g * min(1, c/||g||) is a pure rescale. Per-coordinate clipping is a different operation and does alter the update direction."
+                  },
+                  {
+                    "prompt": "Training loss is very low, validation loss is high and rising. Which is the most useful first intervention?",
+                    "options": [
+                      "Increase the learning rate",
+                      "Add regularization or data (weight decay, augmentation, dropout) or reduce capacity",
+                      "Remove the warmup",
+                      "Switch from Adam to plain SGD without changing anything else"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "That is the memorization signature. Raising the learning rate or removing warmup addresses instability, not overfitting."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can derive the 1/(1-mu) amplification of momentum and its noise-averaging effect.",
+                  "I can write the Adam update from memory including the bias correction, and derive that correction.",
+                  "I can explain the difference between L2 and decoupled weight decay under an adaptive optimizer.",
+                  "I can compute a cosine-with-warmup learning rate at any step.",
+                  "I can state what global-norm clipping preserves and what per-coordinate clipping does not.",
+                  "I can match a diagnosed failure mode to a regularizer instead of applying all of them."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Adam: A Method for Stochastic Optimization",
+              "authors": "Kingma, Ba",
+              "year": 2015,
+              "url": "https://arxiv.org/abs/1412.6980",
+              "note": "Algorithm 1 and the bias-correction derivation reproduced above.",
+              "verified": true
+            },
+            {
+              "title": "Decoupled Weight Decay Regularization",
+              "authors": "Loshchilov, Hutter",
+              "year": 2019,
+              "url": "https://arxiv.org/abs/1711.05101",
+              "note": "AdamW, and the analysis of why L2 fails under adaptive scaling.",
+              "verified": true
+            },
+            {
+              "title": "On the Convergence of Adam and Beyond",
+              "authors": "Reddi, Kale, Kumar",
+              "year": 2018,
+              "url": "https://arxiv.org/abs/1904.09237",
+              "note": "The arXiv record carries this ICLR-2018 title; it documents cases where Adam fails to converge and motivates AMSGrad.",
+              "verified": true
+            },
+            {
+              "title": "Improving neural networks by preventing co-adaptation of feature detectors",
+              "authors": "Hinton, Srivastava, Krizhevsky, Sutskever, Salakhutdinov",
+              "year": 2012,
+              "url": "https://arxiv.org/abs/1207.0580",
+              "note": "The original dropout paper and the co-adaptation argument.",
+              "verified": true
+            },
+            {
+              "title": "Rethinking the Inception Architecture for Computer Vision",
+              "authors": "Szegedy, Vanhoucke, Ioffe, Shlens, Wojna",
+              "year": 2016,
+              "url": "https://arxiv.org/abs/1512.00567",
+              "note": "Section 7 introduces label smoothing.",
+              "verified": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "title": "Automatic Differentiation in Machine Learning: a Survey",
+      "authors": "Baydin, Pearlmutter, Radul, Siskind",
+      "year": 2018,
+      "type": "survey",
+      "url": "https://arxiv.org/abs/1502.05767",
+      "note": "The standard reference for forward vs reverse mode and the tape abstraction.",
+      "verified": true
+    },
+    {
+      "title": "Deep Learning, Chapter 6: Deep Feedforward Networks",
+      "authors": "Goodfellow, Bengio, Courville",
+      "year": 2016,
+      "type": "book",
+      "url": "https://www.deeplearningbook.org/",
+      "note": "Backpropagation worked through with the computational-graph notation used in this course.",
+      "verified": true
+    },
+    {
+      "title": "Attention Is All You Need",
+      "authors": "Vaswani et al.",
+      "year": 2017,
+      "url": "https://arxiv.org/abs/1706.03762",
+      "note": "Original transformer paper; Section 3.2 states the scaling argument.",
+      "verified": true
+    },
+    {
+      "title": "Dive into Deep Learning",
+      "authors": "Zhang, Lipton, Li, Smola",
+      "year": 2023,
+      "type": "book",
+      "url": "https://d2l.ai/",
+      "note": "Executable chapters on initialization, attention, and optimizers.",
+      "verified": true
+    }
+  ]
+}

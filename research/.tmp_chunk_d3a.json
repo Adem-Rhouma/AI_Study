@@ -1,0 +1,178 @@
+{
+  "domain": { "slug": "inference-systems", "name": "Inference Systems", "summary": "Serving a trained model is a distinct engineering discipline: autoregressive decoding has a per-token sequential dependency, its cost is dominated by moving weights and KV cache rather than by arithmetic, and user-facing latency targets collide with the batching that makes hardware economical. This domain covers serving architecture and scheduling, memory management, decoding acceleration, compression and portability, and the retrieval indexes that surround modern LLM applications." },
+  "subdomain": { "slug": "llm-serving-engine", "name": "LLM Serving Architecture and Scheduling", "summary": "Request scheduling, KV-cache memory management, phase disaggregation and decoding acceleration: the mechanisms that determine throughput, tail latency and cost per token." },
+  "topics": [
+    {
+      "slug": "llm-serving-continuous-batching",
+      "name": "Continuous Batching, SLOs and Serving Economics",
+      "difficulty": "advanced",
+      "tags": ["serving", "batching", "latency", "cost", "systems"],
+      "definition": "Serving an LLM by admitting and retiring requests at the granularity of a single decode iteration (iteration-level or continuous batching), together with the latency/service objectives and cost model that determine how a serving fleet should be configured.",
+      "explanation": "Static batching, where a fixed set of requests runs to a fixed length, wastes most of the machine because generated lengths vary wildly: slots stay reserved after a request has finished, and the batch cannot change until the whole group ends. Orca introduced iteration-level scheduling: the engine runs one decode step at a time and rebuilds the batch after every step, so finished requests release their slots immediately and new requests join mid-flight, with selective batching applying the same attention computation to differently-sized per-request state. Effective batch size is what makes bandwidth-bound decode economical - throughput scales almost linearly with tokens per step while per-token weight traffic stays fixed - so continuous batching routinely yields several-fold capacity gains at the same latency. Latency must be decomposed to be managed: time to first token is governed by prefill work and queueing, time between tokens by decode step time plus scheduling delay, and end-to-end by total generated tokens; an SLO is usually a joint constraint (TTFT and TPOT percentiles), and the right objective is goodput, the throughput of requests that actually satisfy the SLO rather than raw tokens per second. Queueing intuition applies directly: as utilisation approaches one, waiting time explodes, so fleets are provisioned with headroom and autoscaled on queue depth rather than on average utilisation, and priority classes (interactive versus batch) let low-prefill work be deferred. Chunked prefill and decode co-scheduling, described in the disaggregation topic, is the main tool for keeping a decode-heavy batch fed without violating TTFT. Serving many fine-tuned variants multiplies the problem, which is why multi-LoRA engines batch a base model with many adapters rather than replicating servers per adapter. Finally, economics: cost per million tokens is (device hourly cost x number of devices) divided by accepted tokens per hour, and energy per token follows the same shape, so the decisions above are all cost decisions; reporting throughput without the accompanying latency percentiles and batch configuration is not a defensible benchmark.",
+      "learning_objectives": [
+        "Explain why static batching wastes capacity and how iteration-level scheduling recovers it",
+        "Define TTFT, TPOT/time-between-tokens and end-to-end latency, and state which workload phases affect each",
+        "Compute goodput for a configuration given an SLO, and contrast it with unconditioned throughput",
+        "Reason about utilisation, queueing delay and autoscaling signals for a serving fleet",
+        "Derive cost per million generated tokens and energy per token from device price, count and measured throughput",
+        "Explain multi-LoRA batching and why per-adapter replicas are inefficient"
+      ],
+      "prerequisites_strict": ["kv-cache-paged-attention"],
+      "prerequisites_recommended": ["roofline-model-performance-profiling", "transformer-architecture", "gpu-architecture-cuda-programming"],
+      "related_concepts": ["prefill-decode-disaggregation", "speculative-decoding", "model-compression-for-inference", "ml-deployment-rollout-monitoring"],
+      "advanced_extensions": ["Priority, fairness and anti-starvation policies (FCFS/LCFS/SFMT variants)", "Preemption by swap versus recompute under memory pressure", "Predicted-length scheduling and its effect on tail latency", "Autoscaling with model-load cold starts", "Request-level tracing and per-span observability"],
+      "key_results_or_algorithms": ["Orca iteration-level scheduling (OSDI 2022)", "Selective batching for attention", "Continuous batching in vLLM/TGI/SGLang/TensorRT-LLM", "Goodput optimisation under TTFT/TPOT constraints", "LCFS-with-prefix-reuse cache policies", "Chunked-prefill co-scheduling"],
+      "math_foundations": [
+        "Decode step time ~ max(weights bytes / bandwidth, FLOPs / peak) per token, summed over layers; batch increases arithmetic per byte read",
+        "Little's law: concurrent requests = arrival rate x latency, which fixes the batch size a fleet must sustain",
+        "Queueing growth: waiting time rises sharply as utilisation approaches 1"
+      ],
+      "applications": [
+        "Configuring a chat API fleet to a p95 TTFT budget",
+        "Choosing replica count and parallelism for a target tokens-per-second-per-dollar",
+        "Serving thousands of tenant-specific adapters on shared GPUs",
+        "Benchmarking engines honestly at matched latency percentiles"
+      ],
+      "common_misconceptions": [
+        "Throughput numbers are comparable across engines: they are only comparable at the same SLO, batch, sequence lengths and precision",
+        "Bigger batches always help: KV-cache pressure, per-step latency and tail latency eventually cap useful batch",
+        "Latency is one number: TTFT and inter-token latency have different causes and different fixes",
+        "Utilisation at 100% is the goal: it destroys the latency SLO and leaves no room for failure capacity"
+      ],
+      "further_reading": [
+        { "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models", "authors": "Gyeong-In Yu et al.", "year": 2022, "type": "paper", "url": null },
+        { "title": "Efficiently Scaling Transformer Inference", "authors": "Reiner Pope, Sholto Douglas, Aakanksha Chowdhery et al.", "year": 2022, "type": "paper", "url": null },
+        { "title": "S-LoRA: Serving Thousands of Concurrent LoRA Adapters", "authors": "Ying Sheng et al.", "year": 2023, "type": "paper", "url": "https://arxiv.org/abs/2311.03285" },
+        { "title": "Site Reliability Engineering (SLOs, error budgets)", "authors": "Betsy Beyer, Niall Richard Murphy et al. (Google SRE)", "year": 2016, "type": "book", "url": null }
+      ]
+    },
+    {
+      "slug": "kv-cache-paged-attention",
+      "name": "KV Cache Management and PagedAttention",
+      "difficulty": "advanced",
+      "tags": ["kv-cache", "vllm", "memory", "serving"],
+      "definition": "Management of the key/value tensors cached during autoregressive decoding, whose size grows with batch and context length, and the paging abstraction that stores them in fixed-size blocks with an indirection table to eliminate fragmentation.",
+      "explanation": "Autoregressive decoding reuses every previous token's key and value vectors, so the cache is not an optional memoisation but exact computation state whose footprint is roughly 2 x layers x kv_heads x head_dim x sequence_length x bytes x requests. That quantity grows linearly in both batch and context, is reserved per request, and quickly exceeds the memory needed for the weights, which is what caps concurrent requests. Conventional engines allocate a contiguous buffer per request sized by a maximum length, so most reserved memory is unusable padding and external fragmentation limits the batch; PagedAttention (vLLM, SOSP 2023) instead stores KV in fixed-size blocks (e.g. 16 tokens) and gives each request a block table mapping logical position to physical block, exactly like virtual memory. That makes allocation grow with actual generated length, enables sharing of blocks between sequences - most valuably for common prompt prefixes, where reference counting plus copy-on-write allows one cached prefill to serve many requests - and lets the scheduler decide admission based on blocks available rather than worst-case length. Prefix caching generalises this to a radix/tree-structured cache across requests, which is the main reason applications with long shared system prompts, multi-turn conversations or agent loops see first-token latency and cost drop dramatically. The cost of paging is indirection: attention kernels must gather non-contiguous blocks, so block size, layout and kernel design matter, and the paged form is what makes many attention kernels engine-specific. Cache pressure is relieved by several orthogonal levers: quantising KV to fp8 or int4, sliding-window and local-global attention patterns with sink tokens, eviction or summarisation of old context, and offload of cold blocks to CPU DRAM or SSD, which becomes the central resource in disaggregated and cache-centric serving architectures. The engineering competency is arithmetic: predict KV bytes for a given model and context, compare to available HBM, and know which lever (paging, quantisation, eviction, offload, or more replicas) buys what.",
+      "learning_objectives": [
+        "Compute KV-cache bytes per token for a model with grouped-query attention, and per request at a target context length",
+        "Explain internal/external fragmentation under per-request contiguous allocation and how block tables remove it",
+        "Describe prefix caching, reference counting and copy-on-write sharing across requests",
+        "Analyse KV quantisation, sliding-window/eviction, and CPU/SSD offload in terms of capacity, latency and accuracy",
+        "Relate KV memory to maximum concurrent batch size and to admission/backpressure policy"
+      ],
+      "prerequisites_strict": ["attention-mechanisms"],
+      "prerequisites_recommended": ["llm-serving-continuous-batching", "gpu-architecture-cuda-programming", "numerical-formats-mixed-precision"],
+      "related_concepts": ["llm-serving-continuous-batching", "prefill-decode-disaggregation", "speculative-decoding", "model-compression-for-inference", "ann-vector-search-indexes"],
+      "advanced_extensions": ["RadixAttention-style tree prefix caches with eviction", "KV cache transfer between prefill and decode pools over RDMA", "Multi-turn and agentic cache reuse scheduling", "Cache-aware load balancing across replicas", "Linear-attention and state-space models that shrink or remove KV state"],
+      "key_results_or_algorithms": ["PagedAttention block tables (vLLM)", "Prefix/prompt caching with content hashing", "Block-granular attention kernels (FlashAttention-style with paging)", "Grouped-query and multi-query attention KV reduction", "Token-eviction heuristics (H2O, StreamingLLM attention sinks)", "KV quantisation (fp8/int4, per-channel)"],
+      "math_foundations": [
+        "KV bytes per token = 2 x layers x kv_heads x head_dim x bytes; multiply by context and requests for the footprint",
+        "GQA/MQA reduce the kv_heads factor, trading quality for memory and bandwidth"
+      ],
+      "applications": [
+        "Raising concurrency on the same GPU and cutting cost per token",
+        "Serving 128K-token contexts where KV dominates memory",
+        "Serving agent workloads with repeated prefixes cheaply",
+        "Diagnosing out-of-memory or throughput collapse caused by cache fragmentation"
+      ],
+      "common_misconceptions": [
+        "The KV cache is a cache in the discardable sense: it is exact decoder state and cannot simply be dropped",
+        "Long context costs mainly prefill time: resident KV memory is often the binding constraint",
+        "Paging is free: kernels pay for indirection, and block size is a real tuning parameter",
+        "Prefix sharing means storing one copy forever: it needs eviction, refcounts and invalidation on model or prompt change"
+      ],
+      "further_reading": [
+        { "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "authors": "Woosuk Kwon, Zhuohan Li, Siyuan Feng et al.", "year": 2023, "type": "paper", "url": null },
+        { "title": "SGLang: Efficient Execution of Structured Language Model Programs", "authors": "Lianmin Zheng et al.", "year": 2023, "type": "paper", "url": null },
+        { "title": "Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving", "authors": "Ruoyu Qin et al.", "year": 2024, "type": "paper", "url": "https://arxiv.org/abs/2407.00079" },
+        { "title": "vLLM documentation and design docs", "authors": "vLLM project", "year": null, "type": "docs", "url": null }
+      ]
+    },
+    {
+      "slug": "prefill-decode-disaggregation",
+      "name": "Prefill/Decode Disaggregation and Phase-Aware Scheduling",
+      "difficulty": "expert",
+      "tags": ["serving", "disaggregation", "scheduling", "systems"],
+      "definition": "Running the prompt-processing (prefill) phase and the token-generation (decode) phase on separate pools of accelerators, with independent parallelism, placement and scheduling for each, rather than interleaving both phases in one engine.",
+      "explanation": "Prefill processes the whole prompt in one large, essentially compute-bound pass and produces the initial KV cache; decode then emits tokens one at a time, reading weights and growing KV, and is bandwidth-bound. Colocating them creates mutual interference: a long prefill blocks the decode steps of everyone sharing that replica, so inter-token latency spikes for already-started requests, and the two phases want different batch sizes, precisions, tensor-parallel degrees and even different hardware. Disaggregation - separating prefill and decode pools, transferring the KV cache between them - lets each pool be optimised for its own roofline and its own SLO term, and DistServe framed the objective precisely as goodput maximisation under TTFT and TPOT constraints, showing substantial capacity gains over colocated scheduling. Production systems such as Mooncake push the design further into a KV-cache-centric architecture that pools CPU DRAM, SSD and RDMA fabric as a shared cache tier, using cross-request reuse plus cache-aware scheduling to raise effective capacity. The costs are real and worth knowing: KV transfer volume grows with prompt length, layers and precision, so a slow or congested fabric turns migration into the bottleneck; the scheduler must place prefill so that its output lands where decode capacity and prefix reuse agree; and the two pools must be sized and autoscaled jointly, which is harder than scaling one homogeneous pool. The alternative to disaggregation keeps phases colocated but makes them mixable: chunked prefill splits a long prompt into blocks and interleaves them with decode steps in the same batch, which recovers much of the tail-latency problem with none of the migration cost - the honest framing is that chunked prefill is a scheduling fix while disaggregation is a placement fix, and both address the same asymmetry. Multi-adapter serving, request migration for preemption, and speculative decoding all interact with these choices, so a serving stack should be evaluated as a system rather than a pile of optimisations.",
+      "learning_objectives": [
+        "Explain the compute-versus-bandwidth asymmetry between prefill and decode and its scheduling consequences",
+        "Define goodput under TTFT/TPOT constraints and describe how phase separation maximises it",
+        "Estimate KV-cache migration volume for a prompt and evaluate whether the fabric can afford it",
+        "Contrast chunked prefill (co-scheduling) with disaggregation (separation) and state when each is preferable",
+        "Describe how prefill and decode pools are sized, parallelised and autoscaled independently"
+      ],
+      "prerequisites_strict": ["llm-serving-continuous-batching", "kv-cache-paged-attention"],
+      "prerequisites_recommended": ["roofline-model-performance-profiling", "collective-communication-interconnects"],
+      "related_concepts": ["speculative-decoding", "model-compression-for-inference", "collective-communication-interconnects", "ml-lifecycle-technical-debt"],
+      "advanced_extensions": ["Heterogeneous pools (large-memory decode nodes, high-FLOPs prefill nodes)", "KV-cache tiering and cache-aware routing", "Prefill-aware parallelism search per phase", "Spot/pre-emptible decode capacity with migration", "Disaggregation for multimodal encoders and MoE models"],
+      "key_results_or_algorithms": ["DistServe prefill/decode separation with goodput optimisation", "Mooncake KVCache-centric disaggregated serving", "Sarathi-style chunked prefill with decode co-scheduling", "Splitwise phase-split cost analysis", "Cache-aware and locality-aware request routing"],
+      "math_foundations": [
+        "Prefill FLOPs scale with prompt length times model width in one pass; decode cost per token is dominated by weight and KV bytes read",
+        "Migration time = KV bytes / effective link bandwidth, which must be small relative to the TTFT budget"
+      ],
+      "applications": [
+        "Removing inter-token latency spikes caused by long-prompt arrivals",
+        "Buying different hardware for prefill-heavy retrieval workloads versus generation-heavy ones",
+        "Reusing a shared KV tier across replicas for long system prompts",
+        "Explaining why a decode-only batch of one token per step under-uses a GPU"
+      ],
+      "common_misconceptions": [
+        "Disaggregation is always better: migration and pool-sizing complexity can outweigh the latency win, especially for short prompts",
+        "Chunked prefill solves the same problem as disaggregation: it mitigates interference but cannot change hardware or parallelism per phase",
+        "KV transfer is cheap: at long context and high concurrency it competes directly with training traffic for fabric bandwidth",
+        "Two pools means two independent scaling problems: they must be balanced or one starves the other"
+      ],
+      "further_reading": [
+        { "title": "DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving", "authors": "Yinmin Zhong et al.", "year": 2024, "type": "paper", "url": "https://arxiv.org/abs/2401.09670" },
+        { "title": "Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving", "authors": "Ruoyu Qin et al.", "year": 2024, "type": "paper", "url": "https://arxiv.org/abs/2407.00079" },
+        { "title": "Sarathi: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills", "authors": "Author list unverified", "year": 2024, "type": "paper", "url": null },
+        { "title": "Splitwise: Efficient Generative LLM Inference Using Phase Splitting", "authors": "Author list unverified", "year": 2024, "type": "paper", "url": null }
+      ]
+    },
+    {
+      "slug": "speculative-decoding",
+      "name": "Speculative Decoding and Decoding-Time Acceleration",
+      "difficulty": "advanced",
+      "tags": ["decoding", "latency", "inference", "systems"],
+      "definition": "Generating several candidate tokens cheaply with a draft mechanism and verifying them in one pass of the target model, accepting the longest prefix that passes and thereby converting sequential decode steps into parallel verification.",
+      "explanation": "Decode latency is bound by the sequential dependency between tokens and by weight reads rather than arithmetic, which means a target model can score several candidate tokens in the time it takes to produce one - the free capacity that speculative decoding exploits. A draft source proposes gamma tokens; the target model evaluates them in a single forward pass; the standard algorithm (Leviathan et al.; independently Chen et al.) accepts each token while the target agrees, and on the first disagreement samples from the renormalised residual distribution, which provably leaves the output distribution exactly equal to the target model's - an important point, since the goal is faster sampling, not a cheaper approximation of it. Expected speed-up is governed by the acceptance rate alpha and draft cost: with per-token acceptance probability alpha, the expected accepted length is (1 - alpha^(gamma+1))/(1 - alpha), so a cheap but poorly aligned drafter or a gamma chosen too large both fail to help, and a drafter that is expensive relative to the target can make things worse. Draft sources include a smaller model from the same family, self-drafting heads trained on the target (Medusa's multiple decoding heads; EAGLE's feature-level autoregressive drafting), static n-gram or prompt-lookup drafting that costs nothing at inference time, and multi-token prediction objectives trained into the model itself; tree or multi-candidate verification lets one pass check several draft continuations at once. The interaction with batching is the crucial operational subtlety: at high batch, verification is no longer free because the machine is already compute-saturated and the extra tokens consume real FLOPs, so speculative decoding typically improves single-stream latency and hurts aggregate throughput unless the acceptance rate is high and the batch modest. Adjacent latency tricks share the same analysis: CUDA graphs and kernel fusion to remove launch overhead at decode, FlashDecoding-style parallelisation over KV length, early exit or layer skipping (approximate, not exact), and quantisation of weights to reduce bytes read per step.",
+      "learning_objectives": [
+        "Derive expected tokens per target pass from acceptance rate and gamma, and state the cost model that yields net speed-up",
+        "Explain the rejection-sampling correction that makes speculative sampling distribution-preserving",
+        "Compare draft sources (small model, self-drafting heads, n-gram lookup, multi-token prediction) on quality, memory and alignment",
+        "Explain why speculative decoding's benefit shrinks as batch size grows",
+        "Combine speculative decoding with CUDA graphs, fused kernels and KV-parallel decoding in a latency budget"
+      ],
+      "prerequisites_strict": ["llm-serving-continuous-batching"],
+      "prerequisites_recommended": ["kv-cache-paged-attention", "roofline-model-performance-profiling", "tokenization"],
+      "related_concepts": ["kv-cache-paged-attention", "model-compression-for-inference", "prefill-decode-disaggregation", "llm-application-engineering"],
+      "advanced_extensions": ["Tree/multi-candidate attention masks for parallel verification", "Adaptive gamma based on runtime acceptance", "Speculative execution for structured/constrained decoding", "Draft model training with target-distilled data", "Early-exit and dynamic-depth inference as approximate alternatives"],
+      "key_results_or_algorithms": ["Speculative decoding/sampling (Leviathan et al., ICML 2023)", "Chen et al. speculative sampling variant", "Blockwise parallel decoding", "Medusa decoding heads", "EAGLE feature-level drafting", "Prompt/n-gram lookup drafting", "CUDA graphs and FlashDecoding"],
+      "math_foundations": [
+        "E[tokens per pass] = (1 - alpha^(gamma+1))/(1 - alpha) for geometric acceptance with rate alpha",
+        "Net speed-up = expected accepted tokens / (1 + gamma x draft_cost/target_cost), so draft cost must be genuinely small",
+        "Distribution preservation via residual renormalised sampling: p_accept = min(1, q_t(x)/q_d(x))"
+      ],
+      "applications": [
+        "Cutting interactive latency for code generation and agents without changing model quality",
+        "Reducing time-to-last-token for long structured outputs",
+        "Deciding whether speculation is worthwhile at a given batch size and hardware",
+        "Combining prefix lookup drafting with cached prompts in agentic loops"
+      ],
+      "common_misconceptions": [
+        "Speculative decoding is approximate: the standard acceptance rule is exact, though naive accept-if-top-k rules are not",
+        "A bigger gamma is always faster: long drafts lower acceptance and waste verification compute",
+        "It helps throughput at scale: with large batches the extra tokens consume saturated compute",
+        "Any small model makes a good drafter: distribution mismatch (vocabulary, tokenizer, style) dominates the cost model"
+      ],
+      "further_reading": [
+        { "title": "Fast Inference from Transformers via Speculative Decoding", "authors": "Yaniv Leviathan, Matan Kalman, Yossi Matias", "year": 2022, "type": "paper", "url": "https://arxiv.org/abs/2211.17192" },
+        { "title": "Accelerating Large Language Model Decoding with Speculative Sampling", "authors": "Charlie Chen et al.", "year": 2023, "type": "paper", "url": null },
+        { "title": "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads", "authors": "Tianle Cai et al.", "year": 2024, "type": "paper", "url": null },
+        { "title": "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty", "authors": "Yuhui Li et al.", "year": 2024, "type": "paper", "url": null },
+        { "title": "Blockwise Parallel Decoding for Deep Autoregressive Models", "authors": "Mitchell Stern et al.", "year": 2018, "type": "paper", "url": null }
+      ]
+    }
+  ]
+}

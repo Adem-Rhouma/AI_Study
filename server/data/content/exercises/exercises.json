@@ -1,0 +1,704 @@
+[
+  {
+    "slug": "ex-erm-vs-risk",
+    "title": "Empirical risk is not the quantity you care about",
+    "kind": "single_choice",
+    "difficulty": "beginner",
+    "points": 10,
+    "topicSlugs": [
+      "supervised-learning-foundations",
+      "statistical-learning-theory"
+    ],
+    "lessonSlug": "what-is-learning-formally",
+    "context": "A model is trained by minimising the average loss over the 5,000 examples in the training file. Its test loss on 10,000 held-out examples is substantially higher.",
+    "prompt": "Which statement correctly identifies what was minimised during training and what you actually want to be small?",
+    "payload": {
+      "kind": "single_choice",
+      "options": [
+        {
+          "label": "A",
+          "text": "Training minimised the population risk; you want the empirical risk to be small.",
+          "correct": false,
+          "feedback": "Reversed. The training file only ever gives you the empirical risk."
+        },
+        {
+          "label": "B",
+          "text": "Training minimised the empirical risk over 5,000 samples; you want the population risk over the data distribution to be small, and the gap between them is the generalization gap.",
+          "correct": true,
+          "feedback": "Exactly. Empirical risk minimisation is a proxy, and its quality depends on sample size and hypothesis-class complexity."
+        },
+        {
+          "label": "C",
+          "text": "Training minimised the test risk; the training loss is only used for monitoring.",
+          "correct": false,
+          "feedback": "If the test set influenced training, the test loss would no longer be an honest estimate."
+        },
+        {
+          "label": "D",
+          "text": "Both quantities are identical, so a higher test loss must be a measurement error.",
+          "correct": false,
+          "feedback": "They are equal only in expectation over training-set draws, not for a single fixed sample."
+        }
+      ]
+    },
+    "hints": [
+      "The training file is a finite sample from some distribution; the loss you can compute on it is a statistic of that sample.",
+      "The quantity that determines future performance is an expectation over the whole distribution, not an average over the rows you happen to have."
+    ],
+    "solution": "B. Empirical risk R_hat = (1/n) sum L(f(x_i), y_i) over the training sample is what gradient descent minimises. Population risk R = E_{(x,y)~D}[L(f(x), y)] is what determines deployment performance. Their difference is the generalization gap, which learning theory bounds in terms of n and the complexity of the hypothesis class.",
+    "explanation": "Every practical failure mode of overfitting is a statement about this gap. Regularization, more data, and smaller hypothesis classes all work by shrinking it; none of them change the objective that the optimizer actually sees.",
+    "answerNote": "One correct option.",
+    "tags": [
+      "learning-theory",
+      "risk",
+      "generalization"
+    ]
+  },
+  {
+    "slug": "ex-bias-variance-compute",
+    "title": "Decompose an expected squared error",
+    "kind": "numeric",
+    "difficulty": "beginner",
+    "points": 15,
+    "topicSlugs": [
+      "statistical-learning-theory",
+      "model-selection-validation"
+    ],
+    "lessonSlug": "generalization-and-the-bias-variance-tradeoff",
+    "context": "You refit the same model on 200 bootstrap resamples of a training set. At a fixed query point the true value is y = 4.0. Across resamples the mean prediction is 4.2 and the variance of the predictions is 0.09. The observation noise at that point has variance 0.25. Assume squared loss.",
+    "prompt": "Using the bias-variance decomposition, what is the expected squared error at this point? Give a decimal number.",
+    "payload": {
+      "kind": "numeric",
+      "expected": 0.38,
+      "tolerance": 0.005
+    },
+    "hints": [
+      "Write down the three terms of the decomposition for squared loss.",
+      "Bias enters squared: (4.2 - 4.0)^2, not (4.2 - 4.0)."
+    ],
+    "solution": "bias^2 + variance + noise = (4.2 - 4.0)^2 + 0.09 + 0.25 = 0.04 + 0.09 + 0.25 = 0.38.",
+    "explanation": "The irreducible noise term (0.25) dominates here: 66% of the expected error cannot be removed by any model. Recognising that changes what you optimise — chasing the remaining 0.13 with a larger model risks converting variance into more error than you save in bias.",
+    "answerNote": "Enter the number only, to two decimal places. No units, no working, no expression.",
+    "tags": [
+      "bias-variance",
+      "numeric",
+      "decomposition"
+    ]
+  },
+  {
+    "slug": "ex-normal-equations",
+    "title": "Derive the normal equations",
+    "kind": "derivation",
+    "difficulty": "intermediate",
+    "points": 25,
+    "topicSlugs": [
+      "convex-optimization-and-duality",
+      "supervised-learning-foundations"
+    ],
+    "lessonSlug": "linear-regression-least-squares-to-gradients",
+    "context": "X is an n x d design matrix with n > d, y is an n-vector, and the loss is J(w) = ||y - Xw||^2. Do not quote the result — derive it.",
+    "prompt": "Derive the closed-form minimiser of J(w). State the condition under which your expression is well defined, and show by a second derivative that the stationary point is a minimum rather than a maximum or saddle.",
+    "payload": {
+      "kind": "derivation"
+    },
+    "hints": [
+      "Expand the squared norm into three terms before differentiating; the cross term is the one that produces X^T y.",
+      "Use the matrix-calculus identities d/dw (w^T A w) = (A + A^T) w and d/dw (b^T w) = b.",
+      "The Hessian is a Gram matrix. What do you know about the eigenvalues of X^T X?"
+    ],
+    "solution": "J(w) = y^T y - 2 y^T X w + w^T X^T X w. The gradient is dJ/dw = -2 X^T y + 2 X^T X w. Setting it to zero gives X^T X w = X^T y, the normal equations, so w* = (X^T X)^{-1} X^T y whenever X^T X is invertible, which holds exactly when X has full column rank (rank d). The Hessian is 2 X^T X, and for any v, v^T X^T X v = ||Xv||^2 >= 0, so it is positive semidefinite, and positive definite when X has full column rank. Hence the stationary point is the unique global minimum. If X is rank deficient, X^T X is singular and the minimiser is not unique; ridge regression replaces X^T X with X^T X + lambda I, which is positive definite for any lambda > 0 and therefore always invertible.",
+    "explanation": "Two facts do all the work: the objective is a convex quadratic, and its Hessian is a Gram matrix. Convexity means the unique stationary point is the global minimum, and the Gram structure tells you exactly when it is unique. The geometric reading is that Xw* is the orthogonal projection of y onto the column space of X, which is why the residual X^T(y - Xw*) is zero.",
+    "answerNote": "Derivations are not auto-graded. Your submission is stored and compared against the reference solution above; read it after submitting even if your work looks complete.",
+    "tags": [
+      "least-squares",
+      "derivation",
+      "linear-algebra"
+    ]
+  },
+  {
+    "slug": "ex-gd-step-size",
+    "title": "Find the stability bound for gradient descent",
+    "kind": "numeric",
+    "difficulty": "intermediate",
+    "points": 15,
+    "topicSlugs": [
+      "convex-optimization-and-duality",
+      "optimization-for-neural-networks"
+    ],
+    "lessonSlug": "gradient-descent-step-size-and-convergence",
+    "context": "You minimise f(w) = (1/2) w^T H w where H is symmetric positive definite with eigenvalues 0.5 and 8. The iteration is w_{t+1} = w_t - eta * grad f(w_t).",
+    "prompt": "What is the upper bound B such that gradient descent converges to the minimiser from any starting point for every step size in the open interval (0, B)? Give B as a decimal.",
+    "payload": {
+      "kind": "numeric",
+      "expected": 0.25,
+      "tolerance": 0.005
+    },
+    "hints": [
+      "In the eigenbasis the problem splits into independent scalar problems, one per eigenvalue.",
+      "Each scalar iteration is e_{t+1} = (1 - eta * lambda) e_t. Convergence needs |1 - eta * lambda| < 1.",
+      "The binding constraint comes from the largest eigenvalue, not the smallest."
+    ],
+    "solution": "Per eigen-direction the error contracts by the factor |1 - eta * lambda|, so we need 0 < eta < 2/lambda for every lambda. The tightest constraint is lambda_max = 8, giving B = 2/8 = 0.25. The rate is governed by the condition number kappa = 8/0.5 = 16, and the optimal fixed step is eta = 2/(lambda_min + lambda_max) = 2/8.5 = 0.235, giving a contraction factor (kappa - 1)/(kappa + 1) = 15/17 = 0.882 per step.",
+    "explanation": "The bound 2/lambda_max is why stiff directions dominate step-size choice: a single large eigenvalue caps the step for the entire problem. Preconditioning, momentum, and per-coordinate adaptivity all exist to escape that cap, since the smallest eigenvalue still controls how slowly the flat directions converge.",
+    "answerNote": "Enter the endpoint B itself as a decimal, not a step size you happened to test. The tolerance absorbs rounding, not a different bound.",
+    "tags": [
+      "gradient-descent",
+      "convergence",
+      "numeric"
+    ]
+  },
+  {
+    "slug": "ex-cv-leakage",
+    "title": "Spot the leakage in a cross-validation protocol",
+    "kind": "multi_choice",
+    "difficulty": "intermediate",
+    "points": 20,
+    "topicSlugs": [
+      "model-selection-validation"
+    ],
+    "lessonSlug": "model-selection-and-cross-validation",
+    "context": "A team reports 97% cross-validated accuracy on a fraud-detection task. Their pipeline is: (1) standardise all features using the mean and standard deviation of the full dataset; (2) run SMOTE oversampling on the full dataset to balance classes; (3) select the top 200 features by univariate F-score computed on the full dataset; (4) fit a logistic regression inside each fold; (5) average fold accuracies.",
+    "prompt": "Select every step that leaks information from outside a training fold into that fold's evaluation. There is more than one.",
+    "payload": {
+      "kind": "multi_choice",
+      "options": [
+        {
+          "label": "A",
+          "text": "Step 1: standardising with full-dataset statistics before splitting.",
+          "correct": true,
+          "feedback": "Correct. The scaler saw the held-out fold. The leak is small in magnitude but real, and it is the one people most often dismiss."
+        },
+        {
+          "label": "B",
+          "text": "Step 2: oversampling with SMOTE on the full dataset before splitting.",
+          "correct": true,
+          "feedback": "Correct, and severe. SMOTE synthesises points by interpolating between neighbours, so a synthetic sample in the training fold can be built from a real sample in the validation fold — near-duplicate leakage."
+        },
+        {
+          "label": "C",
+          "text": "Step 3: feature selection by F-score on the full dataset before splitting.",
+          "correct": true,
+          "feedback": "Correct. Feature selection is a supervised, label-dependent step, so it uses validation labels. This alone can turn a chance-level model into an apparently strong one."
+        },
+        {
+          "label": "D",
+          "text": "Step 4: fitting the logistic regression inside each fold.",
+          "correct": false,
+          "feedback": "This is the only step done correctly. Everything upstream of it must also be inside the fold."
+        },
+        {
+          "label": "E",
+          "text": "Step 5: averaging the fold accuracies.",
+          "correct": false,
+          "feedback": "Averaging is fine, though reporting the spread across folds matters more than the mean when folds are few."
+        }
+      ]
+    },
+    "hints": [
+      "Ask of each step: did it look at any data point that later appears in a validation fold?",
+      "A step that uses labels is supervised. Supervised steps are the most damaging to perform outside the fold."
+    ],
+    "solution": "A, B and C. The rule is that every data-dependent transformation — scaling, imputation, resampling, feature selection, target encoding, hyperparameter search — must be fitted on the training fold only and applied to the validation fold. In scikit-learn this means putting them inside a Pipeline that is itself passed to cross_val_score.",
+    "explanation": "The correct protocol is: split, then fit_transform on the training part and transform on the validation part, for every step. Notice how many innocent-looking preprocessing calls are actually supervised estimators. When a reported number looks too good, the first thing to inspect is not the model but where the split happens relative to preprocessing.",
+    "answerNote": "Select all that apply. Partial credit is awarded per correct option.",
+    "tags": [
+      "cross-validation",
+      "leakage",
+      "methodology"
+    ]
+  },
+  {
+    "slug": "ex-chain-rule-backprop",
+    "title": "Backpropagate through a two-layer ReLU network",
+    "kind": "numeric",
+    "difficulty": "intermediate",
+    "points": 20,
+    "topicSlugs": [
+      "backpropagation-autodiff-forward-reverse",
+      "mathematics-of-automatic-differentiation"
+    ],
+    "lessonSlug": "backpropagation-as-reverse-mode-autodiff",
+    "context": "Scalars x = 2, w1 = 1.5, w2 = 3, y = 1. The graph is z = w1 * x, h = relu(z), p = w2 * h, L = (1/2)(p - y)^2.",
+    "prompt": "Compute dL/dw1 exactly. Give a decimal number.",
+    "payload": {
+      "kind": "numeric",
+      "expected": 48,
+      "tolerance": 0.0001
+    },
+    "hints": [
+      "Run the forward pass first and write down the value of every node — the backward pass needs them.",
+      "Seed the adjoint at L with 1, then work backwards: L -> p -> h -> z -> w1.",
+      "The relu derivative is 1 where z > 0 and 0 otherwise. Check the sign of z."
+    ],
+    "solution": "Forward: z = 1.5 * 2 = 3, h = relu(3) = 3, p = 3 * 3 = 9, L = 0.5 * (9 - 1)^2 = 32. Backward: dL/dp = p - y = 8; dL/dh = w2 * 8 = 24; dL/dz = 24 * relu'(3) = 24 * 1 = 24; dL/dw1 = dL/dz * x = 24 * 2 = 48. (For completeness, dL/dw2 = dL/dp * h = 8 * 3 = 24 and dL/dx = 24 * w1 = 36.)",
+    "explanation": "Every step is either a multiplication by a cached forward value or a multiplication by a weight, and the weight always arrives transposed on the way back. Had w1 been negative, z would have been negative, relu'(z) would have been 0, and dL/dw1 would have been exactly 0 — the dead-unit case, where the parameter receives no gradient at all and cannot recover without a change elsewhere in the network.",
+    "answerNote": "Give the exact value; the tolerance only absorbs floating-point formatting.",
+    "tags": [
+      "backpropagation",
+      "chain-rule",
+      "numeric"
+    ]
+  },
+  {
+    "slug": "ex-autodiff-trace",
+    "title": "How many traversals does reverse mode need?",
+    "kind": "short_answer",
+    "difficulty": "beginner",
+    "points": 10,
+    "topicSlugs": [
+      "mathematics-of-automatic-differentiation"
+    ],
+    "lessonSlug": "backpropagation-as-reverse-mode-autodiff",
+    "context": "A network has 10^9 parameters and a single scalar loss. You want the full gradient.",
+    "prompt": "How many backward traversals of the computational graph does reverse-mode automatic differentiation need? Answer with a single number or word.",
+    "payload": {
+      "kind": "short_answer",
+      "accepted": [
+        "1",
+        "one"
+      ],
+      "matchMode": "equals"
+    },
+    "hints": [
+      "Count outputs, not inputs. Reverse mode returns one row of the Jacobian per pass.",
+      "A scalar loss means the Jacobian has exactly one row."
+    ],
+    "solution": "One. Reverse mode computes the gradient of one output with respect to all inputs in a single backward traversal, so the cost is independent of the parameter count. Forward mode would need 10^9 traversals, one per input.",
+    "explanation": "This is the single fact that makes deep learning computationally possible. Its cost is memory: reverse mode must retain the forward values of every node, which is why activation memory, gradient checkpointing, and activation recomputation are engineering concerns rather than afterthoughts.",
+    "answerNote": "Answer with a count of passes — a digit or the word, no units. The grader matches exact text, so a full sentence is marked wrong.",
+    "tags": [
+      "autodiff",
+      "reverse-mode",
+      "cost"
+    ]
+  },
+  {
+    "slug": "ex-init-variance",
+    "title": "Compute a He initialization standard deviation",
+    "kind": "numeric",
+    "difficulty": "intermediate",
+    "points": 10,
+    "topicSlugs": [
+      "gradient-pathologies-initialization-theory",
+      "activation-functions-mathematics"
+    ],
+    "lessonSlug": "activations-initialization-and-signal-propagation",
+    "context": "A fully connected layer has fan-in n = 256 and uses ReLU activations. You want the variance of the activations to be preserved across the layer.",
+    "prompt": "What standard deviation should the layer's weights be drawn with under the He rule? Give the value rounded to four decimal places.",
+    "payload": {
+      "kind": "numeric",
+      "expected": 0.0884,
+      "tolerance": 0.001
+    },
+    "hints": [
+      "He: Var(w) = 2 / fan_in for ReLU-family activations.",
+      "sqrt(2/256) = sqrt(1/128). The answer is about 0.09, not 0.0625 — 0.0625 is the Xavier value for this fan-in."
+    ],
+    "solution": "std = sqrt(2/256) = sqrt(0.0078125) = 0.088388..., which rounds to 0.0884. The Xavier/Glorot value for the same fan-in would be sqrt(1/256) = 0.0625; using it with ReLU under-scales activations by a factor of sqrt(2) per layer, compounding to about 1024x over 20 layers.",
+    "explanation": "The factor of 2 exists because ReLU zeroes every negative pre-activation, halving the variance of a symmetric distribution. Initialization is a variance-preservation argument, not a magic constant, which is why the correct value changes with the activation and with whether you use fan-in, fan-out, or their average.",
+    "answerNote": "Enter a decimal rounded to four places. The tolerance only absorbs that rounding, so a value from a different rule will not pass.",
+    "tags": [
+      "initialization",
+      "he",
+      "numeric"
+    ]
+  },
+  {
+    "slug": "ex-attention-cost",
+    "title": "Price the attention score matrix",
+    "kind": "numeric",
+    "difficulty": "intermediate",
+    "points": 15,
+    "topicSlugs": [
+      "attention-mechanics-scaled-dot-product-kv-cache"
+    ],
+    "lessonSlug": "attention-scaled-dot-product-and-multi-head",
+    "context": "One attention layer with d_model = 1024, 16 heads, sequence length T = 512, applied to a single sequence. Scores are stored in float16 (2 bytes per element).",
+    "prompt": "How many mebibytes (MiB, where 1 MiB = 2^20 bytes) does the full score tensor of this one layer occupy?",
+    "payload": {
+      "kind": "numeric",
+      "expected": 8,
+      "tolerance": 0.05,
+      "unit": "MiB"
+    },
+    "hints": [
+      "The score tensor has one entry per (head, query position, key position).",
+      "16 * 512 * 512 entries, times 2 bytes, divided by 2^20."
+    ],
+    "solution": "Entries = h * T^2 = 16 * 512^2 = 16 * 262,144 = 4,194,304. Bytes = 4,194,304 * 2 = 8,388,608 = exactly 8 MiB. Note that d_model does not appear: the score tensor depends on heads and sequence length only, because each head produces a T x T matrix regardless of d_k.",
+    "explanation": "Scale this up: 32 layers at T = 4096 gives 32 * 16 * 4096^2 * 2 bytes = 16 GiB for score storage in one example, which is why fused kernels such as FlashAttention never materialise the full tensor and instead compute attention in tiles. The quadratic term is in memory traffic as much as in FLOPs.",
+    "answerNote": "Enter the number of mebibytes only — not bytes and not the entry count. The unit is supplied for you.",
+    "tags": [
+      "attention",
+      "memory",
+      "scaling",
+      "numeric"
+    ]
+  },
+  {
+    "slug": "ex-attention-truefalse",
+    "title": "Does the KV cache change the answer?",
+    "kind": "true_false",
+    "difficulty": "beginner",
+    "points": 10,
+    "topicSlugs": [
+      "attention-mechanics-scaled-dot-product-kv-cache"
+    ],
+    "lessonSlug": "attention-scaled-dot-product-and-multi-head",
+    "context": "A decoder-only language model generates one token at a time under a causal mask.",
+    "prompt": "True or false: reusing cached keys and values from previous positions produces different attention outputs than recomputing them from scratch at every step.",
+    "payload": {
+      "kind": "true_false",
+      "expected": false
+    },
+    "hints": [
+      "Ask what the causal mask forbids: can position i attend to position j > i?",
+      "If past keys and values cannot depend on future tokens, what does that imply about recomputation?"
+    ],
+    "solution": "False. Under a causal mask the key and value at position j are functions of tokens 1..j only, so appending a new token cannot change them. The cache is therefore exact, not an approximation, and the outputs are identical up to floating-point non-determinism in the reduction order.",
+    "explanation": "This invariance is precisely what makes the cache legal. It would fail for a bidirectional encoder, where every representation depends on the whole sequence, and it fails for any model whose attention scores depend on sequence length in a non-causal way. Caching converts per-step cost from O(T^2 d) to O(T d) at the price of O(L T d) memory.",
+    "answerNote": "Pick true or false. Before answering, settle which side of the comparison the claim places the cache on.",
+    "tags": [
+      "kv-cache",
+      "inference",
+      "true-false"
+    ]
+  },
+  {
+    "slug": "ex-softmax-temperature",
+    "title": "Read the effect of a temperature",
+    "kind": "single_choice",
+    "difficulty": "intermediate",
+    "points": 10,
+    "topicSlugs": [
+      "attention-mechanics-scaled-dot-product-kv-cache"
+    ],
+    "prompt": "A softmax over logits z is computed as softmax(z / T). What happens as T increases from 1 toward infinity, and as T decreases toward 0?",
+    "payload": {
+      "kind": "single_choice",
+      "options": [
+        {
+          "label": "A",
+          "text": "Large T approaches a one-hot distribution at the maximum logit; small T approaches uniform.",
+          "correct": false,
+          "feedback": "Backwards. Dividing by a large T flattens the logits toward zero."
+        },
+        {
+          "label": "B",
+          "text": "Large T approaches the uniform distribution; small T approaches one-hot at the maximum logit.",
+          "correct": true,
+          "feedback": "Right. T scales the logit spread: dividing by a large T compresses it, dividing by a small T amplifies it."
+        },
+        {
+          "label": "C",
+          "text": "T only changes the normalisation constant, so the distribution is unaffected.",
+          "correct": false,
+          "feedback": "The exponential makes the scaling highly non-linear; it changes the shape of the distribution, not just its scale."
+        },
+        {
+          "label": "D",
+          "text": "Large T makes the output deterministic in the sense of always choosing the same token; small T makes it random.",
+          "correct": false,
+          "feedback": "The words are attached to the wrong ends. Small T is the near-deterministic regime."
+        }
+      ]
+    },
+    "hints": [
+      "As T -> infinity, every z_i / T -> 0, so all exponentials approach 1.",
+      "As T -> 0, the largest logit dominates the sum of exponentials."
+    ],
+    "solution": "B. lim_{T->inf} softmax(z/T) = uniform over the support, and lim_{T->0} softmax(z/T) = one-hot at argmax z. Sampling temperature in language-model decoding uses exactly this control: T near 0 is greedy, T = 1 uses the model's own distribution, T > 1 flattens it and increases diversity at the cost of coherence.",
+    "explanation": "The same algebra explains the 1/sqrt(d_k) factor in attention: it is a temperature set to sqrt(d_k) so that scores arrive at the softmax with unit variance rather than variance d_k. Uncontrolled temperature is the difference between a trainable attention layer and a hard argmax with no gradient.",
+    "answerNote": "One correct option.",
+    "tags": [
+      "softmax",
+      "temperature",
+      "decoding"
+    ]
+  },
+  {
+    "slug": "ex-code-softmax",
+    "title": "Write a numerically stable softmax",
+    "kind": "code",
+    "difficulty": "intermediate",
+    "points": 25,
+    "topicSlugs": [
+      "activation-functions-mathematics",
+      "attention-mechanics-scaled-dot-product-kv-cache"
+    ],
+    "lessonSlug": "attention-scaled-dot-product-and-multi-head",
+    "context": "The naive implementation exp(z_i) / sum(exp(z_j)) overflows in float32 for z around 100 and underflows to all zeros for z around -100. Attention scores routinely reach these magnitudes before scaling.",
+    "prompt": "Write a function softmax(z) that takes a 1-D NumPy array and returns the softmax as a 1-D NumPy array, without overflow for inputs in the range [-1000, 1000]. Include the one line that makes it stable and explain in a comment why it does not change the result.",
+    "payload": {
+      "kind": "code",
+      "language": "python",
+      "starter": "import numpy as np\n\ndef softmax(z: np.ndarray) -> np.ndarray:\n    # Your implementation here.\n    pass\n\n# Check it yourself before submitting:\n# assert np.allclose(softmax(np.array([1.0, 2.0, 3.0])), [0.0900306, 0.2447285, 0.6652410])\n# assert not np.isnan(softmax(np.array([1000.0, 1000.0, 1000.0]))).any()\n# assert np.allclose(softmax(np.array([-1000.0, 0.0, 1000.0])), [0.0, 0.0, 1.0])\n",
+      "tests": "These assertions are for you to run locally; the Arena does not execute code.\nassert np.allclose(softmax(np.array([1.0, 2.0, 3.0])), [0.0900306, 0.2447285, 0.6652410])\nassert np.allclose(softmax(np.zeros(5)), np.full(5, 0.2))\nassert not np.isnan(softmax(np.full(3, 1000.0))).any()\nassert np.allclose(softmax(np.array([-1000.0, 0.0, 1000.0])), [0.0, 0.0, 1.0])\nassert np.allclose(softmax(np.array([2.0, 1.0, 0.1])).sum(), 1.0)"
+    },
+    "hints": [
+      "Softmax is invariant under a shift: softmax(z) = softmax(z - c) for any scalar c.",
+      "Choose c to be the maximum of z. What is the largest exponent you then ever compute?",
+      "For a 2-D input you would need axis=-1 and keepdims=True; the 1-D case needs neither, but writing it that way generalises."
+    ],
+    "solution": "import numpy as np\n\ndef softmax(z: np.ndarray) -> np.ndarray:\n    # Shifting by the max leaves the result unchanged because the factor\n    # exp(c) appears in every numerator and in the denominator, so it cancels.\n    # It guarantees the largest exponent is exp(0) = 1, so no overflow,\n    # and at least one numerator is non-zero, so the denominator is non-zero.\n    shifted = z - np.max(z)\n    e = np.exp(shifted)\n    return e / np.sum(e)",
+    "explanation": "The shift removes both failure modes at once. Overflow cannot occur because every exponent is at most 0. Division by zero cannot occur because the maximal element contributes exp(0) = 1 to the denominator. Underflow of the small terms is harmless — they genuinely are negligible relative to the max, and representing them as 0 is the correct float behaviour. The same trick appears in every production attention kernel, where it is fused with the tiled computation.",
+    "answerNote": "Code answers are not executed by the Arena — there is no sandbox. Your submission is stored as text and flagged for review; run the assertions locally and compare with the reference solution.",
+    "tags": [
+      "softmax",
+      "numerical-stability",
+      "code"
+    ]
+  },
+  {
+    "slug": "ex-match-optimizers",
+    "title": "Match each optimizer property to its method",
+    "kind": "match",
+    "difficulty": "beginner",
+    "points": 15,
+    "topicSlugs": [
+      "optimization-for-neural-networks"
+    ],
+    "lessonSlug": "optimizers-schedules-and-regularization",
+    "prompt": "Match each property on the left to the optimizer it describes on the right.",
+    "payload": {
+      "kind": "match",
+      "pairs": [
+        {
+          "left": "Amplifies a constant gradient by 1/(1 - mu)",
+          "right": "SGD with momentum"
+        },
+        {
+          "left": "Divides each coordinate by an estimate of its own gradient magnitude",
+          "right": "Adam"
+        },
+        {
+          "left": "Applies the weight penalty outside the adaptive denominator",
+          "right": "AdamW"
+        },
+        {
+          "left": "Needs a 1/(1 - beta^t) correction because its moment estimates start at zero",
+          "right": "Adam"
+        },
+        {
+          "left": "Stores no optimizer state beyond the parameters themselves",
+          "right": "Plain SGD"
+        },
+        {
+          "left": "Stores two extra tensors per parameter, doubling optimizer memory",
+          "right": "Adam"
+        }
+      ]
+    },
+    "hints": [
+      "Three of the six properties belong to the same method.",
+      "Ask which methods keep running statistics at all."
+    ],
+    "solution": "Momentum gives the 1/(1-mu) amplification. Adam normalizes per coordinate by sqrt(v_hat) and needs bias correction for both moments, and it stores m and v (two tensors per parameter). AdamW is Adam with the weight penalty removed from the adaptive path. Plain SGD stores nothing but the parameters.",
+    "explanation": "The memory column is the one that matters at scale: at 70B parameters in float32, Adam's state alone is 560 GB, which is why memory-reduced variants such as Adafactor (factored second moment) and sign-based methods such as Lion exist. Choosing an optimizer is partly a systems decision.",
+    "answerNote": "Every pair must be matched for full credit; partial credit is awarded per correct pair.",
+    "tags": [
+      "optimizers",
+      "match",
+      "adam"
+    ]
+  },
+  {
+    "slug": "ex-regularization-match",
+    "title": "Match the failure mode to the regularizer",
+    "kind": "match",
+    "difficulty": "intermediate",
+    "points": 20,
+    "topicSlugs": [
+      "normalization-and-regularization-for-deep-networks",
+      "optimization-for-neural-networks"
+    ],
+    "lessonSlug": "optimizers-schedules-and-regularization",
+    "prompt": "Match each diagnosed failure on the left to the intervention on the right that targets it most directly.",
+    "payload": {
+      "kind": "match",
+      "pairs": [
+        {
+          "left": "Validation loss rises while training loss keeps falling",
+          "right": "Weight decay or data augmentation"
+        },
+        {
+          "left": "Predictions are confidently wrong; calibration is poor",
+          "right": "Label smoothing"
+        },
+        {
+          "left": "Units depend on specific partners and break when one is perturbed",
+          "right": "Dropout"
+        },
+        {
+          "left": "Loss spikes to NaN partway through training",
+          "right": "Gradient clipping and a lower peak learning rate"
+        },
+        {
+          "left": "Training loss plateaus high and will not come down",
+          "right": "More capacity or a longer schedule, not more regularization"
+        }
+      ]
+    },
+    "hints": [
+      "Diagnose before prescribing: is the model underfitting, memorizing, or unstable?",
+      "Adding a penalty to a model that is already underfitting makes it worse."
+    ],
+    "solution": "Memorization (rising validation loss) calls for capacity control: weight decay, augmentation, or early stopping. Over-confidence is what label smoothing was introduced for. Co-adaptation is the specific failure dropout was designed to prevent. Instability and spikes are a step-size problem, addressed by clipping and warmup. A high, flat training loss is underfitting — the correct response is the opposite of regularization.",
+    "explanation": "The last row is the one that costs the most accuracy in practice. Practitioners reach for regularization whenever a model underperforms, but regularization trades training fit for generalization; applied to an underfitting model it strictly hurts. Read the two curves before choosing an intervention.",
+    "answerNote": "Match all five for full credit.",
+    "tags": [
+      "regularization",
+      "diagnosis",
+      "match"
+    ]
+  },
+  {
+    "slug": "ex-transformer-params",
+    "title": "Size a transformer from its shape",
+    "kind": "numeric",
+    "difficulty": "intermediate",
+    "points": 20,
+    "topicSlugs": [
+      "transformer-block-internals-normalization-mlp-stacking"
+    ],
+    "lessonSlug": "transformer-blocks-and-stacking-conventions",
+    "context": "A decoder-only transformer has L = 24 layers, d_model = 1024, MLP expansion ratio 4, tied input/output embeddings, and a vocabulary of 32,000. Ignore LayerNorm and bias parameters.",
+    "prompt": "What is the approximate total parameter count, in millions? Give the number of millions as a decimal (for example 123.5 for 123,500,000).",
+    "payload": {
+      "kind": "numeric",
+      "expected": 334.8,
+      "tolerance": 1,
+      "unit": "million"
+    },
+    "hints": [
+      "Per block: attention is 4d^2 and the MLP at ratio 4 is 8d^2, so 12d^2.",
+      "Body = 12 * L * d^2. Add the embedding V * d once, because it is tied to the output projection."
+    ],
+    "solution": "Body = 12 * 24 * 1024^2 = 288 * 1,048,576 = 301,989,888. Tied embedding = 32,000 * 1024 = 32,768,000. Total = 334,757,888 = 334.8 million. The commonly quoted 12Ld^2 approximation alone gives 302.0 million and omits the embedding term entirely.",
+    "explanation": "The point of the exercise is the ratio, not the last digit: the transformer body scales with L d^2 while the embedding scales with V d. Here the embedding is 9.8% of the total; for a shallow model with a large vocabulary it can exceed the body. Tying the input and output matrices removes a whole V d term, which is why almost every language model does it.",
+    "answerNote": "Enter millions as a decimal — 12.5 means twelve and a half million. The tolerance is wide enough for the approximation itself but not for omitting one of the blocks the context lists.",
+    "tags": [
+      "transformer",
+      "parameter-count",
+      "numeric"
+    ]
+  },
+  {
+    "slug": "ex-dropout-expectation",
+    "title": "Why inverted dropout scales at train time",
+    "kind": "expression",
+    "difficulty": "advanced",
+    "points": 20,
+    "topicSlugs": [
+      "normalization-and-regularization-for-deep-networks"
+    ],
+    "lessonSlug": "optimizers-schedules-and-regularization",
+    "context": "Dropout zeroes each activation independently with probability p. Inverted dropout rescales the surviving activations by 1/(1 - p) during training and does nothing at inference.",
+    "prompt": "Write the factor by which surviving activations are multiplied during training so that the expected activation is unchanged between training and inference. Answer with a single expression in p.",
+    "payload": {
+      "kind": "expression",
+      "accepted": [
+        "1/(1-p)",
+        "1/(1 - p)",
+        "(1-p)^-1",
+        "1 over 1-p"
+      ],
+      "matchMode": "equals"
+    },
+    "hints": [
+      "Let m ~ Bernoulli(1-p). You want E[y * m * c] = y.",
+      "E[m] = 1 - p, so c must be its reciprocal."
+    ],
+    "solution": "c = 1/(1 - p). With y_train = y * m / (1 - p), E[y_train] = y * (1 - p) / (1 - p) = y, so the inference-time graph needs no rescaling at all. The classical (non-inverted) formulation instead multiplies by (1 - p) at test time, which is mathematically equivalent but requires every exported model to remember the factor.",
+    "explanation": "Matching expectations is not the same as matching distributions — the variance of the dropped-out activation is larger by a factor of 1/(1-p). That residual mismatch is one reason dropout interacts badly with BatchNorm, whose running statistics assume a stable activation distribution between train and inference.",
+    "answerNote": "Give a single expression in p in plain text — a parenthesised quotient or an equivalent negative exponent both match. A decimal value is not accepted.",
+    "tags": [
+      "dropout",
+      "expectation",
+      "expression"
+    ]
+  },
+  {
+    "slug": "ex-dead-relu-diagnosis",
+    "title": "Diagnose a layer that stopped learning",
+    "kind": "single_choice",
+    "difficulty": "intermediate",
+    "points": 15,
+    "topicSlugs": [
+      "activation-functions-mathematics",
+      "gradient-pathologies-initialization-theory"
+    ],
+    "lessonSlug": "activations-initialization-and-signal-propagation",
+    "context": "During training you log the fraction of ReLU units in layer 3 whose pre-activation is negative for every example in the batch. It rises from 8% to 71% over the first two epochs and then stops changing. Validation accuracy is poor and the layer's weights are nearly constant from that point on.",
+    "prompt": "What is the mechanism, and which single change most directly addresses it?",
+    "payload": {
+      "kind": "single_choice",
+      "options": [
+        {
+          "label": "A",
+          "text": "The learning rate is too small, so the layer cannot escape a local minimum; increase it.",
+          "correct": false,
+          "feedback": "A too-small learning rate slows everything uniformly. Here one specific layer has stopped receiving gradient entirely."
+        },
+        {
+          "label": "B",
+          "text": "Those units are dead: relu'(z) = 0 for z < 0, so their gradient is exactly zero and no update can move them. Switch to a leaky variant (LeakyReLU/GELU), lower the learning rate, or reinitialize with a larger He scale.",
+          "correct": true,
+          "feedback": "Correct. Zero gradient is self-perpetuating: an unchanging weight keeps producing negative pre-activations."
+        },
+        {
+          "label": "C",
+          "text": "The layer is saturated in the sigmoid sense; rescale the inputs to the [-1, 1] range.",
+          "correct": false,
+          "feedback": "ReLU does not saturate at large positive values — its slope stays at 1. Saturation is a sigmoid/tanh failure mode."
+        },
+        {
+          "label": "D",
+          "text": "This is expected behaviour: about half of all ReLU units are inactive at any time, so 71% is within the normal range.",
+          "correct": false,
+          "feedback": "Roughly half of units are inactive per example, but a unit that is inactive for every example in the batch receives no gradient at all. Those are different measurements."
+        }
+      ]
+    },
+    "hints": [
+      "What is the derivative of relu at a negative input, and what does that do to the weight update?",
+      "Distinguish 'inactive for this example' from 'inactive for every example'."
+    ],
+    "solution": "B. A unit with z < 0 for every input has relu'(z) = 0, hence zero gradient, hence zero update — a fixed point it cannot leave on its own. The standard remedies are a non-zero negative slope (LeakyReLU, GELU, SiLU), a lower peak learning rate so fewer units are driven negative in the first place, and correct He initialization so pre-activations start symmetric about zero.",
+    "explanation": "The diagnostic matters more than the fix: measure the fraction of units inactive across the whole batch, not per example. Per-example sparsity around 50% is healthy and is what makes ReLU efficient; batch-wide inactivity is the pathology. Large learning rates early in training are the usual cause, which is another mechanistic argument for warmup.",
+    "answerNote": "One correct option.",
+    "tags": [
+      "relu",
+      "dead-units",
+      "diagnosis"
+    ]
+  },
+  {
+    "slug": "ex-necessity-of-nonlinearity",
+    "title": "What a stack of linear layers computes",
+    "kind": "true_false",
+    "difficulty": "beginner",
+    "points": 10,
+    "topicSlugs": [
+      "activation-functions-mathematics"
+    ],
+    "lessonSlug": "activations-initialization-and-signal-propagation",
+    "prompt": "True or false: a 50-layer network consisting only of matrix multiplications and bias additions, with no activation function, can represent functions that a single linear layer cannot.",
+    "payload": {
+      "kind": "true_false",
+      "expected": false
+    },
+    "hints": [
+      "Compose two affine maps explicitly: W2(W1 x + b1) + b2.",
+      "Is the composition of affine maps affine?"
+    ],
+    "solution": "False. W2(W1 x + b1) + b2 = (W2 W1) x + (W2 b1 + b2), which is a single affine map. By induction any depth of pure affine layers collapses to one affine layer, so the hypothesis class is identical to that of linear regression — with 50 times the parameters and a much worse optimization landscape.",
+    "explanation": "Depth buys expressiveness only through nonlinearity. This is also why residual connections do not by themselves create expressive power: they change the optimization geometry and the gradient flow, while the nonlinearity in each branch is what makes the composite function non-affine.",
+    "answerNote": "Pick true or false. The claim is about representable functions, not about how hard the network is to train.",
+    "tags": [
+      "nonlinearity",
+      "depth",
+      "true-false"
+    ]
+  }
+]

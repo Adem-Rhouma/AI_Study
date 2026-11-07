@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Runtime & generated data under server/data:
+#   ai-mastery.sqlite (+ -wal/-shm/-journal), app.key (generated secret),
+#   uploads/, and curriculum/ JSONs (regenerate with `npm run curriculum:build`;
+#   source of truth is /research). Hand-authored seed content stays tracked.
+server/data/*
+!server/data/content/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp

@@ -1,0 +1,2069 @@
+{
+  "area": "systems-mlops",
+  "owner_agent": "A5a",
+  "domains": [
+    {
+      "slug": "ml-systems-and-hardware",
+      "name": "ML Systems & Hardware",
+      "summary": "How the physical and architectural properties of accelerators, together with the software layers above them, determine what models can be trained and served at what cost. Every ML training or inference decision is a budget over FLOPs, bytes moved, and bytes resident, so a practitioner who cannot reason about the memory hierarchy cannot reason about feasibility. This domain covers the machine, the numeric formats that run on it, and the compilers and profilers that close the gap between a model graph and measured throughput.",
+      "subdomains": [
+        {
+          "slug": "ml-systems-hardware-foundations",
+          "name": "GPU Architecture, Performance Models and Compilers",
+          "summary": "The layered view of an AI workload: SIMT execution and memory hierarchy, roofline arithmetic-intensity analysis, CUDA/Triton kernel authoring, low-precision numeric formats, and ML compilers that fuse operators.",
+          "topics": [
+            {
+              "slug": "gpu-architecture-cuda-programming",
+              "name": "GPU Architecture and the CUDA Programming Model",
+              "difficulty": "intermediate",
+              "tags": [
+                "gpu",
+                "cuda",
+                "simt",
+                "kernels",
+                "systems"
+              ],
+              "definition": "The design of NVIDIA GPUs as throughput-oriented SIMT machines (warps, streaming multiprocessors, a deep memory hierarchy, tensor cores, concurrent streams) and the CUDA model by which programmers expose parallelism to them.",
+              "explanation": "A GPU trades single-thread latency for aggregate throughput: hundreds of threads per SM execute in warps of 32 lanes under a single instruction stream (SIMT), so divergence within a warp serialises the divergent paths and memory-access coalescing determines whether global traffic arrives in one transaction or many. Latency is hidden rather than reduced: an SM keeps many warps resident and switches to a ready warp while others stall on memory, which is why occupancy (resident warps relative to the hardware maximum, limited by registers, shared memory and thread counts per block) is a first-order performance variable. High-bandwidth memory sits far from the compute units, so frameworks tile work into registers, then shared memory (the fast scratchpad each SM manages explicitly), then L2, then HBM; keeping a working set in the fast levels is the essence of kernel-level ML optimisation. Tensor cores are fixed-function matrix-multiply-accumulate units that execute a tile of mixed-precision MMA in one instruction, giving an order-of-magnitude speed-up over general-purpose FP32 pipes but only for shapes, layouts and precisions they support. CUDA expresses all of this through a grid of thread blocks that are independent and therefore schedulable in any order, plus streams and events for asynchronous copy/execute overlap, and the host API is mostly a mechanism for describing that decomposition. For ML engineers the practical consequences are everywhere: contiguous memory layouts and channel dimensions that align to 32 lanes, batch sizes that keep SMs busy, avoiding host-device synchronisation inside training loops, and knowing why a fused kernel beats three separate elementwise passes. Streams make data parallelism across GPUs and asynchronous prefetch of the next micro-batch possible.",
+              "learning_objectives": [
+                "Explain SIMT, warps and warp divergence, and predict when a memory access coalesces",
+                "Describe the register/shared-memory/L2/HBM hierarchy and the cost of each level",
+                "Compute occupancy-limiting resources from register and shared-memory usage per block",
+                "Write a CUDA kernel that tiles a matrix multiply through shared memory, and explain why tensor cores change the arithmetic throughput",
+                "Use streams and events to overlap H2D/D2H copies with compute, and identify accidental synchronisation points",
+                "Diagnose why an operation is slow by classifying it as bandwidth-bound, latency-bound or launch-overhead-bound"
+              ],
+              "prerequisites_strict": [],
+              "prerequisites_recommended": [
+                "computational-complexity",
+                "matrix-decompositions-and-low-rank-approximation"
+              ],
+              "related_concepts": [
+                "roofline-model-performance-profiling",
+                "ml-compilers-operator-fusion",
+                "numerical-formats-mixed-precision",
+                "activation-checkpointing-memory-optimization",
+                "kv-cache-paged-attention"
+              ],
+              "advanced_extensions": [
+                "Triton tile-level programming",
+                "CUTLASS template kernels",
+                "persistent kernels and programmatic dependent launch",
+                "GPU virtualisation and MIG partitioning",
+                "kernel autotuning"
+              ],
+              "key_results_or_algorithms": [
+                "Grid/block/thread hierarchy",
+                "Warp-synchronised reduction primitives",
+                "Shared-memory tiling (GEMM)",
+                "Stream-ordered asynchronous memcpy",
+                "Occupancy calculator",
+                "Tensor core MMA instructions",
+                "FlashAttention as an IO-aware kernel"
+              ],
+              "math_foundations": [
+                "Matrix multiply cost: 2MNK FLOPs, and the distinction between FLOPs and bytes moved",
+                "Log-scale cost of memory levels (registers ~ single-cycle, HBM ~ hundreds of cycles)"
+              ],
+              "applications": [
+                "Fusing elementwise ops into one kernel to escape bandwidth limits",
+                "Picking batch/sequence shapes that fill SMs on A100/H100-class parts",
+                "Multi-GPU training with per-device streams and overlapped communication",
+                "LLM decode kernels where weight loading, not arithmetic, dominates"
+              ],
+              "common_misconceptions": [
+                "More threads always means faster: launch configuration, register pressure and occupancy interact, and oversubscription can reduce per-thread resources",
+                "GPUs are just many fast CPUs: they lack large caches and rely on thread-level parallelism to hide latency, so latency-sensitive scalar code performs badly",
+                "Occupancy is the goal: it is a means to hide latency; a well-tuned low-occupancy GEMM can saturate the machine",
+                "Tensor cores accelerate any matmul: unsupported shapes, layouts or precisions silently fall back to CUDA cores",
+                "Async means faster: an implicit synchronisation (a .cpu(), a print of a tensor, a non-pinned host buffer) serialises the pipeline"
+              ],
+              "further_reading": [
+                {
+                  "title": "CUDA C++ Programming Guide",
+                  "authors": "NVIDIA",
+                  "year": null,
+                  "type": "docs",
+                  "url": "https://docs.nvidia.com/cuda/cuda-c-programming-guide/"
+                },
+                {
+                  "title": "Programming Massively Parallel Processors: A Hands-on Approach",
+                  "authors": "David Kirk, Wen-mei Hwu",
+                  "year": 2022,
+                  "type": "book",
+                  "url": null
+                },
+                {
+                  "title": "CMU 10-714 Deep Learning Systems",
+                  "authors": "Tianqi Chen",
+                  "year": 2023,
+                  "type": "course",
+                  "url": null
+                },
+                {
+                  "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+                  "authors": "Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Re",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2205.14135"
+                },
+                {
+                  "title": "CUTLASS: CUDA Templates for Linear Algebra Subroutines",
+                  "authors": "NVIDIA",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "roofline-model-performance-profiling",
+              "name": "Roofline Analysis, Profiling and Performance Tuning",
+              "difficulty": "advanced",
+              "tags": [
+                "performance",
+                "roofline",
+                "profiling",
+                "systems"
+              ],
+              "definition": "A method for bounding an operator's attainable performance by the lesser of machine peak FLOP/s and memory bandwidth times arithmetic intensity, plus the measurement discipline (profilers, counters, ablations) used to find which bound actually applies.",
+              "explanation": "The roofline model, introduced by Williams, Waterman and Shashikant, plots attainable performance against arithmetic intensity (FLOPs per byte of DRAM traffic). Below the machine balance point a kernel is bandwidth-bound and no clever math helps; above it, peak compute matters. For ML this is the single most useful back-of-the-envelope tool: a matmul of shape (M,K)x(K,N) has roughly 2MNK FLOPs and O(MK+KN+MN) bytes, so intensity grows with tile size, while attention on a sequence of length L naively moves L^2 elements, which is why IO-aware reimplementation gave such large gains. It also explains the asymmetry between LLM prefill (large, compute-bound GEMMs) and decode (one token at a time, so weights are read once per token and the workload is bandwidth-bound), and why batching tokens instead of requests changes throughput dramatically. Arithmetic intensity is a per-operation quantity but end-to-end time is a sum, so the practical workflow is: profile to get per-kernel time, bytes and FLOPs; compare against the roof; then apply the fix appropriate to the bound (fusion or larger tiles for bandwidth, better precision or tensor-core utilisation for compute, launch-count reduction for overhead-bound small ops). Profilers here are not optional: NVIDIA Nsight Compute/Systems, PyTorch's Kineto/profiler traces, and framework op-level timing give the same numbers, and ML practitioners should read a kernel timeline the way a software engineer reads a flame graph. A tuned ML system is usually one where the residual time has been pushed into a few large compute-bound kernels rather than hundreds of small ones. The model is a simplification, because it assumes DRAM is the only limit and ignores latency, synchronisation, and network cost, all of which matter in distributed training where the analogous bound is communication volume over link bandwidth.",
+              "learning_objectives": [
+                "Derive arithmetic intensity for GEMM, elementwise, reduction, softmax and attention operators",
+                "Compute a machine's ridge point from peak FLOPs and DRAM bandwidth and classify an operator as memory- or compute-bound",
+                "Read a kernel-level profile and attribute time to compute, bandwidth, launch overhead, or idle/synchronisation",
+                "Explain why LLM decode is bandwidth-bound and quantify the effect of batch size and KV-cache reads",
+                "Choose the correct optimisation for a measured bound instead of guessing"
+              ],
+              "prerequisites_strict": [
+                "gpu-architecture-cuda-programming"
+              ],
+              "prerequisites_recommended": [
+                "attention-mechanisms",
+                "transformer-architecture"
+              ],
+              "related_concepts": [
+                "numerical-formats-mixed-precision",
+                "ml-compilers-operator-fusion",
+                "llm-serving-continuous-batching",
+                "collective-communication-interconnects"
+              ],
+              "advanced_extensions": [
+                "Cerebrum/Machine-Specification models with network traffic",
+                "Operational-intensity analysis of sparse and quantised kernels",
+                "Goodput-oriented serving analysis",
+                "Critical-path/roofline accounting for pipeline schedules"
+              ],
+              "key_results_or_algorithms": [
+                "Roofline model (Williams et al., CACM 2009)",
+                "Arithmetic intensity",
+                "Machine balance point",
+                "Nsight Compute / Kineto profiling",
+                "Kernel-fusion as bandwidth optimisation",
+                "IO-aware attention tiling"
+              ],
+              "math_foundations": [
+                "Time >= max(FLOPs / peak_FLOP/s, bytes / bandwidth), so performance = min(peak, bandwidth x intensity)",
+                "FLOP and byte accounting conventions: weights, activations, gradients each carry separate traffic"
+              ],
+              "applications": [
+                "Deciding whether to fuse, reformat to lower precision, or increase batch",
+                "Explaining FlashAttention's speedup as traffic reduction rather than FLOP reduction",
+                "Sizing GPU count and batch for a target tokens/s on a new model",
+                "Judging that a 1B-parameter int8 decode step is bandwidth-limited: roughly one weight byte read per generated token"
+              ],
+              "common_misconceptions": [
+                "FLOPs determine speed: bytes moved usually decide it for small-batch and decode-time work",
+                "A kernel at 80% of peak FLOP/s is well-optimised if the roofline says it is bandwidth-bound",
+                "Mixed precision always doubles throughput: only when the workload is compute-bound and the kernel actually uses tensor cores",
+                "The roofline includes inter-GPU communication, which is often the real limit in distributed training"
+              ],
+              "further_reading": [
+                {
+                  "title": "Roofline: An Insightful Visual Performance Model for Multicore Architectures",
+                  "authors": "Samuel Williams, Andrew Waterman, David Patterson",
+                  "year": 2009,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Roofline: Visualizing and Analyzing Computer Systems",
+                  "authors": "Caleb Donovick et al. (Berkeley/EECS roofline tooling documentation)",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "Nsight Compute CLI documentation",
+                  "authors": "NVIDIA",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "PyTorch Profiler (Kineto) documentation",
+                  "authors": "PyTorch team",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "numerical-formats-mixed-precision",
+              "name": "Numerical Formats and Mixed-Precision Training",
+              "difficulty": "advanced",
+              "tags": [
+                "numerics",
+                "precision",
+                "bf16",
+                "fp8",
+                "training"
+              ],
+              "definition": "The family of floating-point and integer formats used to store weights, activations and gradients, and the techniques (automatic mixed precision, loss scaling, stochastic rounding, scaling of accumulators) that let low-precision arithmetic train stably.",
+              "explanation": "Every format trades dynamic range (exponent bits) against mantissa precision. FP32 has about 7 decimal digits; TF32 keeps FP32 range with a 10-bit mantissa on tensor cores; BF16 keeps FP32's 8-bit exponent so the range is unchanged but only 7 mantissa bits are precise; FP16 halves storage but has a narrow range that overflows near 65504 and underflows in normal-number territory, which is exactly what happens to small gradients. FP8 comes in E4M3 (weights/activations) and E5M2 (gradients) variants, needing per-tensor or block scaling and careful casting rules. Integer formats (INT8, INT4) are fixed-point and require zero points and per-channel scales, so they compress more aggressively but are sensitive to outliers. In mixed-precision training, matmuls and activations run in the fast format while master weights and accumulators stay in FP32, and the optimizer states are updated from FP32 gradients or from loss-scaled low-precision gradients. Loss scaling multiplies the loss by a large power of two before the backward pass so that small gradient magnitudes survive FP16's underflow, then divides them before the update; its failure modes are well documented: overflow to inf/NaN from too large a scale (requiring dynamic rescaling and skipped updates), and silent divergence when the scale interacts with gradient clipping or with optimizers whose internal state is also low precision. Beyond overflow, the deeper hazards are accumulation error (summing many small contributions in low precision loses the small ones), catastrophic cancellation in softmax and layernorm, gradient sparsification through rounding to zero, and nondeterminism from atomics and reduction order. Modern stacks keep those numerics inside reductions: FlashAttention and tensor-core GEMMs accumulate in FP32 even with FP16/BF16 inputs, and layer norm/softmax typically run in FP32. Practitioners must be able to reason about error budget per format, why BF16 largely displaced FP16 for large training runs, why INT8/FP8 inference needs calibration data or block-wise scales, and why a loss-spike investigation includes checking whether the failure preceded a precision or clipping change.",
+              "learning_objectives": [
+                "Compare fp32, tf32, bf16, fp16, fp8 (E4M3/E5M2), int8 and int4 on range, precision, storage and hardware support",
+                "Explain why gradient underflow occurs in fp16 and how loss scaling fixes and can break training",
+                "Implement static and dynamic loss scaling and state what happens on inf/NaN steps",
+                "Reason about accumulation error, cancellation and reduction order, including why master weights stay in fp32",
+                "Select a quantisation scheme (per-tensor, per-channel, blockwise, weight-only vs weight-and-activation) for a deployment target",
+                "Audit a training run's numerical configuration for known failure modes such as clipping interacting with loss scaling"
+              ],
+              "prerequisites_strict": [
+                "gpu-architecture-cuda-programming",
+                "backpropagation"
+              ],
+              "prerequisites_recommended": [
+                "numerical-linear-algebra-and-stability",
+                "optimization-convex"
+              ],
+              "related_concepts": [
+                "data-parallelism-zero-sharding",
+                "model-compression-for-inference",
+                "training-memory-optimization",
+                "activation-checkpointing-memory-optimization",
+                "numerical-analysis-and-autodiff"
+              ],
+              "advanced_extensions": [
+                "FP8 and MX (microscaling) block formats",
+                "Stochastic rounding and its effect on convergence",
+                "8-bit and blockwise optimizers",
+                "Nondeterminism reduction and bitwise reproducibility",
+                "Quantisation-aware and post-training quantisation"
+              ],
+              "key_results_or_algorithms": [
+                "Automatic Mixed Precision (torch.amp)",
+                "Dynamic and static loss scaling",
+                "Master-weight (FP32 copy) update rule",
+                "Per-channel and blockwise scales",
+                "Exponent/mantissa budget analysis",
+                "Tensor-core accumulate-in-FP32 pattern"
+              ],
+              "math_foundations": [
+                "Floating-point representation: value = (-1)^s * 2^(e-bias) * 1.m, with relative precision set by mantissa bits and range by exponent bits",
+                "Machine epsilon and rounding error ~ 2^-p; total error grows with number of accumulated terms",
+                "Gradient magnitudes in deep nets span many orders of magnitude, which is why range often matters more than precision"
+              ],
+              "applications": [
+                "Halving activation and gradient memory and doubling GEMM throughput in LLM pretraining",
+                "INT8/INT4 weight-only quantisation to fit a 70B model on one accelerator",
+                "FP8 training runs on H100-class hardware with per-tensor scaling",
+                "Explaining a loss spike or NaN as a numerical event rather than a data event"
+              ],
+              "common_misconceptions": [
+                "Mixed precision is only a speed trick: it changes gradient noise, effective learning-rate dynamics and reproducibility",
+                "Lower precision always loses accuracy proportionally: well-scaled weight-only quantisation is often near-lossless, while naive INT8 activations can be catastrophic",
+                "BF16 needs no loss scaling because it has FP32 range (correct for overflow, but gradient underflow near zero remains possible)",
+                "FP32 gradients are stored: most frameworks keep low-precision gradients in the backward pass and FP32 only in optimizer state and master weights",
+                "Quantisation error is unbiased rounding noise: systematic outliers in activations dominate and require special handling"
+              ],
+              "further_reading": [
+                {
+                  "title": "Mixed Precision Training",
+                  "authors": "Paulius Micikevicius, Sharan Narang, Jonah Alben, Gregory Diamos et al.",
+                  "year": 2017,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/1710.03740"
+                },
+                {
+                  "title": "FP8 Formats for Deep Learning",
+                  "authors": "Paulius Micikevicius et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "PyTorch documentation: Automatic Mixed Precision (AMP) and numerical accuracy notes",
+                  "authors": "PyTorch team",
+                  "year": null,
+                  "type": "docs",
+                  "url": "https://pytorch.org/docs/stable/amp.html"
+                },
+                {
+                  "title": "Integer Quantization for Deep Learning Inference: Principles and Empirical Evaluation",
+                  "authors": "Hao Wu et al.",
+                  "year": 2020,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "CMU 10-714 Deep Learning Systems: numeric precision and operator kernels",
+                  "authors": "Tianqi Chen",
+                  "year": 2023,
+                  "type": "lecture-notes",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "ml-compilers-operator-fusion",
+              "name": "ML Compilers, Intermediate Representations and Operator Fusion",
+              "difficulty": "expert",
+              "tags": [
+                "compilers",
+                "xla",
+                "triton",
+                "mlir",
+                "fusion"
+              ],
+              "definition": "The software stack that turns a model description into efficient machine code: graph capture and rewriting, operator fusion, layout/tiling decisions, automatic kernel generation, and the intermediate representations (HLO/Triton/Tensor dialects) that make retargeting feasible.",
+              "explanation": "A framework executes an eager op-by-op program, which is flexible and easy to debug but loses the global view needed for optimisation: nothing knows that three consecutive elementwise ops can read their input once, or that a matmul's output layout can be chosen to suit the next kernel. Compilers recover that view. Tensor compilers such as XLA, TVM, TorchInductor and IREE capture a computation graph or trace, apply algebraic and layout rewrites, fuse operators into fewer kernels, select or generate tile sizes and memory plans, and emit PTX/C++/MLIR-driven code. Fusion has two flavours: horizontal (same op on different inputs, e.g. fused QKV projection) and vertical (chained ops collapsed so intermediates never reach DRAM), and vertical fusion is usually the win because it converts bandwidth-bound sequences into one pass. MLIR supplies the substrate: multiple dialects at different abstraction levels, from linalg/tensor operations down to loops and GPU primitives, letting projects share lowering passes instead of each writing a monolithic compiler. Triton takes a different route: instead of compiling a graph it exposes a tile-level Python-embedded DSL in which the programmer writes block-shaped math and the compiler handles thread mapping, shared memory and vectorisation, which is why hand-written kernels for attention and quantised GEMMs are now commonly Triton rather than CUDA. The trade-offs are real: compilation latency and cache invalidation, graph breaks when control flow escapes the captured region, dynamic shapes forcing specialised recompilation, and debugging a fused kernel that produces a subtly different number than the eager chain. Auto-tuning and search (TVM's schedule search, XLA's tile heuristics) shift cost from programmer time to compute time, and modern LLM serving stacks typically combine an eager trainer with a compiled or hand-kernel-optimised inference path.",
+              "learning_objectives": [
+                "Explain why eager execution leaves performance on the table, in terms of launch overhead and DRAM traffic",
+                "Distinguish horizontal from vertical fusion and predict the traffic saved in a given chain",
+                "Describe the lowering pipeline of a tensor compiler and what representation exists at each stage",
+                "Write a Triton kernel for a fused softmax or elementwise-scale op and explain the tile abstraction",
+                "Identify causes of graph breaks, recompilation, and numerical drift between eager and compiled paths",
+                "Evaluate when compiling (torch.compile, XLA) is worth the iteration cost"
+              ],
+              "prerequisites_strict": [
+                "gpu-architecture-cuda-programming",
+                "roofline-model-performance-profiling"
+              ],
+              "prerequisites_recommended": [
+                "computational-complexity",
+                "numerical-analysis-and-autodiff"
+              ],
+              "related_concepts": [
+                "numerical-formats-mixed-precision",
+                "activation-checkpointing-memory-optimization",
+                "kv-cache-paged-attention",
+                "speculative-decoding",
+                "model-packaging-edge-deployment"
+              ],
+              "advanced_extensions": [
+                "torch.compile / Inductor graph caching and dynamo",
+                "XLA sparsity and sharding compilers (GSPMD)",
+                "Automatic scheduling search",
+                "Graph-of-Loops/Exo-style hardware-aware scheduling",
+                "Compiler support for paged and irregular memory"
+              ],
+              "key_results_or_algorithms": [
+                "XLA HLO graph rewriting",
+                "TVM automated schedule search (Ansor)",
+                "MLIR dialect lowering",
+                "TorchInductor code generation",
+                "Triton block/tile programming model",
+                "Constant folding, layout normalisation, fusion passes"
+              ],
+              "math_foundations": [
+                "Loop-nest and iteration-space transformations: tiling, interchange, fusion, and their effect on cache reuse",
+                "Dependence analysis: two ops fuse only if no intermediate must be observed or materialised"
+              ],
+              "applications": [
+                "Fusing dropout + residual + layernorm into one pass over activations",
+                "Generating per-shape specialised kernels for attention variants",
+                "Compiling the same graph to GPU, TPU and CPU backends",
+                "Reducing decode-step launch overhead for many small per-layer ops"
+              ],
+              "common_misconceptions": [
+                "Compilers make hand optimisation obsolete: the best kernels for attention and quantised GEMMs are still authored with knowledge of the machine",
+                "Fusion always reduces time: fusing can increase register pressure and reduce occupancy, making a kernel slower",
+                "Compiled and eager results must match bitwise: reduction order changes, so tolerance-based checks are the right test",
+                "A compiler can fix a bad algorithm: changing IO complexity (as in IO-aware attention) is an algorithmic, not a codegen, win",
+                "Graph mode has no cost: recompiles and cache misses dominate iteration speed for dynamic-shape research code"
+              ],
+              "further_reading": [
+                {
+                  "title": "TVM: An Automated End-to-End Optimizing Compiler for Deep Learning",
+                  "authors": "Lianmin Zheng, Chengfan Jia et al. (incl. Tianqi Chen, Arvind)",
+                  "year": 2018,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "MLIR: A Compiler Infrastructure for the End of Moore's Law",
+                  "authors": "Chris Lattner, Jacques Pienaar et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "XLA: Machine Learning Code Generator and Compiler for TensorFlow",
+                  "authors": "Google (TensorFlow team)",
+                  "year": 2017,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "Triton documentation",
+                  "authors": "Triton project",
+                  "year": null,
+                  "type": "docs",
+                  "url": "https://triton-lang.org"
+                },
+                {
+                  "title": "PyTorch 2 / torch.compile documentation",
+                  "authors": "PyTorch team",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "accelerator-landscape-hardware-codesign",
+              "name": "Accelerator Landscape and Hardware-Software Co-design",
+              "difficulty": "advanced",
+              "tags": [
+                "hardware",
+                "tpu",
+                "npu",
+                "fpga",
+                "codesign"
+              ],
+              "definition": "The range of AI accelerators beyond general-purpose GPUs (TPUs, NPUs, FPGAs, ASICs, and research architectures such as in-memory and neuromorphic chips), and the practice of co-designing model structures and hardware so each exploits the other's strengths.",
+              "explanation": "GPUs dominate because they are programmable and have a mature software stack, but their design carries the overhead of generality: caches, branch prediction, and a wide instruction set that an inner-loop matmul does not need. Domain-specific accelerators instead specialise the datapath. TPUs are systolic arrays: weight-stationary dataflows where each processing element multiplies and accumulates into a neighbour, eliminating much operand-fetch traffic and making dense matrix algebra cheap in exchange for rigidity about batch, shape and mesh topology, and requiring an XLA-style compiler to place work across a pod interconnect. NPUs in phones and laptops are small fixed-function engines sized for one or two popular workloads (attention blocks, convolutions, a limited quantisation set), and their performance depends more on whether the framework supports the operator than on headline TOPS numbers. FPGAs offer reconfigurable pipelines and predictable latency for unusual dataflows or inference at low batch, at the cost of long design cycles and limited arithmetic flexibility. In-memory and neuromorphic approaches attack the von Neumann bottleneck directly by doing accumulation in the memory array or by event-driven sparse spiking computation; they remain research-scale with real obstacles in precision, programming model and tooling. Co-design is where the leverage sits: model choices such as arithmetic per parameter, sparsity, quantisation tolerance, sequence parallelism, or Mixture-of-Experts routing shapes can be picked to suit a target machine, while hardware gains value only if compilers and operators exist for it. Evaluating an accelerator correctly requires normalising on the workload actually used (tokens/s at a batch size that fits, cost per inference, energy per token), not marketing TOPS, which typically quote sparse or unrealisable peak figures.",
+              "learning_objectives": [
+                "Contrast dataflow models: SIMT general compute, systolic weight-stationary arrays, and in-memory accumulation",
+                "Explain why compiler support and operator coverage determine real accelerator usability more than peak specs",
+                "Identify co-design levers (precision, sparsity, expert routing, kernel shapes) and their hardware consequences",
+                "Compute a defensible cost/energy-per-token comparison across two devices",
+                "State the current limits of FPGA, neuromorphic and in-memory approaches"
+              ],
+              "prerequisites_strict": [
+                "gpu-architecture-cuda-programming",
+                "roofline-model-performance-profiling"
+              ],
+              "prerequisites_recommended": [
+                "numerical-formats-mixed-precision",
+                "transformer-architecture"
+              ],
+              "related_concepts": [
+                "ml-compilers-operator-fusion",
+                "model-packaging-edge-deployment",
+                "expert-parallelism-moe-training",
+                "model-compression-for-inference"
+              ],
+              "advanced_extensions": [
+                "Systolic-array dataflow variants (output/input stationary)",
+                "Chiplet and advanced-packaging limits on HBM capacity",
+                "Optical and analog MAC proposals",
+                "Design-space search for accelerators (Timeloop/Accelergy-style modelling)",
+                "Domain-specific language targets (MLIR-based)"
+              ],
+              "key_results_or_algorithms": [
+                "TPU systolic array dataflow",
+                "XLA/GSPMD mesh compilation",
+                "NPU delegate stacks (NNAPI/CoreML)",
+                "FPGA overlay architectures",
+                "Spiking/in-memory compute prototypes",
+                "Roofline normalisation of device comparisons"
+              ],
+              "math_foundations": [
+                "Energy per operation and per byte moved differ by orders of magnitude, which is why dataflow placement dominates efficiency",
+                "Peak TOPS = MAC count x clock x 2 x precision factor; real throughput is bounded by memory and utilisation"
+              ],
+              "applications": [
+                "Choosing between GPU, TPU and NPU for a training or edge-inference budget",
+                "Designing quantisation and layer shapes to fit an NPU's supported op set",
+                "Reasoning about MoE on hardware with fast local interconnect but slow global fabric",
+                "Reading a vendor benchmark honestly (batch size, sequence length, precision, and what was excluded)"
+              ],
+              "common_misconceptions": [
+                "TOPS predict model throughput: memory bandwidth, supported precision and kernel coverage usually decide",
+                "Specialised hardware is always cheaper per token: only at utilisation and scale that amortise design and tooling cost",
+                "A model is portable across accelerators: unsupported ops force fallbacks that dominate runtime",
+                "Non-GPU research architectures are on a path to general LLM training (unresolved; treat as speculative)",
+                "Co-design means hardware follows models: in practice compiler and framework investment often matters more than silicon novelty"
+              ],
+              "further_reading": [
+                {
+                  "title": "A Domain-Specific Architecture for Deep Neural Networks (TPU v1)",
+                  "authors": "Norm Jouppi, David Patterson et al. (ISCA)",
+                  "year": 2017,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "TPU v4: An Optically Reconfigurable Supercomputer for Machine Learning with Hardware Support for Embeddings",
+                  "authors": "Norm Jouppi et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Cloud TPU architecture and programming guides",
+                  "authors": "Google Cloud",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "MLIR: A Compiler Infrastructure for the End of Moore's Law",
+                  "authors": "Chris Lattner, Jacques Pienaar et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Proceedings of the Conference on Machine Learning and Systems (MLSys)",
+                  "authors": "MLSys conference",
+                  "year": null,
+                  "type": "survey",
+                  "url": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "large-scale-training-systems",
+      "name": "Large-Scale Training Systems",
+      "summary": "Training a frontier model is a distributed-systems problem: parameters, gradients, activations and optimizer state exceed a single accelerator's memory, and the interconnect rather than the FLOPs often decides the wall-clock time. This subdomain covers how to split a model and a workload across thousands of devices, how to pay for the communication, how to hold activation memory down, and how to keep a months-long job correct, recoverable and reproducible.",
+      "subdomains": [
+        {
+          "slug": "distributed-training-parallelism",
+          "name": "Parallelism and Communication",
+          "summary": "The orthogonal ways to split work across devices - data, tensor, pipeline, expert and sequence parallelism - and the collective operations and fabric that carry their traffic.",
+          "topics": [
+            {
+              "slug": "data-parallelism-zero-sharding",
+              "name": "Data Parallelism, ZeRO Stages and Fully Sharded Data Parallel",
+              "difficulty": "advanced",
+              "tags": [
+                "distributed-training",
+                "zero",
+                "fsdp",
+                "memory"
+              ],
+              "definition": "Replicating the model across workers and partitioning the batch, plus the family of techniques (ZeRO stages 1-3, FSDP, distributed optimizer, offloading) that shard optimizer state, gradients and parameters themselves instead of replicating them.",
+              "explanation": "Vanilla synchronous data parallelism replicates the full model on every rank and all-reduces gradients, so throughput scales with rank count but memory per device does not shrink: weights, gradients and (crucially) optimizer state, which for Adam is two FP32 buffers plus an FP32 master copy, dominate the footprint - roughly 16 bytes per parameter in FP32 Adam plus activations. Gradient accumulation amortises communication over several micro-batches, and bucketing overlaps all-reduce with the backward pass, which is where DDP gets most of its scalability. ZeRO observes that all this replicated state is redundant and removes it stage by stage: stage 1 shards optimizer state, stage 2 adds gradient shards via reduce-scatter, stage 3 additionally shards parameters, gathering each layer's parameters just-in-time with all-gather and freeing them after use. That converts memory savings into extra communication, so stage 3 wants a fast intra-node fabric and careful prefetching; FSDP is the PyTorch-native realisation of stage-3-style sharding with a per-unit sharding strategy and mixed precision attached. Activation memory remains untouched by ZeRO, which is why it is combined with recomputation, and the whole budget is typically written per parameter as weights + gradients + optimizer + activations, then compared to HBM capacity. Combined with mixed precision, sharding raises subtleties: all-gather must move the low-precision copy while reduce-scatter may be in gradient precision, and the master weights live only on the owning rank, so checkpoint formats must be sharded-aware. The practical decision rule is that data parallelism is the cheapest scaling axis (perfect compute efficiency, traffic proportional to gradient size), so one exhausts DP/ZeRO before reaching for model parallelism.",
+              "learning_objectives": [
+                "Account for per-GPU memory of a transformer training run in bytes per parameter plus activations",
+                "Explain ZeRO stages 1/2/3 and FSDP in terms of which state is sharded and which collectives replace all-reduce",
+                "Implement or configure gradient accumulation, bucketing and communication overlap",
+                "Analyse the memory-versus-communication trade-off of sharding parameters, including prefetching needs",
+                "Combine ZeRO with activation checkpointing and offloading in a memory budget for a given model size"
+              ],
+              "prerequisites_strict": [
+                "numerical-formats-mixed-precision",
+                "backpropagation"
+              ],
+              "prerequisites_recommended": [
+                "collective-communication-interconnects",
+                "activation-checkpointing-memory-optimization",
+                "transformer-architecture"
+              ],
+              "related_concepts": [
+                "tensor-parallelism-sequence-parallelism",
+                "pipeline-parallelism-schedules",
+                "collective-communication-interconnects",
+                "training-reliability-checkpointing-scheduling",
+                "distributed-and-federated-optimization"
+              ],
+              "advanced_extensions": [
+                "ZeRO-Offload / ZeRO-Infinity CPU and NVMe offload",
+                "Sequence-aware sharding and hybrid sharding strategies",
+                "Overlap of all-gather with compute using multiple streams",
+                "Peer/peerless gradient synchronization",
+                "Expert-parallel ZeRO combinations (ZPaL)"
+              ],
+              "key_results_or_algorithms": [
+                "Synchronous all-reduce SGD",
+                "Gradient accumulation and bucketed overlap",
+                "ZeRO stage 1/2/3",
+                "FSDP sharding strategies and CPU offload",
+                "Distributed optimizer (Shampoo/Adam state sharding)",
+                "Mixed-precision interaction with reduce-scatter/all-gather"
+              ],
+              "math_foundations": [
+                "Adam state: two FP32 tensors plus master weights; hence ~12 bytes/param of optimizer-side state beyond gradient/weight storage",
+                "Traffic comparison: all-reduce moves gradient-sized data; ZeRO-3 moves weight-sized data per step, in both gather and scatter forms"
+              ],
+              "applications": [
+                "Scaling beyond a single GPU when only the batch is limited by memory",
+                "Training a 7B model on consumer/prosumer hardware by offloading optimizer state",
+                "Choosing between DDP, ZeRO-1+DP and FSDP for a given cluster topology",
+                "Explaining why increasing tensor parallelism can be worse than increasing data parallelism"
+              ],
+              "common_misconceptions": [
+                "Data parallelism needs no communication analysis: gradient all-reduce is a bandwidth term that can dominate small-model training",
+                "ZeRO-3 removes all memory problems: activations and the just-in-time parameter gather still bound batch size and require bandwidth",
+                "More ranks always means more throughput: sharding trades communication and lower per-rank arithmetic efficiency for capacity",
+                "Optimizer state is a minor cost: for Adam in FP32 it is the largest single contributor to model state"
+              ],
+              "further_reading": [
+                {
+                  "title": "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models",
+                  "authors": "Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase, Yuxiong He",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/1910.02054"
+                },
+                {
+                  "title": "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism",
+                  "authors": "Mohamed Shoeybi, Mostofa Patwary, Raul Puri, Patrick LeGresley, Jared Casper, Bryan Catanzaro",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/1907.04577"
+                },
+                {
+                  "title": "PyTorch FSDP tutorial and API reference",
+                  "authors": "PyTorch team",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "DeepSpeed documentation",
+                  "authors": "Microsoft DeepSpeed team",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "ML Systems",
+                  "authors": "Crawfurd et al.",
+                  "year": null,
+                  "type": "book",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "tensor-parallelism-sequence-parallelism",
+              "name": "Tensor Parallelism and Sequence/Context Parallelism",
+              "difficulty": "expert",
+              "tags": [
+                "tensor-parallelism",
+                "megatron",
+                "long-context",
+                "distributed-training"
+              ],
+              "definition": "Splitting individual tensor operations across devices (intra-layer/model parallelism) and splitting the sequence dimension so activations are distributed, as in Megatron-style column/row parallelism, tensor-sequence parallelism, Ulysses and ring attention.",
+              "explanation": "When one layer's weights or activations do not fit on a device, the arithmetic itself is partitioned. Megatron-LM splits an MLP's two matmuls so the first is column-parallel (each rank holds a slice of the output features, so the input needs no communication) and the second row-parallel (partial sums are all-reduced), and splits attention by heads so each rank computes a subset of heads; per transformer layer this costs a small constant number of all-reduces in the forward and backward passes. Because that traffic is per layer and per step, tensor parallelism is confined to a high-bandwidth domain - typically inside a node across NVLink - and kept to a modest degree (2-8) with data parallelism wrapped around it. It also shards activations, unlike data parallelism, so it is the standard answer for very wide models. The residual activation memory and the replicated layernorm/dropout path motivated Megatron's tensor-sequence parallelism: the sequence dimension is scattered so that non-tensor-parallel regions (layernorm, dropout, loss) operate on a per-rank sequence slice with all-gather/reduce-scatter instead of all-reduce, restoring memory savings while keeping the same communication volume. For long contexts, pure activation sharding is not enough, since attention's quadratic intermediates dominate; approaches include ring attention (pass K/V blocks around a device ring so each rank computes partial attention with online-softmax rescaling), DeepSpeed/Ulysses-style all-to-all head redistribution (each rank owns all heads for a sequence slice, converting sequence parallelism into head parallelism), and combinations with paged attention kernels. The engineering discipline is the same in every variant: enumerate the collectives per layer, their sizes, and whether the fabric supports them, then check that compute-to-communication did not collapse. Combined 4D layouts (data x tensor x pipeline x expert) make these choices interacting, which is where parallelism search frameworks such as Alpa and auto-placement tools enter.",
+              "learning_objectives": [
+                "Derive the per-layer collective pattern of column/row parallel MLP and head-wise attention splits",
+                "Explain why tensor parallelism degree is bounded by intra-node bandwidth and how to estimate the communication fraction",
+                "Describe tensor-sequence parallelism and which memory it recovers at the same communication cost",
+                "Implement online-softmax rescaling in a ring-attention style partition of sequence",
+                "Choose among TP, SP/context parallelism and pipeline parallelism for a given model width, depth and context length"
+              ],
+              "prerequisites_strict": [
+                "data-parallelism-zero-sharding",
+                "attention-mechanisms"
+              ],
+              "prerequisites_recommended": [
+                "gpu-architecture-cuda-programming",
+                "transformer-architecture",
+                "collective-communication-interconnects"
+              ],
+              "related_concepts": [
+                "pipeline-parallelism-schedules",
+                "activation-checkpointing-memory-optimization",
+                "expert-parallelism-moe-training",
+                "kv-cache-paged-attention"
+              ],
+              "advanced_extensions": [
+                "Auto-parallelism search (Alpa, optimal client placement)",
+                "Interleaved tensor parallelism across nodes",
+                "Ring/column attention for million-token contexts",
+                "TP-aware quantised and FP8 kernels",
+                "Sequence-parallel fused kernels for layernorm/dropout"
+              ],
+              "key_results_or_algorithms": [
+                "Megatron column/row parallel layers",
+                "Head-parallel attention split",
+                "Tensor-sequence parallelism (all-gather/reduce-scatter substitution)",
+                "Ring attention with online softmax",
+                "DeepSpeed-Ulysses all-to-all head redistribution",
+                "Context-parallelism in Torch/distributed"
+              ],
+              "math_foundations": [
+                "Attention cost O(L^2 d) per layer; activation memory for L tokens scales with L and head count, hence sequence partitioning",
+                "Online softmax identity: rescale partial maxima and sums to combine two passes exactly",
+                "Per-step communication volume in bytes vs per-step FLOPs per rank gives the efficiency bound"
+              ],
+              "applications": [
+                "Sharding a 175B-parameter model across a node of 8 GPUs",
+                "Enabling 128K-token contexts by distributing the sequence dimension",
+                "Diagnosing low model-FLOPs-utilisation caused by an all-reduce on the critical path",
+                "Deciding TP degree before adding pipeline stages to avoid bubbles"
+              ],
+              "common_misconceptions": [
+                "Tensor parallelism is free scaling: each additional rank reduces per-rank FLOPs while communication per layer stays, so efficiency falls quickly beyond the fast fabric",
+                "TP replaces activation checkpointing: it shards activations but does not remove the need for recompute at long context",
+                "Sequence parallelism means parallelising over sequences across steps: here it is the token axis inside one forward pass",
+                "Any parallelism combination works: TP inside pipeline stages and expert parallel across ranks require careful group construction and ordering"
+              ],
+              "further_reading": [
+                {
+                  "title": "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism",
+                  "authors": "Mohamed Shoeybi et al.",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/1907.04577"
+                },
+                {
+                  "title": "Reducing Activation Recomputation in Large Transformer Models",
+                  "authors": "Vijay Anand Korthikanti, Jared Casper, Sangkug Lym, Lawrence McAfee, Michael Andersch, Mohammad Shoeybi, Bryan Catanzaro",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2205.05198"
+                },
+                {
+                  "title": "Ring Attention with Blockwise Transformers for Near-Infinite Context",
+                  "authors": "Hao Liu, Matei Zaharia, Pieter Abbeel",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Alpa: Automating Inter- and Intra-Operator Parallelism for Distributed Deep Learning",
+                  "authors": "Lianmin Zheng, Zhuohan Li, Hao Zhang et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "PaLM: Scaling Language Modeling with Pathways (training-infrastructure section)",
+                  "authors": "Aakanksha Chowdhery et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2204.02311"
+                }
+              ]
+            },
+            {
+              "slug": "pipeline-parallelism-schedules",
+              "name": "Pipeline Parallelism and Microbatch Schedules",
+              "difficulty": "expert",
+              "tags": [
+                "pipeline-parallelism",
+                "gpipe",
+                "schedules",
+                "distributed-training"
+              ],
+              "definition": "Partitioning a model's layers into stages mapped to different devices and streaming micro-batches through them, with a schedule determining when each stage runs forward and backward passes and how much of the pipeline is idle.",
+              "explanation": "Pipeline parallelism is the cheap way to add depth to a cluster: communication is only activation tensors flowing between adjacent stages, so it tolerates slower inter-node links, which is why very large runs combine small tensor-parallel groups with wide pipeline stages and data-parallel replicas. The cost is the bubble. In GPipe's original schedule, all micro-batch forward passes run, then all backward passes in reverse; the idle fraction is roughly (p-1)/(m+p-1) for p stages and m micro-batches, so you need m several times p to be efficient, and memory grows with the number of in-flight activations. 1F1B interleaves one forward with one backward, holding peak in-flight micro-batches bounded and reducing activation memory at the cost of a modestly larger bubble; interleaved/v-pipeline schedules (Megatron) let a device own non-contiguous layer blocks to shrink the bubble further at the price of more memory and traffic. Zero-bubble and related schedules attack the residual idleness by splitting the backward pass into gradient-with-respect-to-input and gradient-with-respect-to-weight phases and placing them into bubble slots, or by using microbatch-distillation-style approximations; these show real gains only when the schedule overhead does not erase them. Schedules also interact with reliability: pipeline stage failure stalls the whole job, and stage imbalance from uneven layer counts creates persistent stalls. Finally, pipeline parallelism couples awkwardly with loss and optimizer placement, with activation checkpointing (recompute may be cheaper than holding cross-stage activations), and with expert layers, which want a different parallel axis. The right competency is to draw a schedule as a time-space diagram, compute bubble and peak memory for it, and pick the schedule for the model's depth and the cluster's link speeds.",
+              "learning_objectives": [
+                "Compute bubble fraction for GPipe and 1F1B schedules as a function of stages and micro-batches",
+                "Explain why pipeline parallelism tolerates slow interconnect while tensor parallelism does not",
+                "Describe 1F1B's activation-memory behaviour and why interleaving reduces the bubble",
+                "Split the backward pass into dgrad/wgrad and explain how bubbles can be filled",
+                "Design a 4D parallel layout (DP x TP x PP x EP) for a given model and cluster, and justify stage boundaries"
+              ],
+              "prerequisites_strict": [
+                "tensor-parallelism-sequence-parallelism",
+                "data-parallelism-zero-sharding"
+              ],
+              "prerequisites_recommended": [
+                "activation-checkpointing-memory-optimization",
+                "collective-communication-interconnects"
+              ],
+              "related_concepts": [
+                "expert-parallelism-moe-training",
+                "activation-checkpointing-memory-optimization",
+                "training-reliability-checkpointing-scheduling"
+              ],
+              "advanced_extensions": [
+                "Interleaved/V-schedule and virtual stages",
+                "Zero-bubble and mb-distillation schedules",
+                "Pipeline-aware gradient accumulation and loss scaling",
+                "Elastic/asynchronous pipeline parallelism",
+                "Intra-layer placement search combining TP/PP"
+              ],
+              "key_results_or_algorithms": [
+                "GPipe (microbatched pipeline, NeurIPS 2019)",
+                "PipeDream (OSDI 2019)",
+                "1F1B schedule",
+                "Megatron interleaved pipeline schedule",
+                "Zero-bubble / BDouble schedules",
+                "Model-FLOPs-utilisation accounting"
+              ],
+              "math_foundations": [
+                "Bubble ratio (p-1)/(m+p-1) for fill-then-drain schedules; throughput efficiency 1 minus that",
+                "Peak in-flight activations proportional to micro-batches simultaneously resident in forward stage",
+                "Time-space (Gantt) diagram reasoning for stage occupancy"
+              ],
+              "applications": [
+                "Training a 100+ layer model whose per-stage weights fit but whose total does not",
+                "Crossing slow Ethernet between nodes while keeping NVLink for TP",
+                "Explaining low throughput in a run with too few micro-batches for its stage count",
+                "Combining pipeline parallelism with selective activation recompute to fit long contexts"
+              ],
+              "common_misconceptions": [
+                "Pipeline parallelism adds devices for free: the bubble is a direct tax and only disappears with many micro-batches",
+                "More stages are always better: stage count raises scheduling and memory pressure and increases failure probability per step",
+                "1F1B is strictly better than GPipe: it lowers memory but its bubble and ordering constraints differ",
+                "Pipeline traffic is negligible: activations between stages can dwarf parameter traffic at large micro-batch and long sequence"
+              ],
+              "further_reading": [
+                {
+                  "title": "GPipe: Efficient Training of Giant Neural Networks using Pipeline Parallelism",
+                  "authors": "Yanping Huang et al.",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/1811.06965"
+                },
+                {
+                  "title": "PipeDream: Generalized Pipeline Parallelism for DNN Training",
+                  "authors": "Author list unverified",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Zero Bubble Pipeline Parallelism",
+                  "authors": "Shenggui Li et al.",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Llama 3 Herd of Models (pretraining infrastructure section)",
+                  "authors": "Meta AI",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2407.21783"
+                },
+                {
+                  "title": "CMU 10-714 Deep Learning Systems: distributed training",
+                  "authors": "Tianqi Chen",
+                  "year": 2023,
+                  "type": "course",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "expert-parallelism-moe-training",
+              "name": "Mixture-of-Experts and Expert Parallelism",
+              "difficulty": "expert",
+              "tags": [
+                "moe",
+                "routing",
+                "expert-parallelism",
+                "distributed-training"
+              ],
+              "definition": "Sparsely activated transformer layers in which a learned router sends each token to a few expert FFNs, and the parallelism strategy that distributes experts across devices with all-to-all token exchange.",
+              "explanation": "An MoE layer replaces one dense FFN with N experts and a gating network that picks top-k per token, so total parameters grow while FLOPs per token stay near dense-equivalent; this decouples capacity from compute cost and is the reason trillion-parameter-class models can be trained and served economically. The systems burden is routing. Tokens must be dispatched to whichever device holds their chosen expert and results returned, which is an all-to-all collective whose volume depends on sequence length, hidden size and k, and all-to-all is the least friendly traffic pattern for hierarchical fabrics - it crosses nodes, cannot be overlapped as easily as all-reduce, and is sensitive to load imbalance. Load balancing is therefore a first-class concern: routers exhibit rich-get-richer behaviour, so auxiliary load-balancing losses, expert dropout, capacity factors with token dropping, or bias-based no-aux-loss balancing (Switch, GShard, StoMEx-style) are used, and capacity-factor choices trade dropped tokens against wasted compute. Sharded MoE replicates experts across ranks so that all-to-all can be replaced by all-reduce at the cost of memory; expert-parallel MoE moves experts to their own device group, usually nested with tensor and data parallelism so that an EP group sits inside the DP group. Training stability adds subtleties: router logits need precision care, the auxiliary loss perturbs optimisation and scaling, and checkpointing must handle routed-state and non-deterministic token assignment for reproducibility. At inference, MoE makes memory-bandwidth accounting unusual, because only the activated experts' weights are read per token but batch composition changes which experts are hot, which interacts with expert offloading and with paged KV-cache scheduling. Sparsity also breaks dense-kernel assumptions: grouped/batched GEMM kernels and token permutation cost real time.",
+              "learning_objectives": [
+                "Compute parameters, FLOPs and communication for a top-k MoE layer and compare with a dense FFN of matched compute",
+                "Explain capacity factors, token dropping, and auxiliary load-balancing losses, with their trade-offs",
+                "Derive all-to-all traffic for expert parallelism and explain its sensitivity to imbalance and topology",
+                "Contrast sharded MoE with expert-parallel MoE in memory/communication terms",
+                "Analyse MoE inference cost: which experts' weights are read per token and how offloading changes latency"
+              ],
+              "prerequisites_strict": [
+                "tensor-parallelism-sequence-parallelism",
+                "pipeline-parallelism-schedules"
+              ],
+              "prerequisites_recommended": [
+                "transformer-architecture",
+                "collective-communication-interconnects",
+                "numerical-formats-mixed-precision"
+              ],
+              "related_concepts": [
+                "model-compression-for-inference",
+                "llm-serving-continuous-batching",
+                "kv-cache-paged-attention",
+                "accelerator-landscape-hardware-codesign"
+              ],
+              "advanced_extensions": [
+                "Grouped-GEMM and token-permutation kernels",
+                "Expert offloading and caching for inference",
+                "Aux-loss-free balancing with router bias updates",
+                "Fine-grained/shared-expert designs (DeepSeek-style)",
+                "MoE-specific reproducibility of routing decisions"
+              ],
+              "key_results_or_algorithms": [
+                "Switch Transformer (top-1 routing)",
+                "GShard (sharded experts, capacity factor)",
+                "Sparsely-Gated MoE (Shazeer)",
+                "Mixtral-style top-k routing",
+                "Load-balancing auxiliary loss",
+                "All-to-all dispatch/combine with grouped GEMM"
+              ],
+              "math_foundations": [
+                "Params grow linearly in expert count; per-token FLOPs grow with k, so capacity-to-compute decoupling is the point",
+                "All-to-all volume ~ tokens x hidden x bytes per dispatch and combine; imbalance changes worst-case stage time"
+              ],
+              "applications": [
+                "Training a large-capacity model under a fixed FLOP budget",
+                "Serving many specialised adapters/experts at low marginal compute",
+                "Diagnosing throughput collapse caused by one overloaded expert rank",
+                "Choosing k, expert count and capacity factor for a hardware target"
+              ],
+              "common_misconceptions": [
+                "MoE reduces training cost: it reduces compute per parameter, while total communication and memory for expert weights grow",
+                "Sparsity is free at inference: expert weights still occupy memory bandwidth and hot experts create tail latency",
+                "The router is a minor component: its precision, auxiliary loss and balancing directly affect quality and stability",
+                "Capacity factor only affects quality: dropped tokens silently change effective batch and gradient statistics"
+              ],
+              "further_reading": [
+                {
+                  "title": "Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity",
+                  "authors": "William Fedus, Barret Zoph, Noam Shazeer",
+                  "year": 2021,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2101.03961"
+                },
+                {
+                  "title": "GShard: Scaling Giant Models with Conditional Computation and Automatic Sharding",
+                  "authors": "Dmitry Lepikhin et al.",
+                  "year": 2020,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "MegaBlocks: Efficient Sparse Training with Mixture-of-Experts",
+                  "authors": "Trevor Gale, Deepak Narayanan, Chintan Shah, Mohammad Shoeybi, Matei Zaharia",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Mixtral of Experts",
+                  "authors": "Albert Q. Jiang et al.",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "collective-communication-interconnects",
+              "name": "Collective Communication and Interconnect Fabrics",
+              "difficulty": "expert",
+              "tags": [
+                "communication",
+                "allreduce",
+                "nvlink",
+                "infiniband",
+                "rdma"
+              ],
+              "definition": "The collective operations (all-reduce, reduce-scatter, all-gather, all-to-all, broadcast, barrier) that distributed training depends on, their algorithms, and the physical fabrics (NVLink, PCIe, InfiniBand, Ethernet with RDMA) that determine their cost.",
+              "explanation": "Synchronous data parallelism reduces to one primitive: every rank must obtain the sum of gradients. Naively that is a gather to rank 0 plus a broadcast, whose traffic concentrates on one node; ring all-reduce instead arranges ranks in a ring and performs reduce-scatter followed by all-gather, so each rank sends and receives about 2(n-1)/n times the gradient size regardless of n, which is bandwidth-optimal and is why it became the standard. Tree and double-binary-tree algorithms trade latency for bandwidth and win at large rank counts or when message sizes are small, and modern libraries such as NCCL choose algorithms per message size and topology. Reduce-scatter and all-gather are the constituent halves: ZeRO-2 leans on reduce-scatter, ZeRO-3/FSDP add all-gather of parameters each step, and MoE dispatch needs all-to-all, whose cost is dominated by the slowest link in the crossing pattern. On the hardware side, PCIe is host-attached and comparatively narrow; NVLink/NVSwitch give intra-node GPU-to-GPU bandwidth an order of magnitude higher; RDMA-capable fabrics (InfiniBand, RoCE/Ethernet) let GPUs read remote memory directly, bypassing the CPU, and GPUDirect RDMA extends that to NIC-to-GPU. Rail-optimised and multi-rail node designs, fat-tree/dragonfly-ish topologies, and congestion control determine whether the theoretical bisection is achieved. Performance is usually reported as bus bandwidth, but the real skill is algorithm design: overlap communication with computation by partitioning into buckets on separate streams, choose collective granularity, avoid global barriers where a dependency ordering suffices, and keep the traffic pattern inside the fast fabric whenever the parallelism axis allows. Network failures, slow links, and straggler ranks are also communication phenomena, and they show up as unexplained throughput loss long before any compute problem exists.",
+              "learning_objectives": [
+                "Derive per-rank communication volume for ring all-reduce, reduce-scatter and all-gather",
+                "Explain when tree algorithms beat ring and how message size and rank count change the crossover",
+                "Map each parallelism strategy to its collective pattern and required bandwidth",
+                "Compare NVLink, PCIe, InfiniBand and RoCE with RDMA/GPUDirect in bandwidth, latency and topology implications",
+                "Overlap collectives with compute using buckets and multiple streams, and measure the effect",
+                "Diagnose straggler and congestion effects in a multi-node job"
+              ],
+              "prerequisites_strict": [
+                "data-parallelism-zero-sharding"
+              ],
+              "prerequisites_recommended": [
+                "gpu-architecture-cuda-programming",
+                "pipeline-parallelism-schedules",
+                "expert-parallelism-moe-training"
+              ],
+              "related_concepts": [
+                "pipeline-parallelism-schedules",
+                "tensor-parallelism-sequence-parallelism",
+                "training-reliability-checkpointing-scheduling",
+                "roofline-model-performance-profiling"
+              ],
+              "advanced_extensions": [
+                "In-network computation and shuffling (NVSwitch SHARP)",
+                "Congestion control on Ethernet RDMA (PCC/ZTR-RTT)",
+                "Communication scheduling across DP groups (hierarchical all-reduce)",
+                "Topology-aware rank placement",
+                "Network-attached checkpointing and storage fabrics"
+              ],
+              "key_results_or_algorithms": [
+                "Ring all-reduce (reduce-scatter + all-gather)",
+                "Double binary tree all-reduce",
+                "NCCL algorithm/protocol selection",
+                "Horovod ring-allreduce integration",
+                "GPUDirect RDMA",
+                "Rail-optimised multi-NIC node design"
+              ],
+              "math_foundations": [
+                "alpha-beta cost model: time = alpha (latency) + size/beta (bandwidth); all-reduce ~ 2(n-1)/n x S per rank on a ring",
+                "Bisection bandwidth bounds the exchange volume between two halves of a cluster"
+              ],
+              "applications": [
+                "Sizing an interconnect before buying GPUs (FLOPs vs bytes per FLOP)",
+                "Placing TP groups on NVLink and PP/DP groups across the fabric",
+                "Explaining why a 400Gbps link still yields poor scaling with small messages",
+                "Making checkpoint save non-blocking by streaming over the network"
+              ],
+              "common_misconceptions": [
+                "All-reduce is a single fixed algorithm: libraries choose ring/tree/hierarchical by size and topology",
+                "Link bandwidth in Gbps is directly usable: protocol overhead, congestion, and small-message latency consume much of it",
+                "Communication always overlaps with compute: it does only if the schedule, streams and dependency order allow it",
+                "Network problems show up as errors: they usually show up as silently reduced throughput and one slow rank"
+              ],
+              "further_reading": [
+                {
+                  "title": "Bringing HPC Techniques to Deep Learning (ring all-reduce)",
+                  "authors": "Sergey Sergeev, Mike del Balso (Uber Engineering)",
+                  "year": 2018,
+                  "type": "blog",
+                  "url": null
+                },
+                {
+                  "title": "Horovod: fast and easy distributed deep learning in TensorFlow",
+                  "authors": "Alexander Sergeev, Mike Del Balso",
+                  "year": 2018,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "NCCL documentation and collective algorithm notes",
+                  "authors": "NVIDIA",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "MegaScale: Scaling Large Language Model Training to More Than 10,000 GPUs",
+                  "authors": "Author list unverified (ByteDance, NSDI 2024)",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "ML Systems (chapter on distributed training and communication)",
+                  "authors": "Crawfurd et al.",
+                  "year": null,
+                  "type": "book",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "activation-checkpointing-memory-optimization",
+              "name": "Activation Memory: Checkpointing, Recomputation and Offloading",
+              "difficulty": "advanced",
+              "tags": [
+                "memory",
+                "checkpointing",
+                "recomputation",
+                "training"
+              ],
+              "definition": "Techniques that reduce the dominant part of training memory - saved forward activations needed by backpropagation - through selective or full recomputation, CPU/NVMe offload, layout choices, and operator-level fusion.",
+              "explanation": "Backpropagation needs the forward intermediates of each layer, so activation memory grows with layers, batch size, sequence length and hidden width, and for long-context transformers it exceeds parameter and optimizer memory by a large margin. Activation checkpointing stores only the outputs of coarse boundaries and recomputes the discarded intermediates during the backward pass, converting one extra forward pass into roughly a third more total compute and turning activation memory from linear in depth into sublinear. That trade is only sometimes worth it: recomputation costs real FLOPs, so the standard menu is full, selective (recompute only the cheap-but-large things like attention softmax statistics), per-layer granularity, and the Megatron-style combination of tensor-sequence parallelism plus selective recompute that recovers most of the memory without paying a full extra forward. Offloading moves activations, weights, or optimizer state to CPU RAM and even NVMe (ZeRO-Offload/Infinity), which increases capacity at the price of PCIe bandwidth and synchronisation - and offload is often better justified as a way to buy batch size than as a throughput win. Layout and fusion matter more than people expect: contiguous tensor layouts, avoiding duplicated copies in residual paths, in-place ops where autograd permits, and IO-aware kernels such as FlashAttention that never materialise the L x L matrix, which is the single biggest long-context memory saving available. Gradient accumulation reduces the number of synchronisation-required samples rather than memory, but enables larger effective batch at fixed activation cost per micro-batch. The competent practitioner builds a memory budget table (weights, gradients, optimizer, activations, workspace/allocator fragmentation, communication buffers), measures peak rather than estimating from theory, and understands that allocator fragmentation and caching pools can make a job OOM at a memory level below the theoretical limit.",
+              "learning_objectives": [
+                "Estimate activation memory per transformer layer analytically and verify it by measurement",
+                "Derive the compute overhead of full versus selective activation checkpointing",
+                "Explain how tensor-sequence parallelism and FlashAttention reduce activation footprint, and what they do not reduce",
+                "Decide between recompute, offload, and additional parallelism for a memory-constrained run",
+                "Account for allocator fragmentation, workspace buffers and communication buffers in a peak-memory budget"
+              ],
+              "prerequisites_strict": [
+                "backpropagation",
+                "data-parallelism-zero-sharding"
+              ],
+              "prerequisites_recommended": [
+                "tensor-parallelism-sequence-parallelism",
+                "numerical-formats-mixed-precision",
+                "gpu-architecture-cuda-programming"
+              ],
+              "related_concepts": [
+                "tensor-parallelism-sequence-parallelism",
+                "pipeline-parallelism-schedules",
+                "kv-cache-paged-attention",
+                "numerical-formats-mixed-precision"
+              ],
+              "advanced_extensions": [
+                "Sublinear attention memory via blockwise recomputation",
+                "Randomised/checkpoint-based gradient schemes",
+                "CPU/NVMe paging with prefetch schedulers",
+                "Memory-efficient optimizers (8-bit, blockwise, sparse)",
+                "Deterministic recompute for reproducibility"
+              ],
+              "key_results_or_algorithms": [
+                "Gradient checkpointing / activation recomputation",
+                "Selective recomputation (attention, layernorm)",
+                "Megatron combined recompute schedule",
+                "ZeRO-Offload and ZeRO-Infinity",
+                "FlashAttention memory profile O(L) not O(L^2)",
+                "Paged KV cache (inference analogue)"
+              ],
+              "math_foundations": [
+                "Activation memory for a transformer layer is O(b L h) for stored tensors plus attention terms; recompute changes depth-dependence from O(d) to O(sqrt(d)) or O(1) per boundary",
+                "Extra forward pass ~ +1/3 total FLOPs for a forward:backward:recompute accounting of 1:2:1"
+              ],
+              "applications": [
+                "Fitting longer context on the same hardware",
+                "Enabling larger micro-batches to improve tensor-core utilisation",
+                "Recovering from OOM caused by attention materialisation",
+                "Trading bandwidth-bound offload for capacity on constrained nodes"
+              ],
+              "common_misconceptions": [
+                "Checkpointing is free: it is a real FLOPs tax that can lower model-FLOPs-utilisation if communication is already the limit",
+                "Model parameters determine memory footprint: for long sequences activations dominate",
+                "Gradient accumulation reduces activation memory: it changes effective batch, not per-micro-batch activation cost",
+                "The theoretical peak-memory number is what the allocator needs: fragmentation and cached pools add real overhead"
+              ],
+              "further_reading": [
+                {
+                  "title": "Training Deep Nets with Sublinear Memory Cost",
+                  "authors": "Tianqi Chen, Bing Xu, Chanyang Zhang, Carlos Guestrin",
+                  "year": 2016,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Reducing Activation Recomputation in Large Transformer Models",
+                  "authors": "Vijay Anand Korthikanti, Jared Casper, Sangkug Lym, Lawrence McAfee, Michael Andersch, Mohammad Shoeybi, Bryan Catanzaro",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2205.05198"
+                },
+                {
+                  "title": "ZeRO-Infinity: Breaking the GPU Memory Wall for Extreme Scale Deep Learning",
+                  "authors": "Olatunji Ruwase, Samyam Rajbhandari et al.",
+                  "year": 2021,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "PyTorch activation checkpointing API documentation",
+                  "authors": "PyTorch team",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "CMU 10-714 Deep Learning Systems",
+                  "authors": "Tianqi Chen",
+                  "year": 2023,
+                  "type": "course",
+                  "url": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "training-reliability-and-clusters",
+          "name": "Long-Run Reliability, Checkpointing and Cluster Scheduling",
+          "summary": "Multi-week jobs on thousands of accelerators fail routinely; the systems question is how to keep goodput high through checkpointing strategy, failure detection and recovery, deterministic restarts, and schedulers that allocate whole jobs efficiently.",
+          "topics": [
+            {
+              "slug": "training-reliability-checkpointing-scheduling",
+              "name": "Long-Run Training Reliability, Checkpointing and Cluster Scheduling",
+              "difficulty": "expert",
+              "tags": [
+                "reliability",
+                "checkpointing",
+                "fault-tolerance",
+                "scheduling",
+                "reproducibility"
+              ],
+              "definition": "The engineering that keeps a multi-week, thousands-of-accelerators job making progress: fault detection and recovery, checkpoint frequency and format, restart determinism, training-forensics of loss spikes, and cluster scheduling that maximises useful throughput.",
+              "explanation": "At frontier scale, hardware failure is not an exception but the operating condition. With a per-device mean-time-to-failure of weeks, a 2000-GPU job experiences interruptions every few hours, so the run must be planned around them: state saved frequently, recovery automated, and lost steps bounded. Checkpointing strategy is an economic calculation - checkpoint interval trades lost work against time spent writing (and the storage bandwidth it consumes), so asynchronous, sharded and incremental checkpoint formats, in-memory staging, and network-attached checkpointing exist precisely to make writes cheap enough to checkpoint often. A checkpoint must carry not only parameters and optimizer state but RNG state, data-loader position, scheduler state and the exact iteration boundary, otherwise restarting produces a job that is statistically different from the one that would have continued; reproducibility demands the same determinism controls (fixed kernel reduction order, seeded data shuffling, logged config and code revision). Loss spikes are a different failure class: data ordering, a bad batch, precision changes, optimizer hyperparameters, or a transient hardware fault can all cause them, and forensics means reconstructing per-rank step statistics, gradient norms, per-layer activation statistics, loss contributions per data shard, and comparing against a deterministic rerun of the affected window. Llama-3-class reports describe detecting, quarantining and mitigating spikes with data-order and hyperparameter changes over a months-long run, and this is a normal part of large runs rather than an anomaly. Cluster scheduling then determines whether the machine is used: gang scheduling with backfill, topology-aware placement to keep jobs on the fewest rails, pre-emption policies, priority and fair-share, and utilisation accounting (jobs held for a maintenance window, straggler nodes, or an over-subscribed interconnect waste real money). Goodput - useful training throughput after failure and recovery cost - is the metric that ties all of it together, and the honest framing is that reliability engineering is a compute-efficiency discipline, not a nicety. ML jobs are not like web services: they request hundreds or thousands of devices that must start together, hold specific network adjacency, and cannot be served from a partial allocation. That breaks ordinary schedulers. Gang scheduling and all-or-nothing placement guarantee that a job runs only when its full allocation exists, which prevents deadlock but invites fragmentation; backfill and priority tiers let small jobs slip between large reservations while protecting the frontier job's progress. Topology matters economically because two jobs placed on the same rails and switches can saturate a shared uplink, so good schedulers and good ML engineers reason about rack/rail locality, not just device counts. Pre-emption and spot-style allocation reduce cost when checkpointing and recovery are trustworthy, and their viability is entirely a function of how expensive restart is - which links scheduling back to the checkpoint topic. Utilisation must be reported as goodput: fraction of allocated device-hours actually making forward progress, excluding time lost to failures, restarts, data loading starvation, and comm-bound underutilisation; a cluster at 100% allocation can be at 55% goodput and the remedy differs completely depending on which loss dominates. Related practical concerns are storage and data-loading as schedulable resources (a job starved by a cold dataset is a scheduling failure), multi-tenancy fairness across research versus production queues, and the feedback loop in which cost per run determines which parallelism layout is chosen. Measurement infrastructure - per-job telemetry, per-node health metrics, and cost attribution to projects - is part of the systems work, not an afterthought.",
+              "learning_objectives": [
+                "Compute expected interruption frequency from device MTTF and job size, and choose a checkpoint interval from lost-work vs write-cost",
+                "Enumerate everything a restart-complete checkpoint must contain, including RNG, dataloader and scheduler state",
+                "Design a restart-determinism policy and explain why bitwise reproducibility is often traded for statistical reproducibility",
+                "Run loss-spike forensics: gradient norms, per-rank and per-shard statistics, and controlled rerun of an affected window",
+                "Explain gang scheduling, topology-aware placement, and goodput, and identify straggler sources in a cluster",
+                "Explain gang scheduling, backfill, priority and pre-emption and their effects on fragmentation",
+                "Define and measure goodput for a cluster and attribute losses to failures, starvation, or communication bounds",
+                "Reason about topology-aware placement and why device count alone is an insufficient allocation request",
+                "Evaluate spot/pre-emptible capacity given a job's checkpoint-and-restart cost",
+                "Attribute cost per training run and connect it to parallelism-layout choices"
+              ],
+              "prerequisites_strict": [
+                "data-parallelism-zero-sharding",
+                "pipeline-parallelism-schedules",
+                "collective-communication-interconnects"
+              ],
+              "prerequisites_recommended": [
+                "numerical-formats-mixed-precision",
+                "model-selection-validation",
+                "experiment-tracking-reproducibility"
+              ],
+              "related_concepts": [
+                "experiment-tracking-reproducibility",
+                "ml-lifecycle-technical-debt",
+                "activation-checkpointing-memory-optimization",
+                "ml-data-pipelines-quality"
+              ],
+              "advanced_extensions": [
+                "Asynchronous and incremental checkpoint formats",
+                "In-memory and network-attached checkpointing",
+                "Hot-spare and elastic reconfiguration after node loss",
+                "Real-time telemetry and proactive failure prediction (ECC/link errors)",
+                "Goodput-aware and pre-emptive scheduling (Borg/Apollo-style policies)",
+                "Co-adaptive scheduling of batch size and resources (Pollux-style)",
+                "Heterogeneous and mixed-generation fleets",
+                "Elastic/resizeable training",
+                "Power and thermal capping as a scheduling constraint",
+                "Multi-cluster and geo-distributed placement"
+              ],
+              "key_results_or_algorithms": [
+                "Checkpoint-interval optimisation",
+                "Async/sharded checkpoint save/load",
+                "Health-check and canary steps after restart",
+                "Gradient-norm-based spike detection and quarantine",
+                "Deterministic rerun of a data window",
+                "Gang scheduling with backfill; topology-aware placement",
+                "Borg-style hierarchical scheduling",
+                "Gang/all-or-nothing placement",
+                "Backfill with priority tiers",
+                "Topology-aware placement",
+                "Goodput/utilisation accounting",
+                "Checkpoint-cost-aware pre-emption"
+              ],
+              "math_foundations": [
+                "If per-device MTTF is T and the job uses N devices, interruption rate is approximately N/T for independent failures",
+                "Expected lost work per interruption ~ (interval/2) plus recovery time; total cost is minimised when the marginal write cost equals the marginal lost-work saving",
+                "Utilisation = useful device-hours / requested device-hours; goodput further discounts by failed work",
+                "Scheduling with all-or-nothing demands is a bin-packing/fragmentation problem"
+              ],
+              "applications": [
+                "Planning a 30-day pretraining run across 1000+ accelerators",
+                "Deciding checkpoint frequency for a job with expensive optimizer state",
+                "Investigating whether a divergence is data-, numerics- or hardware-caused",
+                "Reporting cluster utilisation and goodput to justify additional hardware"
+              ],
+              "common_misconceptions": [
+                "A checkpoint of parameters is enough: without RNG, data position and scheduler state, the resumed run is a different run",
+                "Fault tolerance means automatic retry: without determinism and validated restarts, retries silently corrupt results",
+                "Loss spikes are data bugs: they can also come from numerics, hyperparameters, or a degrading device",
+                "Cluster utilisation equals GPU-hours allocated: idle allocated GPUs and stragglers mean allocated is not the same as useful",
+                "Reproducibility is achievable bitwise at large scale in practice (usually only statistical reproducibility is; treat exactness as an aspiration)",
+                "Allocated GPUs equals used GPUs: idle-but-allocated capacity is the commonest hidden waste",
+                "Higher packing density is always better: co-located jobs can destroy each other's network performance"
+              ],
+              "further_reading": [
+                {
+                  "title": "The Llama 3 Herd of Models (pretraining stability, restarts and infrastructure sections)",
+                  "authors": "Meta AI (Dubey et al.)",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2407.21783"
+                },
+                {
+                  "title": "MegaScale: Scaling Large Language Model Training to More Than 10,000 GPUs",
+                  "authors": "Author list unverified (ByteDance, NSDI 2024)",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "PaLM: Scaling Language Modeling with Pathways (training infrastructure and reliability discussion)",
+                  "authors": "Aakanksha Chowdhery et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2204.02311"
+                },
+                {
+                  "title": "Apollo: Scalable and Coordinated Scheduling for Cloud-Scale Computing",
+                  "authors": "Alexey Tumanov et al.",
+                  "year": 2021,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "An Empirical Study of Loss Spikes During Scalable Large Transformer Model Training",
+                  "authors": "Author list unverified",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "ML Systems",
+                  "authors": "Crawfurd et al.",
+                  "year": null,
+                  "type": "book",
+                  "url": null
+                },
+                {
+                  "title": "Large-scale cluster management at Google with Borg",
+                  "authors": "Abhishek Verma et al.",
+                  "year": 2015,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "ML Systems (Crawfurd et al.) - cluster operation and cost chapters",
+                  "authors": "Crawfurd et al.",
+                  "year": null,
+                  "type": "book",
+                  "url": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "inference-systems",
+      "name": "Inference Systems",
+      "summary": "Serving a trained model is a distinct engineering discipline: autoregressive decoding has a per-token sequential dependency, its cost is dominated by moving weights and KV cache rather than by arithmetic, and user-facing latency targets collide with the batching that makes hardware economical. This domain covers serving architecture and scheduling, memory management, decoding acceleration, compression and portability, and the retrieval indexes that surround modern LLM applications.",
+      "subdomains": [
+        {
+          "slug": "llm-serving-engine",
+          "name": "LLM Serving Architecture and Scheduling",
+          "summary": "Request scheduling, KV-cache memory management, phase disaggregation and decoding acceleration: the mechanisms that determine throughput, tail latency and cost per token.",
+          "topics": [
+            {
+              "slug": "llm-serving-continuous-batching",
+              "name": "Continuous Batching, SLOs and Serving Economics",
+              "difficulty": "advanced",
+              "tags": [
+                "serving",
+                "batching",
+                "latency",
+                "cost",
+                "systems"
+              ],
+              "definition": "Serving an LLM by admitting and retiring requests at the granularity of a single decode iteration (iteration-level or continuous batching), together with the latency/service objectives and cost model that determine how a serving fleet should be configured.",
+              "explanation": "Static batching, where a fixed set of requests runs to a fixed length, wastes most of the machine because generated lengths vary wildly: slots stay reserved after a request has finished, and the batch cannot change until the whole group ends. Orca introduced iteration-level scheduling: the engine runs one decode step at a time and rebuilds the batch after every step, so finished requests release their slots immediately and new requests join mid-flight, with selective batching applying the same attention computation to differently-sized per-request state. Effective batch size is what makes bandwidth-bound decode economical - throughput scales almost linearly with tokens per step while per-token weight traffic stays fixed - so continuous batching routinely yields several-fold capacity gains at the same latency. Latency must be decomposed to be managed: time to first token is governed by prefill work and queueing, time between tokens by decode step time plus scheduling delay, and end-to-end by total generated tokens; an SLO is usually a joint constraint (TTFT and TPOT percentiles), and the right objective is goodput, the throughput of requests that actually satisfy the SLO rather than raw tokens per second. Queueing intuition applies directly: as utilisation approaches one, waiting time explodes, so fleets are provisioned with headroom and autoscaled on queue depth rather than on average utilisation, and priority classes (interactive versus batch) let low-prefill work be deferred. Chunked prefill and decode co-scheduling, described in the disaggregation topic, is the main tool for keeping a decode-heavy batch fed without violating TTFT. Serving many fine-tuned variants multiplies the problem, which is why multi-LoRA engines batch a base model with many adapters rather than replicating servers per adapter. Finally, economics: cost per million tokens is (device hourly cost x number of devices) divided by accepted tokens per hour, and energy per token follows the same shape, so the decisions above are all cost decisions; reporting throughput without the accompanying latency percentiles and batch configuration is not a defensible benchmark.",
+              "learning_objectives": [
+                "Explain why static batching wastes capacity and how iteration-level scheduling recovers it",
+                "Define TTFT, TPOT/time-between-tokens and end-to-end latency, and state which workload phases affect each",
+                "Compute goodput for a configuration given an SLO, and contrast it with unconditioned throughput",
+                "Reason about utilisation, queueing delay and autoscaling signals for a serving fleet",
+                "Derive cost per million generated tokens and energy per token from device price, count and measured throughput",
+                "Explain multi-LoRA batching and why per-adapter replicas are inefficient"
+              ],
+              "prerequisites_strict": [
+                "kv-cache-paged-attention"
+              ],
+              "prerequisites_recommended": [
+                "roofline-model-performance-profiling",
+                "transformer-architecture",
+                "gpu-architecture-cuda-programming"
+              ],
+              "related_concepts": [
+                "prefill-decode-disaggregation",
+                "speculative-decoding",
+                "model-compression-for-inference",
+                "ml-deployment-rollout-monitoring"
+              ],
+              "advanced_extensions": [
+                "Priority, fairness and anti-starvation policies (FCFS/LCFS/SFMT variants)",
+                "Preemption by swap versus recompute under memory pressure",
+                "Predicted-length scheduling and its effect on tail latency",
+                "Autoscaling with model-load cold starts",
+                "Request-level tracing and per-span observability"
+              ],
+              "key_results_or_algorithms": [
+                "Orca iteration-level scheduling (OSDI 2022)",
+                "Selective batching for attention",
+                "Continuous batching in vLLM/TGI/SGLang/TensorRT-LLM",
+                "Goodput optimisation under TTFT/TPOT constraints",
+                "LCFS-with-prefix-reuse cache policies",
+                "Chunked-prefill co-scheduling"
+              ],
+              "math_foundations": [
+                "Decode step time ~ max(weights bytes / bandwidth, FLOPs / peak) per token, summed over layers; batch increases arithmetic per byte read",
+                "Little's law: concurrent requests = arrival rate x latency, which fixes the batch size a fleet must sustain",
+                "Queueing growth: waiting time rises sharply as utilisation approaches 1"
+              ],
+              "applications": [
+                "Configuring a chat API fleet to a p95 TTFT budget",
+                "Choosing replica count and parallelism for a target tokens-per-second-per-dollar",
+                "Serving thousands of tenant-specific adapters on shared GPUs",
+                "Benchmarking engines honestly at matched latency percentiles"
+              ],
+              "common_misconceptions": [
+                "Throughput numbers are comparable across engines: they are only comparable at the same SLO, batch, sequence lengths and precision",
+                "Bigger batches always help: KV-cache pressure, per-step latency and tail latency eventually cap useful batch",
+                "Latency is one number: TTFT and inter-token latency have different causes and different fixes",
+                "Utilisation at 100% is the goal: it destroys the latency SLO and leaves no room for failure capacity"
+              ],
+              "further_reading": [
+                {
+                  "title": "Orca: A Distributed Serving System for Transformer-Based Generative Models",
+                  "authors": "Gyeong-In Yu et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Efficiently Scaling Transformer Inference",
+                  "authors": "Reiner Pope, Sholto Douglas, Aakanksha Chowdhery et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "S-LoRA: Serving Thousands of Concurrent LoRA Adapters",
+                  "authors": "Ying Sheng et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2311.03285"
+                },
+                {
+                  "title": "Site Reliability Engineering (SLOs, error budgets)",
+                  "authors": "Betsy Beyer, Niall Richard Murphy et al. (Google SRE)",
+                  "year": 2016,
+                  "type": "book",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "kv-cache-paged-attention",
+              "name": "KV Cache Management and PagedAttention",
+              "difficulty": "advanced",
+              "tags": [
+                "kv-cache",
+                "vllm",
+                "memory",
+                "serving"
+              ],
+              "definition": "Management of the key/value tensors cached during autoregressive decoding, whose size grows with batch and context length, and the paging abstraction that stores them in fixed-size blocks with an indirection table to eliminate fragmentation.",
+              "explanation": "Autoregressive decoding reuses every previous token's key and value vectors, so the cache is not an optional memoisation but exact computation state whose footprint is roughly 2 x layers x kv_heads x head_dim x sequence_length x bytes x requests. That quantity grows linearly in both batch and context, is reserved per request, and quickly exceeds the memory needed for the weights, which is what caps concurrent requests. Conventional engines allocate a contiguous buffer per request sized by a maximum length, so most reserved memory is unusable padding and external fragmentation limits the batch; PagedAttention (vLLM, SOSP 2023) instead stores KV in fixed-size blocks (e.g. 16 tokens) and gives each request a block table mapping logical position to physical block, exactly like virtual memory. That makes allocation grow with actual generated length, enables sharing of blocks between sequences - most valuably for common prompt prefixes, where reference counting plus copy-on-write allows one cached prefill to serve many requests - and lets the scheduler decide admission based on blocks available rather than worst-case length. Prefix caching generalises this to a radix/tree-structured cache across requests, which is the main reason applications with long shared system prompts, multi-turn conversations or agent loops see first-token latency and cost drop dramatically. The cost of paging is indirection: attention kernels must gather non-contiguous blocks, so block size, layout and kernel design matter, and the paged form is what makes many attention kernels engine-specific. Cache pressure is relieved by several orthogonal levers: quantising KV to fp8 or int4, sliding-window and local-global attention patterns with sink tokens, eviction or summarisation of old context, and offload of cold blocks to CPU DRAM or SSD, which becomes the central resource in disaggregated and cache-centric serving architectures. The engineering competency is arithmetic: predict KV bytes for a given model and context, compare to available HBM, and know which lever (paging, quantisation, eviction, offload, or more replicas) buys what.",
+              "learning_objectives": [
+                "Compute KV-cache bytes per token for a model with grouped-query attention, and per request at a target context length",
+                "Explain internal/external fragmentation under per-request contiguous allocation and how block tables remove it",
+                "Describe prefix caching, reference counting and copy-on-write sharing across requests",
+                "Analyse KV quantisation, sliding-window/eviction, and CPU/SSD offload in terms of capacity, latency and accuracy",
+                "Relate KV memory to maximum concurrent batch size and to admission/backpressure policy"
+              ],
+              "prerequisites_strict": [
+                "attention-mechanisms"
+              ],
+              "prerequisites_recommended": [
+                "llm-serving-continuous-batching",
+                "gpu-architecture-cuda-programming",
+                "numerical-formats-mixed-precision"
+              ],
+              "related_concepts": [
+                "llm-serving-continuous-batching",
+                "prefill-decode-disaggregation",
+                "speculative-decoding",
+                "model-compression-for-inference",
+                "ann-vector-search-indexes"
+              ],
+              "advanced_extensions": [
+                "RadixAttention-style tree prefix caches with eviction",
+                "KV cache transfer between prefill and decode pools over RDMA",
+                "Multi-turn and agentic cache reuse scheduling",
+                "Cache-aware load balancing across replicas",
+                "Linear-attention and state-space models that shrink or remove KV state"
+              ],
+              "key_results_or_algorithms": [
+                "PagedAttention block tables (vLLM)",
+                "Prefix/prompt caching with content hashing",
+                "Block-granular attention kernels (FlashAttention-style with paging)",
+                "Grouped-query and multi-query attention KV reduction",
+                "Token-eviction heuristics (H2O, StreamingLLM attention sinks)",
+                "KV quantisation (fp8/int4, per-channel)"
+              ],
+              "math_foundations": [
+                "KV bytes per token = 2 x layers x kv_heads x head_dim x bytes; multiply by context and requests for the footprint",
+                "GQA/MQA reduce the kv_heads factor, trading quality for memory and bandwidth"
+              ],
+              "applications": [
+                "Raising concurrency on the same GPU and cutting cost per token",
+                "Serving 128K-token contexts where KV dominates memory",
+                "Serving agent workloads with repeated prefixes cheaply",
+                "Diagnosing out-of-memory or throughput collapse caused by cache fragmentation"
+              ],
+              "common_misconceptions": [
+                "The KV cache is a cache in the discardable sense: it is exact decoder state and cannot simply be dropped",
+                "Long context costs mainly prefill time: resident KV memory is often the binding constraint",
+                "Paging is free: kernels pay for indirection, and block size is a real tuning parameter",
+                "Prefix sharing means storing one copy forever: it needs eviction, refcounts and invalidation on model or prompt change"
+              ],
+              "further_reading": [
+                {
+                  "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+                  "authors": "Woosuk Kwon, Zhuohan Li, Siyuan Feng et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "SGLang: Efficient Execution of Structured Language Model Programs",
+                  "authors": "Lianmin Zheng et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving",
+                  "authors": "Ruoyu Qin et al.",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2407.00079"
+                },
+                {
+                  "title": "vLLM documentation and design docs",
+                  "authors": "vLLM project",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "prefill-decode-disaggregation",
+              "name": "Prefill/Decode Disaggregation and Phase-Aware Scheduling",
+              "difficulty": "expert",
+              "tags": [
+                "serving",
+                "disaggregation",
+                "scheduling",
+                "systems"
+              ],
+              "definition": "Running the prompt-processing (prefill) phase and the token-generation (decode) phase on separate pools of accelerators, with independent parallelism, placement and scheduling for each, rather than interleaving both phases in one engine.",
+              "explanation": "Prefill processes the whole prompt in one large, essentially compute-bound pass and produces the initial KV cache; decode then emits tokens one at a time, reading weights and growing KV, and is bandwidth-bound. Colocating them creates mutual interference: a long prefill blocks the decode steps of everyone sharing that replica, so inter-token latency spikes for already-started requests, and the two phases want different batch sizes, precisions, tensor-parallel degrees and even different hardware. Disaggregation - separating prefill and decode pools, transferring the KV cache between them - lets each pool be optimised for its own roofline and its own SLO term, and DistServe framed the objective precisely as goodput maximisation under TTFT and TPOT constraints, showing substantial capacity gains over colocated scheduling. Production systems such as Mooncake push the design further into a KV-cache-centric architecture that pools CPU DRAM, SSD and RDMA fabric as a shared cache tier, using cross-request reuse plus cache-aware scheduling to raise effective capacity. The costs are real and worth knowing: KV transfer volume grows with prompt length, layers and precision, so a slow or congested fabric turns migration into the bottleneck; the scheduler must place prefill so that its output lands where decode capacity and prefix reuse agree; and the two pools must be sized and autoscaled jointly, which is harder than scaling one homogeneous pool. The alternative to disaggregation keeps phases colocated but makes them mixable: chunked prefill splits a long prompt into blocks and interleaves them with decode steps in the same batch, which recovers much of the tail-latency problem with none of the migration cost - the honest framing is that chunked prefill is a scheduling fix while disaggregation is a placement fix, and both address the same asymmetry. Multi-adapter serving, request migration for preemption, and speculative decoding all interact with these choices, so a serving stack should be evaluated as a system rather than a pile of optimisations.",
+              "learning_objectives": [
+                "Explain the compute-versus-bandwidth asymmetry between prefill and decode and its scheduling consequences",
+                "Define goodput under TTFT/TPOT constraints and describe how phase separation maximises it",
+                "Estimate KV-cache migration volume for a prompt and evaluate whether the fabric can afford it",
+                "Contrast chunked prefill (co-scheduling) with disaggregation (separation) and state when each is preferable",
+                "Describe how prefill and decode pools are sized, parallelised and autoscaled independently"
+              ],
+              "prerequisites_strict": [
+                "llm-serving-continuous-batching",
+                "kv-cache-paged-attention"
+              ],
+              "prerequisites_recommended": [
+                "roofline-model-performance-profiling",
+                "collective-communication-interconnects"
+              ],
+              "related_concepts": [
+                "speculative-decoding",
+                "model-compression-for-inference",
+                "collective-communication-interconnects",
+                "ml-lifecycle-technical-debt"
+              ],
+              "advanced_extensions": [
+                "Heterogeneous pools (large-memory decode nodes, high-FLOPs prefill nodes)",
+                "KV-cache tiering and cache-aware routing",
+                "Prefill-aware parallelism search per phase",
+                "Spot/pre-emptible decode capacity with migration",
+                "Disaggregation for multimodal encoders and MoE models"
+              ],
+              "key_results_or_algorithms": [
+                "DistServe prefill/decode separation with goodput optimisation",
+                "Mooncake KVCache-centric disaggregated serving",
+                "Sarathi-style chunked prefill with decode co-scheduling",
+                "Splitwise phase-split cost analysis",
+                "Cache-aware and locality-aware request routing"
+              ],
+              "math_foundations": [
+                "Prefill FLOPs scale with prompt length times model width in one pass; decode cost per token is dominated by weight and KV bytes read",
+                "Migration time = KV bytes / effective link bandwidth, which must be small relative to the TTFT budget"
+              ],
+              "applications": [
+                "Removing inter-token latency spikes caused by long-prompt arrivals",
+                "Buying different hardware for prefill-heavy retrieval workloads versus generation-heavy ones",
+                "Reusing a shared KV tier across replicas for long system prompts",
+                "Explaining why a decode-only batch of one token per step under-uses a GPU"
+              ],
+              "common_misconceptions": [
+                "Disaggregation is always better: migration and pool-sizing complexity can outweigh the latency win, especially for short prompts",
+                "Chunked prefill solves the same problem as disaggregation: it mitigates interference but cannot change hardware or parallelism per phase",
+                "KV transfer is cheap: at long context and high concurrency it competes directly with training traffic for fabric bandwidth",
+                "Two pools means two independent scaling problems: they must be balanced or one starves the other"
+              ],
+              "further_reading": [
+                {
+                  "title": "DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving",
+                  "authors": "Yinmin Zhong et al.",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2401.09670"
+                },
+                {
+                  "title": "Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving",
+                  "authors": "Ruoyu Qin et al.",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2407.00079"
+                },
+                {
+                  "title": "Sarathi: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills",
+                  "authors": "Author list unverified",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Splitwise: Efficient Generative LLM Inference Using Phase Splitting",
+                  "authors": "Author list unverified",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "speculative-decoding",
+              "name": "Speculative Decoding and Decoding-Time Acceleration",
+              "difficulty": "advanced",
+              "tags": [
+                "decoding",
+                "latency",
+                "inference",
+                "systems"
+              ],
+              "definition": "Generating several candidate tokens cheaply with a draft mechanism and verifying them in one pass of the target model, accepting the longest prefix that passes and thereby converting sequential decode steps into parallel verification.",
+              "explanation": "Decode latency is bound by the sequential dependency between tokens and by weight reads rather than arithmetic, which means a target model can score several candidate tokens in the time it takes to produce one - the free capacity that speculative decoding exploits. A draft source proposes gamma tokens; the target model evaluates them in a single forward pass; the standard algorithm (Leviathan et al.; independently Chen et al.) accepts each token while the target agrees, and on the first disagreement samples from the renormalised residual distribution, which provably leaves the output distribution exactly equal to the target model's - an important point, since the goal is faster sampling, not a cheaper approximation of it. Expected speed-up is governed by the acceptance rate alpha and draft cost: with per-token acceptance probability alpha, the expected accepted length is (1 - alpha^(gamma+1))/(1 - alpha), so a cheap but poorly aligned drafter or a gamma chosen too large both fail to help, and a drafter that is expensive relative to the target can make things worse. Draft sources include a smaller model from the same family, self-drafting heads trained on the target (Medusa's multiple decoding heads; EAGLE's feature-level autoregressive drafting), static n-gram or prompt-lookup drafting that costs nothing at inference time, and multi-token prediction objectives trained into the model itself; tree or multi-candidate verification lets one pass check several draft continuations at once. The interaction with batching is the crucial operational subtlety: at high batch, verification is no longer free because the machine is already compute-saturated and the extra tokens consume real FLOPs, so speculative decoding typically improves single-stream latency and hurts aggregate throughput unless the acceptance rate is high and the batch modest. Adjacent latency tricks share the same analysis: CUDA graphs and kernel fusion to remove launch overhead at decode, FlashDecoding-style parallelisation over KV length, early exit or layer skipping (approximate, not exact), and quantisation of weights to reduce bytes read per step.",
+              "learning_objectives": [
+                "Derive expected tokens per target pass from acceptance rate and gamma, and state the cost model that yields net speed-up",
+                "Explain the rejection-sampling correction that makes speculative sampling distribution-preserving",
+                "Compare draft sources (small model, self-drafting heads, n-gram lookup, multi-token prediction) on quality, memory and alignment",
+                "Explain why speculative decoding's benefit shrinks as batch size grows",
+                "Combine speculative decoding with CUDA graphs, fused kernels and KV-parallel decoding in a latency budget"
+              ],
+              "prerequisites_strict": [
+                "llm-serving-continuous-batching"
+              ],
+              "prerequisites_recommended": [
+                "kv-cache-paged-attention",
+                "roofline-model-performance-profiling",
+                "tokenization"
+              ],
+              "related_concepts": [
+                "kv-cache-paged-attention",
+                "model-compression-for-inference",
+                "prefill-decode-disaggregation",
+                "llm-application-engineering"
+              ],
+              "advanced_extensions": [
+                "Tree/multi-candidate attention masks for parallel verification",
+                "Adaptive gamma based on runtime acceptance",
+                "Speculative execution for structured/constrained decoding",
+                "Draft model training with target-distilled data",
+                "Early-exit and dynamic-depth inference as approximate alternatives"
+              ],
+              "key_results_or_algorithms": [
+                "Speculative decoding/sampling (Leviathan et al., ICML 2023)",
+                "Chen et al. speculative sampling variant",
+                "Blockwise parallel decoding",
+                "Medusa decoding heads",
+                "EAGLE feature-level drafting",
+                "Prompt/n-gram lookup drafting",
+                "CUDA graphs and FlashDecoding"
+              ],
+              "math_foundations": [
+                "E[tokens per pass] = (1 - alpha^(gamma+1))/(1 - alpha) for geometric acceptance with rate alpha",
+                "Net speed-up = expected accepted tokens / (1 + gamma x draft_cost/target_cost), so draft cost must be genuinely small",
+                "Distribution preservation via residual renormalised sampling: p_accept = min(1, q_t(x)/q_d(x))"
+              ],
+              "applications": [
+                "Cutting interactive latency for code generation and agents without changing model quality",
+                "Reducing time-to-last-token for long structured outputs",
+                "Deciding whether speculation is worthwhile at a given batch size and hardware",
+                "Combining prefix lookup drafting with cached prompts in agentic loops"
+              ],
+              "common_misconceptions": [
+                "Speculative decoding is approximate: the standard acceptance rule is exact, though naive accept-if-top-k rules are not",
+                "A bigger gamma is always faster: long drafts lower acceptance and waste verification compute",
+                "It helps throughput at scale: with large batches the extra tokens consume saturated compute",
+                "Any small model makes a good drafter: distribution mismatch (vocabulary, tokenizer, style) dominates the cost model"
+              ],
+              "further_reading": [
+                {
+                  "title": "Fast Inference from Transformers via Speculative Decoding",
+                  "authors": "Yaniv Leviathan, Matan Kalman, Yossi Matias",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/2211.17192"
+                },
+                {
+                  "title": "Accelerating Large Language Model Decoding with Speculative Sampling",
+                  "authors": "Charlie Chen et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads",
+                  "authors": "Tianle Cai et al.",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty",
+                  "authors": "Yuhui Li et al.",
+                  "year": 2024,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Blockwise Parallel Decoding for Deep Autoregressive Models",
+                  "authors": "Mitchell Stern et al.",
+                  "year": 2018,
+                  "type": "paper",
+                  "url": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "inference-deployment-and-retrieval",
+          "name": "Deployment Formats, Edge Inference and Vector Retrieval",
+          "summary": "Compressing models to fit their target runtime, packaging them portably and safely, and the approximate-nearest-neighbour indexes that serve embeddings at scale.",
+          "topics": [
+            {
+              "slug": "model-compression-for-inference",
+              "name": "Quantisation, Pruning and Distillation for Deployment",
+              "difficulty": "advanced",
+              "tags": [
+                "quantization",
+                "pruning",
+                "distillation",
+                "compression"
+              ],
+              "definition": "Reducing the memory, bandwidth and compute a deployed model requires - through weight/activation quantisation, sparsity and pruning, or knowledge distillation into a smaller student - and measuring the quality that is lost per unit of saving.",
+              "explanation": "Deployment compression starts from an accounting of what limits the target: decode-time cost is dominated by bytes of weight and KV cache read per token, so weight-only quantisation to int8 or int4 is usually the highest-leverage change, whereas compute-bound prefill and training benefit more from structure and kernel choices. Post-training quantisation methods differ in how they choose scales and absorb error. Round-to-nearest with per-channel scales is the baseline; GPTQ performs layer-wise compensation using approximate second-order (Hessian) information from calibration data; AWQ observes that a small fraction of channels are salient because of large activation magnitudes and protects them by scaling; SmoothQuant migrates activation outlier difficulty into the weights so that int8 activations become feasible; block-wise and microscaling formats trade a small metadata overhead for much better tolerance of heavy-tailed distributions. Activation quantisation is harder than weight quantisation precisely because of impulse channels and because scales must be calibrated without hurting the model, while KV-cache quantisation is now routine at fp8. Pruning removes parameters: unstructured magnitude or second-order methods (SparseGPT, Wanda) can zero most weights with modest quality loss but rarely yield large-batch speed-up, whereas semi-structured 2:4 patterns have hardware support on some accelerators, and structured pruning of heads, layers or experts actually reduces FLOPs but usually requires retraining or distillation to recover quality. Distillation trains a student against a teacher's outputs: soft-target logit distillation is the classical form, and for LLMs the practical recipe is generation-based distillation, where teacher outputs become training data (this is how many open and on-device models are produced) - the honest caveat being that the student inherits the teacher's failure modes and style. Distillation is also the cheapest path to a smaller model when no teacher logits are available, and it interacts with everything: quantisation-aware training, calibration after compression, and re-validation of slice-level and safety behaviour. Measurement discipline decides everything: report task accuracy, calibration (ECE/Brier), and latency/memory at realistic batch, not perplexity alone.",
+              "learning_objectives": [
+                "Compute memory and bandwidth savings of weight-only int8/int4 and KV fp8 quantisation for a concrete model",
+                "Distinguish per-tensor, per-channel, per-block and microscaling quantisation, and weight-only versus weight-and-activation schemes",
+                "Explain why activation outliers block naive int8 activation quantisation and how SmoothQuant/GPTQ/AWQ respond",
+                "Compare unstructured, semi-structured and structured pruning with respect to realised speed-up",
+                "Design a distillation recipe (logit-based versus generation-based) and evaluate student quality beyond aggregate accuracy",
+                "Re-calibrate and re-evaluate a compressed model, including confidence and slice-level regressions"
+              ],
+              "prerequisites_strict": [
+                "numerical-formats-mixed-precision"
+              ],
+              "prerequisites_recommended": [
+                "llm-serving-continuous-batching",
+                "model-packaging-edge-deployment",
+                "supervised-learning-foundations",
+                "kv-cache-paged-attention"
+              ],
+              "related_concepts": [
+                "model-packaging-edge-deployment",
+                "speculative-decoding",
+                "accelerator-landscape-hardware-codesign",
+                "llm-application-engineering"
+              ],
+              "advanced_extensions": [
+                "Quantisation-aware training and fake-quant simulation",
+                "Low-rank and merged-weight factorisation for adapters",
+                "Sparsity plus fused kernels for MoE expert load",
+                "Rate-distortion/quantisation theory for weight distributions",
+                "Compression as a privacy and licensing question for distillation"
+              ],
+              "key_results_or_algorithms": [
+                "RTN and per-channel scaling",
+                "GPTQ (second-order layer-wise quantisation)",
+                "AWQ (activation-aware weight quantisation)",
+                "SmoothQuant (outlier migration)",
+                "LLM.int8() and blockwise quantisation",
+                "SparseGPT / Wanda pruning",
+                "2:4 structured sparsity",
+                "Hinton logit distillation",
+                "Generation-based (sequence) distillation"
+              ],
+              "math_foundations": [
+                "Uniform quantisation: x_q = round(x/s) + z with scale s and zero point z; error bounded by s/2 per element",
+                "Quantisation noise vs signal: per-channel scale selection, heavy-tailed activation statistics, MSE-optimal clipping",
+                "Distillation objective: KL(teacher || student) on soft targets with temperature, plus cross-entropy on hard labels"
+              ],
+              "applications": [
+                "Fitting a 70B model into a single accelerator with int4 weights",
+                "Halving KV-cache memory so long-context serving fits",
+                "Producing a small model for a mobile or embedded product",
+                "Meeting a cost-per-million-tokens target without changing the serving architecture"
+              ],
+              "common_misconceptions": [
+                "Perplexity change predicts task change: compressed models can shift sharply on reasoning, multilingual, safety and calibration slices while aggregate perplexity barely moves",
+                "Unstructured sparsity gives free speed-up: it needs kernels and batch regimes where skipping actually saves bytes or FLOPs",
+                "Quantisation is symmetric across the network: a few layers and a few channels dominate the error",
+                "Distillation is just training on teacher outputs: it inherits teacher biases, and legal/licensing constraints may apply to that data",
+                "One calibration pass is enough: compressed models usually need recalibration for temperature and thresholds"
+              ],
+              "further_reading": [
+                {
+                  "title": "GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers",
+                  "authors": "Elias Frantar et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration",
+                  "authors": "Ji Lin et al.",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models",
+                  "authors": "Guangxuan Xiao et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Distilling the Knowledge in a Neural Network",
+                  "authors": "Geoffrey Hinton, Oriol Vinyals, Jeff Dean",
+                  "year": 2015,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/1503.02531"
+                },
+                {
+                  "title": "SparseGPT: Massive Language Models Can Be Accurately Pruned in One-Shot",
+                  "authors": "Elias Frantar, Dan Alistarh",
+                  "year": 2023,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale",
+                  "authors": "Tim Dettmers et al.",
+                  "year": 2022,
+                  "type": "paper",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "model-packaging-edge-deployment",
+              "name": "Model Packaging, Portability and Edge Deployment",
+              "difficulty": "intermediate",
+              "tags": [
+                "onnx",
+                "safetensors",
+                "edge",
+                "portability",
+                "security"
+              ],
+              "definition": "Serialising a trained model so that a different runtime or device can execute it - exchange graphs, weight containers, runtimes and delegates - and the memory, thermal and security constraints that decide whether that model can run at the edge.",
+              "explanation": "A checkpoint produced by one framework version is not automatically a portable artifact. Graph exchange formats such as ONNX describe the computation as a model with a versioned operator set, tensor initialisers and dynamic-shape annotations; a runtime (ONNX Runtime, TensorRT, OpenVINO, Core ML, NNAPI delegates) then applies layout optimisations, fuses operators, selects kernels and may quantise the graph. Portability in practice is a coverage problem: a model is portable to the extent that every operator exists on the target at the shape and precision required, and unsupported ops cause silent fallbacks to slower paths, which is why the correct evaluation is a measured end-to-end run on device rather than an export success. LLM-era containers differ from classical graph export because decoding is a loop with growing state: formats such as GGUF bundle quantised weights plus metadata for llama.cpp-style runtimes, while ExecuTorch and TFLite target mobile with explicit memory planning, delegate dispatch to NPUs/GPUs, and a pre-packaged program rather than a live graph. The security story matters and is often ignored: Python pickle-based checkpoints execute arbitrary code on load, so untrusted model files are a real supply-chain attack surface; PyTorch's weights_only loading path and container formats that carry only data (safetensors, memory-mapped tensor files) exist to remove that execution step, and organisations should still verify artifact provenance and signature rather than trusting a filename. Edge deployment is bounded by more than FLOPs: the sum of weights, KV cache and runtime buffers must fit in the device's usable RAM, sustained throughput is limited by thermal throttling and battery policy, and update distribution is a fleet-operations problem. The right mental model is a joint budget - bytes, peak memory, energy per inference, and time-to-first-token on a cold load - and an honest benchmark methodology, which is what suites like MLPerf (including its mobile and client benchmarks) try to standardise.",
+              "learning_objectives": [
+                "Explain what an ONNX graph contains (opset version, initialisers, inputs/outputs, dynamic axes) and what a runtime adds",
+                "Diagnose portability failures: missing ops, unsupported dtypes, shape specialisation, and fallback-to-CPU effects",
+                "State why pickle-based checkpoints are unsafe and how weights_only loading and safetensors change the trust model",
+                "Build a device memory budget for an on-device LLM (weights + KV cache + activations + runtime overhead)",
+                "Describe runtime delegates, quantised kernels and thermal throttling, and design an on-device benchmark",
+                "Discuss model-artifact provenance, signing and supply-chain checks"
+              ],
+              "prerequisites_strict": [
+                "numerical-formats-mixed-precision"
+              ],
+              "prerequisites_recommended": [
+                "model-compression-for-inference",
+                "ml-compilers-operator-fusion",
+                "accelerator-landscape-hardware-codesign",
+                "kv-cache-paged-attention"
+              ],
+              "related_concepts": [
+                "model-compression-for-inference",
+                "llm-serving-continuous-batching",
+                "ml-deployment-rollout-monitoring",
+                "accelerator-landscape-hardware-codesign"
+              ],
+              "advanced_extensions": [
+                "Kernel-memory planning and static allocation for embedded runtimes",
+                "NPU/GPU delegate graphs vs CPU fallback paths",
+                "Streaming weights from flash to overcome RAM limits",
+                "Federated fleet update, rollback and staged rollout of models",
+                "Model provenance and attestation (signed artifacts, SBOM-style records)"
+              ],
+              "key_results_or_algorithms": [
+                "ONNX opset versioning and graph optimisation passes",
+                "ONNX Runtime execution providers",
+                "safetensors data-only tensor format",
+                "PyTorch weights_only deserialisation",
+                "ExecuTorch portable edge programs",
+                "TFLite/Core ML/NNAPI delegate dispatch",
+                "GGUF quantised LLM containers",
+                "MLPerf Inference and mobile benchmark methodology"
+              ],
+              "math_foundations": [
+                "Bytes: parameters x bytes-per-parameter plus KV-cache bytes, compared against device usable memory",
+                "Energy per inference = average power x time; throttling makes sustained performance lower than peak"
+              ],
+              "applications": [
+                "Shipping a model to phones or in-vehicle hardware with fixed RAM ceilings",
+                "Moving a training checkpoint to a cheaper inference runtime",
+                "Loading third-party model weights safely in a service",
+                "Publishing a reproducible model artifact for regulators or partners"
+              ],
+              "common_misconceptions": [
+                "Export success means deployability: operator coverage, precision and measured on-device latency decide",
+                "A model file is inert data: pickle checkpoints can execute code at load time",
+                "Desktop GPU benchmarks transfer to mobile: thermals, memory bandwidth and battery policy dominate on device",
+                "Quantisation metadata travels for free: containers differ in which scales and ops they support",
+                "Edge models need no monitoring: fleet versions drift and silently degrade when inputs shift"
+              ],
+              "further_reading": [
+                {
+                  "title": "ONNX Runtime documentation",
+                  "authors": "Microsoft ONNX Runtime project",
+                  "year": null,
+                  "type": "docs",
+                  "url": "https://onnxruntime.ai/docs"
+                },
+                {
+                  "title": "ExecuTorch documentation",
+                  "authors": "PyTorch team",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "safetensors documentation",
+                  "authors": "Hugging Face",
+                  "year": null,
+                  "type": "docs",
+                  "url": null
+                },
+                {
+                  "title": "MLPerf Inference Benchmark",
+                  "authors": "Vijay Janapa Reddi et al.",
+                  "year": 2020,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "PyTorch security notes on weights_only model loading",
+                  "authors": "PyTorch team",
+                  "year": 2025,
+                  "type": "blog",
+                  "url": null
+                }
+              ]
+            },
+            {
+              "slug": "ann-vector-search-indexes",
+              "name": "Vector Search and Approximate Nearest Neighbour Indexes",
+              "difficulty": "intermediate",
+              "tags": [
+                "retrieval",
+                "ann",
+                "hnsw",
+                "ivf-pq",
+                "embeddings"
+              ],
+              "definition": "Indexes that answer approximate k-nearest-neighbour queries over high-dimensional embeddings - graph, inverted-file and quantised structures - traded against recall, latency, memory and build cost, including filtering and freshness requirements.",
+              "explanation": "Exact search over N vectors of dimension d costs O(Nd) per query, which is unaffordable once N reaches millions or a query budget is a few milliseconds, so retrieval systems answer approximately: they accept a small probability of missing a true neighbour in exchange for orders-of-magnitude less work, and quantify the trade-off with recall@k measured against exact ground truth. Graph indexes such as HNSW build a multi-layer navigable small-world graph, greedily descending from sparse long-range layers to a dense base layer; efSearch and M tune the exploration/latency curve, and the structure handles incremental inserts well while deletions and tombstones degrade it. Inverted-file indexes cluster vectors into Voronoi cells with a coarse quantiser and scan only the nprobe closest cells; pairing IVF with product quantisation compresses each vector into codes from several small dictionaries so many candidates can be scored from RAM-resident codes (with optional re-ranking using the stored original vectors), which is how billion-scale search fits in a server. ScaNN's anisotropic quantisation is the sharpest theoretical idea in this area: quantisation error should be penalised along the direction of the query rather than isotropically, because only the inner-product component along the query changes ranking - so the loss function that decides code assignment is asymmetric. Disk-oriented graph designs (DiskANN-style) keep the index on SSD with compressed in-memory navigation, GPU implementations exploit massive parallel distance evaluation, and filtered search - where metadata predicates must be honoured - is genuinely harder than post-filtering, since an index traversal can wander into regions that all fail the predicate; practical designs combine attribute filtering with either pre-filtered candidate sets or predicate-aware graph traversal. Evaluation must report recall@k, queries per second, p99 latency, memory per vector, and build/update time under a realistic query and filter distribution, because a configuration that wins on one axis usually loses on another; downstream relevance evaluation (nDCG, hit rate of a retrieval-augmented pipeline) is a separate question from ANN quality, and the embedding model's quality dominates it.",
+              "learning_objectives": [
+                "Derive brute-force cost and explain why approximation is necessary at scale",
+                "Explain HNSW construction/search, the roles of M, efConstruction and efSearch, and their effect on recall/latency",
+                "Explain IVF coarse quantisation, nprobe, and product-quantisation codebooks with re-ranking",
+                "State the intuition behind anisotropic (ScaNN) quantisation loss for inner-product ranking",
+                "Describe filtered/constrained search strategies and their failure modes",
+                "Evaluate an index by recall@k, QPS, p99 latency, memory per vector, and build/update cost",
+                "Reason about updates, deletes, streaming inserts and index retraining"
+              ],
+              "prerequisites_strict": [
+                "linear-algebra-and-matrix-theory"
+              ],
+              "prerequisites_recommended": [
+                "probability-and-stochastic-processes",
+                "self-supervised-learning",
+                "computational-complexity"
+              ],
+              "related_concepts": [
+                "llm-application-engineering",
+                "model-compression-for-inference",
+                "llm-serving-continuous-batching",
+                "benchmark-design-contamination"
+              ],
+              "advanced_extensions": [
+                "Learned and hybrid index selection",
+                "Compressed residual quantisation with GPU decoding",
+                "Freshness/incremental indexing with deletes and retraining",
+                "Query-class-aware filtering and predicate-cost estimation",
+                "Late-interaction/reranker stages in multi-stage retrieval"
+              ],
+              "key_results_or_algorithms": [
+                "HNSW multi-layer graph search",
+                "IVF-Flat and IVF-PQ with coarse quantiser and re-ranking",
+                "Product quantisation (Jegou et al.)",
+                "ScaNN anisotropic vector quantisation",
+                "DiskANN/Vamana SSD graph",
+                "GPU brute-force and IVF (FAISS)",
+                "Random projection / locality-sensitive hashing",
+                "ANN-Benchmarks evaluation protocol"
+              ],
+              "math_foundations": [
+                "Inner-product and cosine similarity ranking; the score is determined by the component along the query vector",
+                "Quantisation as vector composition of codebook entries; distortion measured per candidate and averaged",
+                "Recall@k as a function of explored candidates; graph degree bounds search cost"
+              ],
+              "applications": [
+                "Retrieval-augmented generation over a private corpus",
+                "Semantic deduplication and clustering of large datasets",
+                "Recommendation candidate generation and duplicate detection",
+                "Long-term memory layers for LLM agents"
+              ],
+              "common_misconceptions": [
+                "Higher recall is simply better: recall, latency, memory and build time trade off and the operating point must match the product",
+                "Benchmarking one index type is meaningful: configuration matters more than the family label",
+                "ANN quality equals retrieval quality: embedding quality and ranking/aggregation dominate end-task relevance",
+                "Filters are a cheap afterthought: post-filtering can return too few results and pre-filtering can break graph connectivity",
+                "One build lasts forever: insert/delete drift and embedding-model upgrades require re-indexing plans"
+              ],
+              "further_reading": [
+                {
+                  "title": "Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs",
+                  "authors": "Yury Malkov, Dmitry Yashunin",
+                  "year": 2020,
+                  "type": "paper",
+                  "url": "https://arxiv.org/abs/1603.09320"
+                },
+                {
+                  "title": "Accelerating Large-Scale Inference with Anisotropic Vector Quantization",
+                  "authors": "Ruiqi Guo et al.",
+                  "year": 2020,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Product Quantization for Nearest Neighbor Search",
+                  "authors": "Herve Jegou, Matthijs Douze, Cordelia Schmid",
+                  "year": 2011,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "Billion-Scale Similarity Search with GPUs",
+                  "authors": "Jeff Johnson, Matthijs Douze, Herve Jegou",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "ANN-Benchmarks: A Benchmarking Tool for Approximate Nearest Neighbor Algorithms",
+                  "authors": "Martin Aumuller et al.",
+                  "year": 2020,
+                  "type": "paper",
+                  "url": null
+                },
+                {
+                  "title": "DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node",
+                  "authors": "Suhas Jayaram Subramanya et al.",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "notes_on_gaps": "Partial pass in progress: domains for inference systems, data engineering and MLOps are being added in the next revision. Citation policy: several classic systems papers are listed with url null because I could not verify identifiers without guessing; author name spellings for two book/paper entries (ML Systems, some arXiv author lists) are marked as uncertain rather than invented precisely."
+}

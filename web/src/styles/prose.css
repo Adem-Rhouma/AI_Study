@@ -1,0 +1,409 @@
+/* Typography for rendered lesson content.
+   Rules of the house: prose is serif, chrome is sans, code is mono, KaTeX is never restyled. */
+
+.prose {
+  font-family: var(--font-serif);
+  font-size: var(--text-body);
+  line-height: 1.7;
+  color: var(--text-primary);
+  max-width: var(--measure-reading);
+}
+
+.prose.dense,
+.prose.compact {
+  max-width: none;
+}
+
+.prose > * + * {
+  margin-top: var(--space-4);
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-family: var(--font-sans);
+  scroll-margin-top: calc(var(--topbar-height) + var(--space-6));
+}
+
+.prose h2 {
+  font-size: var(--text-h2);
+  line-height: var(--text-h2--line-height);
+  margin-top: var(--space-12);
+  margin-bottom: var(--space-4);
+}
+
+.prose h3 {
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-3);
+}
+
+.prose h4 {
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+.prose h5,
+.prose h6 {
+  font-size: var(--text-small-title);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+.prose p > code,
+.prose li > code {
+  font-size: 0.88em;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.35em;
+}
+
+.prose li + li {
+  margin-top: var(--space-2);
+}
+
+.prose li::marker {
+  color: var(--text-muted);
+}
+
+.prose blockquote {
+  margin: var(--space-6) 0;
+  padding-left: var(--space-4);
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.prose a {
+  text-decoration: underline;
+}
+
+/* Inline links to curriculum concepts look different from links to the outside web. */
+.prose a[data-topic-link] {
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1.5px;
+  font-weight: 500;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  margin: var(--space-8) 0;
+}
+
+/* Tables ------------------------------------------------------------------ */
+
+/* Wide tables scroll inside their own box instead of forcing the page to widen. */
+.table-scroll {
+  overflow-x: auto;
+  margin-block: var(--space-6);
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  margin-block: var(--space-6);
+}
+
+.prose thead th {
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.05em;
+  text-align: left;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.prose th,
+.prose td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.prose tbody tr:hover {
+  background: var(--bg-sunken);
+}
+
+.prose td:nth-child(n) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Math -------------------------------------------------------------------- */
+
+.math-inline {
+  white-space: nowrap;
+}
+
+.math-block {
+  margin-block: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  overflow-x: auto;
+  text-align: center;
+}
+
+.math-block .katex-display {
+  margin: 0;
+}
+
+/* Display math produced by remark-math inside prose; KaTeX's own internals are never restyled. */
+.prose .katex-display {
+  margin-block: var(--space-6);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+}
+
+.prose .katex {
+  font-size: 1.06em;
+}
+
+.math-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+/* Code -------------------------------------------------------------------- */
+/* Code surfaces stay dark in both themes: it reads as "code" and keeps one visual language. */
+
+.code-block {
+  --code-bg: #14161a;
+  --code-fg: #e6e2d8;
+  --code-comment: #7d8590;
+  --code-keyword: #7dd3c0;
+  --code-string: #b5e08c;
+  --code-number: #f0c674;
+  --code-fn: #93c5fd;
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-card);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: var(--space-4);
+  overflow-x: auto;
+  /* Code scrolls; it is never wrapped into unreadable ribbons. */
+  white-space: pre;
+  tab-size: 4;
+}
+
+.code-block .hljs-comment,
+.code-block .hljs-quote {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.code-block .hljs-keyword,
+.code-block .hljs-selector-tag,
+.code-block .hljs-built_in {
+  color: var(--code-keyword);
+}
+
+.code-block .hljs-string,
+.code-block .hljs-regexp,
+.code-block .hljs-addition {
+  color: var(--code-string);
+}
+
+.code-block .hljs-number,
+.code-block .hljs-literal,
+.code-block .hljs-symbol {
+  color: var(--code-number);
+}
+
+.code-block .hljs-title,
+.code-block .hljs-function,
+.code-block .hljs-section,
+.code-block .hljs-attr {
+  color: var(--code-fn);
+}
+
+.code-block .hljs-deletion {
+  color: #fca5a5;
+}
+
+/* Callouts ---------------------------------------------------------------- */
+
+.callout {
+  border: 1px solid var(--border-subtle);
+  border-left-width: 3px;
+  border-radius: var(--radius-input);
+  padding: var(--space-4);
+  margin-block: var(--space-6);
+  background: var(--bg-raised);
+}
+
+.callout > .callout-label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.callout .callout-body {
+  font-size: 0.97em;
+}
+
+.callout.note {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.callout.note > .callout-label {
+  color: var(--accent-hover);
+}
+
+.callout.warning {
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.callout.warning > .callout-label {
+  color: var(--warning);
+}
+
+.callout.danger {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.callout.danger > .callout-label {
+  color: var(--danger);
+}
+
+.callout.info {
+  border-left-color: var(--info);
+  background: var(--info-soft);
+}
+
+.callout.info > .callout-label {
+  color: var(--info);
+}
+
+.callout.success {
+  border-left-color: var(--success);
+  background: var(--success-soft);
+}
+
+.callout.success > .callout-label {
+  color: var(--success);
+}
+
+/* Definitions, theorems and proofs are their own block types: learners scan for them. */
+.callout.definition,
+.callout.theorem,
+.callout.proof,
+.callout.key-idea,
+.callout.pitfall {
+  border-left-color: var(--accent);
+  background: var(--bg-raised);
+}
+
+.callout.definition > .callout-label,
+.callout.theorem > .callout-label,
+.callout.proof > .callout-label,
+.callout.key-idea > .callout-label,
+.callout.pitfall > .callout-label {
+  color: var(--text-primary);
+}
+
+.callout.pitfall {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.callout.key-idea {
+  border-left-color: var(--success);
+  background: var(--success-soft);
+}
+
+.callout .theorem-number {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+
+/* Figures ----------------------------------------------------------------- */
+
+.figure {
+  margin-block: var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+
+.figure > .figure-body {
+  padding: var(--space-4);
+}
+
+.figure > figcaption {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.figure .try-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Block rhythm ------------------------------------------------------------
+   Each content block carries the same vertical margin so prose/figure/math meter evenly. */
+.prose > .callout,
+.prose > .math-block,
+.prose > .code-block,
+.prose > .figure,
+.prose > table {
+  margin-block: var(--space-6);
+}
+
+details.proof-toggle > summary {
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+}
+
+details.proof-toggle > summary::-webkit-details-marker {
+  display: none;
+}

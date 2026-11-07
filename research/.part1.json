@@ -1,0 +1,432 @@
+{
+  "area": "deep-learning-generative-vision",
+  "owner_agent": "A2",
+  "domains": [
+    {
+      "slug": "deep-learning-foundations",
+      "name": "Deep Learning Foundations and Theory",
+      "summary": "The mathematical and algorithmic core that makes neural networks trainable: how gradient-based fitting of deep parameterized functions works, why initialization/normalization/optimization choices determine trainability, and what theory actually says about expressivity, generalization, and the infinite-width limit. This domain supplies the primitives every architecture, generative model, and vision system in the other domains is built from.",
+      "subdomains": [
+        {
+          "slug": "network-expressivity-and-history",
+          "name": "Network Expressivity, Depth, and History",
+          "summary": "Where the modern network came from and what depth buys: approximation capacity versus practical representation learning.",
+          "topics": [
+            {
+              "slug": "perceptron-to-multilayer-networks-history",
+              "name": "From Perceptron to Multilayer Networks",
+              "difficulty": "beginner",
+              "tags": ["history", "foundations"],
+              "definition": "The perceptron is a linear threshold unit computing sign(w.x + b); stacking units into layers with nonlinear activations and training them by gradient descent gives the multilayer network that modern deep learning generalizes.",
+              "explanation": "Rosenblatt's 1958 perceptron solved only linearly separable problems, and Minsky and Papert's 1969 analysis of parity and XOR limits caused first-generation funding to collapse; the same argument, restated geometrically, is that a single threshold layer partitions input space with one hyperplane. The 1986 backpropagation line (Rumelhart, Hinton and Williams), building on Linnainmaa's 1970 reverse-mode autodiff and Werbos's 1974 thesis, made multilayer weights trainable and triggered the second wave, which was then crowded out in the 1990s by kernel methods and pushed out of vision/ASR by 2006-2012 by GPU-trained deep nets (LeCun's LeNet and convnets, Hinton's greedy layerwise pretraining, Krizhevsky's AlexNet). Two lessons from this history are still load-bearing: universal approximation says capacity was never the bottleneck, so what changed trainability was data, computation, gradient-based optimization, and better activations/normalization; and every past 'deep learning winter' was a failure of optimization scale, not of the model class. Learning this lineage also fixes terminology: 'deep' means many composed nonlinear layers, 'shallow' nets with one hidden layer remain universal approximators and are still used.",
+              "learning_objectives": [
+                "State the decision boundary a single perceptron implements and prove it cannot represent XOR.",
+                "Explain why the 1969 limitations paper did not refute multilayer capability.",
+                "Order the key enabling events (reverse-mode autodiff, backprop, GPUs, AlexNet) by what each unlocked.",
+                "Implement a single-layer perceptron learning rule and demonstrate its failure on non-separable data."
+              ],
+              "prerequisites_strict": ["linear-algebra-foundations", "multivariable-calculus"],
+              "prerequisites_recommended": ["probability-foundations", "supervised-learning-foundations"],
+              "related_concepts": ["universal-approximation-and-depth", "loss-landscapes-and-grokking"],
+              "advanced_extensions": ["adaline-and-linear-preferring-networks", "neural-network-backpropagation-1986"],
+              "key_results_or_algorithms": ["Perceptron learning rule (converges iff separable)", "Minsky-Papert parity limitation", "Backpropagation (Rumelhart et al. 1986)", "LeNet-5", "AlexNet"],
+              "math_foundations": ["Affine maps and half-space classification", "Vector/matrix notation for layer compositions", "Basic VC-style separability reasoning"],
+              "applications": ["Reading any modern paper's notation", "Understanding why 'deep' is an optimization claim", "Context for representation learning"],
+              "common_misconceptions": [
+                "The perceptron is a multilayer network (Rosenblatt's original was a single trained layer plus fixed random preprocessing).",
+                "XOR proves perceptrons are useless rather than proving one layer is insufficient.",
+                "Deep learning replaced classical AI because it is more accurate in principle (it replaced it because of scale and feature learning)."
+              ],
+              "further_reading": [
+                { "title": "Perceptrons: An Introduction to Computational Geometry", "authors": "Minsky & Papert", "year": 1969, "type": "book", "url": null },
+                { "title": "Learning representations by back-propagating errors", "authors": "Rumelhart, Hinton & Williams", "year": 1986, "type": "paper", "url": null },
+                { "title": "Gradient-based learning applied to document recognition", "authors": "LeCun, Bottou, Bengio & Haffner", "year": 1998, "type": "paper", "url": null },
+                { "title": "Deep Learning", "authors": "Goodfellow, Bengio & Courville", "year": 2016, "type": "book", "url": "https://www.deeplearningbook.org/" }
+              ]
+            },
+            {
+              "slug": "universal-approximation-and-depth",
+              "name": "Universal Approximation, Depth Separation, and Representation Learning",
+              "difficulty": "advanced",
+              "definition": "Universal approximation theorems state that a single hidden layer with enough width can approximate any continuous function on a compact domain; depth separation results state that some functions need exponentially many more neurons if depth is removed.",
+              "explanation": "Cybenko (sigmoidal), Hornik (squashing, arbitrary open sets) and later Barron, Kurkova and Leshno established density, not efficiency: the theorems are silent about how many units, what weights, or how to find them by gradient descent, and the required width typically grows exponentially with input dimension and target accuracy. Depth-aware results are what make networks interesting: Telgarsky's sawtooth construction gives functions realized by O(depth) networks that need width exponential in depth for any shallow net; Eldan-Shamir separate Gaussian mixtures; Raina et al. give a complexity-theoretic separation for strongly polynomial oracle functions; Safran-Shamir show depth can help for some functions and hurt for others, so 'depth is always better' is false. The practical view is representation learning: each layer performs a learned feature map, and composition allows reuse of intermediate features so that a function factored into subfunctions needs far fewer parameters when the factorization is exposed. This is why deep nets on images/sequences do not need the astronomical widths the density theorems suggest, and why the relevant quantity is approximation rate as a function of parameter count (Barron's O(s/sqrt(n)) bound for targets with integrable spectral moment), plus the inductive bias of the architecture and optimizer. A learner should be able to say precisely what the theorems do and do not license.",
+              "learning_objectives": [
+                "State Cybenko's and Hornik's theorems with their hypotheses (activation type, compact domain, continuous target).",
+                "Derive the parameter lower bound intuition for Telgarsky's depth-separation construction.",
+                "Explain why universal approximation does not justify deep learning and name the three missing ingredients.",
+                "Quantify Barron-type approximation rates in terms of target smoothness and input dimension.",
+                "Give a concrete example where depth provably reduces required width and one where it does not help."
+              ],
+              "prerequisites_strict": ["perceptron-to-multilayer-networks-history"],
+              "prerequisites_recommended": ["approximation-theory", "computational-complexity", "measure-theoretic-probability", "optimization-convex"],
+              "related_concepts": ["loss-landscapes-and-grokking", "infinite-width-limit-ntk-mean-field"],
+              "advanced_extensions": ["approximation-in-sobolev-spaces", "width-vs-depth-tradeoffs-for-piecewise-linear-nets", "circuit-complexity-view-of-deep-nets"],
+              "key_results_or_algorithms": ["Cybenko 1989", "Hornik 1991", "Barron 1993 rate", "Telgarsky 2016 separation", "Eldan-Shamir 2016", "Safran-Shamir 2019"],
+              "math_foundations": ["Density vs. approximation rate", "Compact support of the input measure", "Piecewise-linear function counting (number of linear regions)", "Sigmoid/squashing activation properties"],
+              "applications": ["Choosing depth vs width in backbone design", "Justifying residual composition for factored targets", "Reasoning about parameter efficiency of MoE and factorized layers"],
+              "common_misconceptions": [
+                "One hidden layer is enough so depth is unnecessary (density ignores parameter count and trainability).",
+                "Universal approximation implies networks can learn any function from data.",
+                "Deeper is always better (Safran-Shamir: no universal depth separation for all target classes).",
+                "Approximation capacity is the reason ReLU nets work at all."
+              ],
+              "further_reading": [
+                { "title": "Approximation by superpositions of a sigmoidal function", "authors": "Cybenko", "year": 1989, "type": "paper", "url": null },
+                { "title": "Deep vs. shallow networks: An approximation theory perspective", "authors": "Telgarsky", "year": 2016, "type": "paper", "url": null },
+                { "title": "Depth-is-separation-on-distributed-representations", "authors": "Eldan and Shamir", "year": 2016, "type": "paper", "url": null },
+                { "title": "Depth Separation for ReLU Networks Including Residual Architectures", "authors": "Li, Liang, Nonaka, Seigal, Slepcev, et al.", "year": 2020, "type": "paper", "url": null },
+                { "title": "Neural Networks and Deep Learning", "authors": "Nielsen", "year": 2015, "type": "book", "url": "https://neuralnetworksanddeeplearning.com/" }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "gradients-and-autodiff",
+          "name": "Gradients and Automatic Differentiation",
+          "summary": "Backpropagation treated as the algorithm it is: reverse-mode automatic differentiation, with the forward/reverse distinction and JVP/VJP primitives that most courses skip.",
+          "topics": [
+            {
+              "slug": "backpropagation-autodiff-forward-reverse",
+              "name": "Backpropagation as Reverse-Mode Automatic Differentiation",
+              "difficulty": "advanced",
+              "definition": "Backpropagation is reverse-mode automatic differentiation applied to the scalar loss of a computation graph: gradients are accumulated by composing vector-Jacobian products backward through layers, cost O(#primitives) times the forward cost.",
+              "explanation": "Griewank's 1989 thesis formalized the two modes. If y = F(x) in R^m with Jacobian J, forward mode propagates tangent vectors v -> J v (a Jacobian-vector product, JVP) and costs O(n) passes to get the full Jacobian, so it is efficient when inputs outnumber outputs; reverse mode propagates covectors u -> u^T J (a vector-Jacobian product, VJP) and costs O(m) passes, so it is efficient when a scalar (loss) depends on many parameters, which is exactly the deep learning regime. Backprop is therefore not 'the chain rule' as folklore says but an efficient schedule for a composition of VJPs, with the number of operations in a reverse pass essentially equal to the forward pass because the required intermediates were cached in the tape. Gelfand-Yaglom's 1963 reverse formulation and Linnainmaa's 1970 accumulation of adjoint derivatives are the true ancestors; Baydin et al.'s tutorial is the standard modern derivation. A practitioner must be able to derive VJPs for the primitives that cause most real bugs: matmul (dX = dY B^T, dB = X^T dY), reductions and broadcasting (sum-backward is broadcast; axis bookkeeping is where silent errors live), softmax plus cross-entropy (dL/dz = p - y), layernorm, convolution (a transposed-correlation), and in-place ops/aliases that break tape assumptions. Differentiation of a network trained with weight tying, dropout, or non-differentiable sampling requires care (straight-through estimators, score-function alternatives), and gradient accumulation is just VJP linearity exploited across microbatches.",
+              "learning_objectives": [
+                "State the JVP and VJP of a scalar-valued and a vector-valued function and explain which mode is cheaper for loss-on-many-parameters.",
+                "Derive backprop recurrences delta^(l) = ((W^(l+1))^T delta^(l+1)) * phi'(z^(l)) from VJP composition.",
+                "Compute VJPs for matmul, sum, max, concatenation, reshape, and convolution.",
+                "Use finite-difference and dual-number (forward-mode) checks to validate a reverse-mode implementation.",
+                "Explain why double backprop / grad-of-grad needs forward mode or nested reverse mode (per-example gradients)."
+              ],
+              "prerequisites_strict": ["multivariable-calculus", "linear-algebra-foundations"],
+              "prerequisites_recommended": ["numerical-linear-algebra", "differential-equations"],
+              "related_concepts": ["gradient-pathologies-initialization-theory", "optimization-for-neural-networks"],
+              "advanced_extensions": ["reverse-mode-on-graphs-of-variable-length", "jvp-vjp-composition-for-bilevel-gradients", "automatic-differentiation-of-linear-solvers", "memory-efficient-rematerialization"],
+              "key_results_or_algorithms": ["Griewank forward/reverse complexity theorems", "Reverse accumulation (Gelfand-Yaglom)", "Tape-based autodiff (PyTorch Autograd)", "Functional transforms (JAX jvp/vjp/jax.grad/vmap composition)", "Gradient checkpointing"],
+              "math_foundations": ["Jacobians as linear maps, not arrays", "Covectors vs tangent vectors", "Adjoint (transpose) of a linear map", "Topological ordering of a DAG"],
+              "applications": ["Implementing custom layers correctly", "Per-example gradients for DP-SGD and Meta-learning (MAML)", "Differentiable physics and neural ODE adjoints", "Penalizing curvature (gradient-norm regularizers) via double backward"],
+              "common_misconceptions": [
+                "Backprop is a special neural-network rule rather than reverse-mode autodiff.",
+                "Reverse mode is always better (it is better only because the loss is scalar).",
+                "Forward mode is useless (it is the right tool for Jacobian-vector products, curvature-vector products, and tangent-based methods).",
+                "Computing a full Jacobian by autodiff requires n explicit finite differences."
+              ],
+              "further_reading": [
+                { "title": "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation", "authors": "Griewank and Walther", "year": 2008, "type": "book", "url": null },
+                { "title": "Automatic differentiation in machine learning: a survey", "authors": "Baydin, Pearlmutter, Radul and Siskind", "year": 2018, "type": "survey", "url": null },
+                
+                { "title": "JAX automatic differentiation documentation", "authors": "Google JAX team", "year": 2024, "type": "docs", "url": "https://jax.readthedocs.io/en/latest/notebooks/autodiff_cookbook.html" },
+                { "title": "PyTorch autograd mechanics", "authors": "PyTorch team", "year": 2024, "type": "docs", "url": "https://pytorch.org/docs/stable/notes/autograd.html" }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "optimization-and-trainability",
+          "name": "Optimization and Trainability",
+          "summary": "The practical and theoretical machinery that decides whether a deep network can be fit: initializers, normalization, optimizers, schedules, and the pathology of gradient magnitudes.",
+          "topics": [
+            {
+              "slug": "optimization-for-neural-networks",
+              "name": "Optimization for Neural Networks: SGD, Adaptive Methods, and Schedules",
+              "difficulty": "intermediate",
+              "definition": "The family of first-order updates used to fit deep networks - minibatch SGD, momentum and Nesterov, AdaGrad/RMSProp/Adam/AdamW, large-batch methods (LARS/LAMB), and Lion - together with the learning-rate schedule and warmup that make them usable.",
+              "explanation": "Deep learning optimization is nonconvex, noisy (finite minibatches), high-dimensional, badly conditioned, and often ill-behaved at the boundary (weight-norm-driven losses), so convex-analysis guarantees rarely transfer. Minibatch SGD with momentum exploits gradient correlation across steps and implicitly low-pass filters noise; Nesterov's look-ahead gives a modest improvement and better accelerated-method interpretation. AdaGrad accumulates squared gradients (adaptive, subgradient-friendly, eventually stalls), RMSProp exponentially averages them, and Adam combines momentum with an exponential moving average of squared gradients, adding bias correction and a decoupled epsilon placement that matters at fp16. AdamW removes the coupling defect where L2 regularization is diluted by the adaptive denominator, which is why decoupled weight decay is now the default. For very large batches the critical-batch-size idea (You, Mishkin) plus layer-wise adaptive rates (LARS) or trust ratios (LAMB) with linear scaling of LR to batch size and warmup makes thousand-GPU runs converge; Lion is a sign-of-interpolated-gradient method with outer momentum that trades memory for an extra forward and behaves like an Adam variant with weight-decoupled signs. Schedules: warmup stabilizes second-moment estimates and prevents the early large-step blowup; cosine/linear decay approximate annealing; the LR-noise scale (McCandlish's batch size and LR should scale together; gradient noise scale measures how far from a big-step regime you are). Also worth teaching honestly: adaptive methods are not universally better than well-tuned SGD+momentum (Wilson et al.'s diagnostic task analysis; Adam can be worse on some convex/ill-conditioned problems, and AMSGrad's fix is empirically marginal), and optimizer choice interacts with normalization (bias correction after layernorm) and with weight decay effective through Adam's scaling.",
+              "learning_objectives": [
+                "Write pseudocode for SGD, momentum, Nesterov, RMSProp, Adam, AdamW, and Lion, and state the state-memory cost of each.",
+                "Explain why Adam's epsilon placement and bias correction matter in low precision.",
+                "Derive why decoupled weight decay (AdamW) differs from L2-in-gradient when the adaptive denominator varies.",
+                "Compute a warmup-plus-cosine schedule for a given batch size using LR-batch scaling.",
+                "Diagnose an optimizer-limited run (loss spikes, gradient-norm blowup, plateaus) and choose a fix.",
+                "Explain what gradient noise scale measures and how to use it to choose batch size."
+              ],
+              "prerequisites_strict": ["optimization-convex", "backpropagation-autodiff-forward-reverse"],
+              "prerequisites_recommended": ["numerical-linear-algebra", "probability-foundations", "statistical-learning-theory"],
+              "related_concepts": ["gradient-pathologies-initialization-theory", "normalization-layers-mathematics", "loss-landscapes-and-grokking"],
+              "advanced_extensions": ["shampoo-soap-full-matrix-preconditioning", "muon-orthogonalized-matrix-momentum", "distributed-optimizer-sharding", "loss-scaling-and-mixed-precision-optimization"],
+              "key_results_or_algorithms": ["SGD variance and step-size conditions (Robbins-Monro, decreasing LR)", "Adam bias correction", "AdamW", "LARS/LAMB for large-batch training", "AMSGrad", "Cosine annealing with warmup", "Gradient noise scale"],
+              "math_foundations": ["Stochastic approximation", "Preconditioning as a change of metric", "Sign/magnitude decoupling", "Exponential moving averages and effective window"],
+              "applications": ["Choosing an optimizer for vision transformers (AdamW + warmup + cosine is standard)", "Scaling to large batches across nodes", "fp16/bf16 training recipes", "Reproducing published training runs"],
+              "common_misconceptions": [
+                "Adam always converges faster and better than tuned SGD+momentum.",
+                "Weight decay and L2 regularization are the same thing (they are only equal in plain SGD).",
+                "Learning rate can be tuned independently of batch size and warmup.",
+                "Nonconvexity is the main difficulty (noise, conditioning, and poor scaling dominate)."
+              ],
+              "further_reading": [
+                { "title": "Adam: A Method for Stochastic Optimization", "authors": "Kingma and Ba", "year": 2015, "type": "paper", "url": "https://arxiv.org/abs/1412.6980" },
+                { "title": "Decoupled Weight Decay Regularization", "authors": "Loshchilov and Hutter", "year": 2019, "type": "paper", "url": "https://arxiv.org/abs/1711.05101" },
+                { "title": "On the Variance of the Adaptive Learning Rate and Beyond", "authors": "Reddi, Kale and Kumar", "year": 2018, "type": "paper", "url": null },
+                { "title": "The Marginal Value of Adaptive Gradient Methods in Machine Learning", "authors": "Wilson, Roeloff, Stern, Srebro and Reife", "year": 2017, "type": "paper", "url": null },
+                { "title": "Lion: Symmetry and Scaling in Symbolic Optimizers", "authors": "Zhang et al.", "year": 2023, "type": "paper", "url": "https://arxiv.org/abs/2302.06675" },
+                { "title": "An Empirical Model of Large-Batch Training", "authors": "McCandlish, Kaplan, Mora, Amodei and OpenAI DLC team", "year": 2018, "type": "paper", "url": null },
+                { "title": "PyTorch optimizers documentation", "authors": "PyTorch team", "year": 2024, "type": "docs", "url": "https://docs.pytorch.org/docs/stable/optim.html" }
+              ]
+            },
+            {
+              "slug": "gradient-pathologies-initialization-theory",
+              "name": "Gradient Pathologies, Signal Propagation, and Initialization Theory",
+              "difficulty": "advanced",
+              "definition": "Vanishing and exploding gradients are the failure of gradient magnitudes to remain order-one through depth; initialization theory derives weight scales (Xavier, He, and modern mean-field/residual-aware variants) that keep forward activations and backward gradients critically scaled.",
+              "explanation": "In a naive L-layer network, layer-to-layer Jacobians multiply, so pre-activation variances scale like prod_l (n_l Var(w_l) E[phi'(z_l)^2]): if the per-layer gain is <1 activations collapse toward the mean (the signal dies and the top layers see no information), if >1 activations saturate in sigmoid tails or overflow and gradients explode. The same factor appears transposed in the backward pass, which is why a single design principle - keep the forward/backward gain near 1 at every layer, in expectation over the data and the random weights - governs initialization. Xavier/Glorot sets Var(w) = 2/(n_in+n_out) for symmetric saturating activations; He/Kaiming sets Var(w) = 2/n_in for ReLU (half the units are zero); the fan-in convention and whether gain includes the activation derivative (and convolution's spatial support) are the usual sources of off-by-sqrt(2) errors. Beyond variance matching: dropout changes effective gain; normalization layers change it again (a properly normalized network is nearly insensitive to init scale - the 'residual branch' exception, where scaled init of residual outputs, e.g. zero-init on LayerScale or Fixup's scheme, keeps the network near identity at start). The mean-field/NTK view says init also selects which regime training lives in (lazy vs feature-learning), and muP makes hyperparameters (LR, momentum, init std, Adam eps) transferable between a small proxy model and the full one by scaling them with width - the single most practically valuable init-related idea. Also teach the numerical side: exploding gradients in fp16, gradient clipping by global norm as a (biased but stabilizing) projection, and the different failure of dead-ReLU collapse.",
+              "learning_objectives": [
+                "Derive the forward variance recurrence for an L-layer linear-gain network and identify the critical gain condition.",
+                "Compute Xavier and He fan-in-scaled variances for convolutions, and explain the fan-mode choice.",
+                "Explain why saturation (sigmoid) and vanishing (ReLU with negative mean) are different failures.",
+                "Implement variance diagnostics (activation std per layer) and gradient-norm-per-layer profiling to find a pathology.",
+                "State what muP scales and why it lets a small run transfer hyperparameters to a large one.",
+                "Choose gradient clipping and init fixes appropriate to the diagnosed pathology."
+              ],
+              "prerequisites_strict": ["backpropagation-autodiff-forward-reverse", "multivariable-calculus"],
+              "prerequisites_recommended": ["probability-foundations", "random-matrix-theory", "optimization-for-neural-networks"],
+              "related_concepts": ["normalization-layers-mathematics", "residual-connections-and-ode-view", "infinite-width-limit-ntk-mean-field"],
+              "advanced_extensions": ["dynamical-isometry-of-deep-signal-propagation", "edge-of-chaos-initialization", "fixup-and-layerscale-scaled-residual-init", "per-layer-lyapunov-exponents-of-training-dynamics"],
+              "key_results_or_algorithms": ["Glorot & Bengio variance matching", "He et al. ReLU init", "Fan-in/fan-out modes and torch.nn.init API", "Zero/scaled residual init (Fixup, LayerScale)", "Global-norm gradient clipping", "TensorFlow signal propagation (Sermanet, Bengio)"],
+              "math_foundations": ["Second-moment propagation through linear maps", "Expectation over weight distributions", "Eigenvalues/Lyapunov exponents of product matrices", "Composition of random maps"],
+              "applications": ["Making 100-layer transformer/CNN training stable", "Large-scale model recipes (muP) and warmup interaction", "Debugging silently divergent or slow-deep-training runs"],
+              "common_misconceptions": [
+                "Exploding gradients and vanishing gradients are the same phenomenon (they need opposite fixes: scale/gain vs depth-bridging).",
+                "Any small random init works (variance must be matched to fan-in and activation).",
+                "BatchNorm/ LayerNorm make initialization irrelevant for residual networks (residual branch scale still matters).",
+                "Gradient clipping fixes ill-conditioning rather than masking instability."
+              ],
+              "further_reading": [
+                { "title": "Understanding the difficulty of training deep feedforward neural networks", "authors": "Glorot and Bengio", "year": 2010, "type": "paper", "url": null },
+                { "title": "Delving Deep into Rectifiers: Surpassing State-of-the-Art Performance on ImageNet", "authors": "He, Zhang, Ren and Sun", "year": 2015, "type": "paper", "url": null },
+                { "title": "Signal propagation in feedforward networks", "authors": "Sermanet and Bengio", "year": 2017, "type": "paper", "url": null },
+                { "title": "Fixup Initialization: Residual Learning Without Normalization Using Fewer Patches", "authors": "Zhang, Dauphin and Maaten", "year": 2019, "type": "paper", "url": null },
+                { "title": "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot Hyperparameter Transfer", "authors": "Yang, Hu, Deng, Fan and Simon", "year": 2021, "type": "paper", "url": null },
+                { "title": "torch.nn.init module documentation", "authors": "PyTorch team", "year": 2024, "type": "docs", "url": "https://docs.pytorch.org/docs/stable/nn.init.html" }
+              ]
+            },
+            {
+              "slug": "normalization-layers-mathematics",
+              "name": "Normalization Layers: Batch, Layer, Group, Instance, RMSNorm",
+              "difficulty": "intermediate",
+              "definition": "Normalization layers are differentiable, parameterized functions that rescale and shift activations over chosen tensor axes - batch statistics for BatchNorm, per-example feature statistics for LayerNorm, channel groups, spatial statistics for InstanceNorm, and an RMS-only rescale for RMSNorm.",
+              "explanation": "The unifying formula is: given a tensor, compute a mean and variance over an axis set A (BatchNorm: A = batch and often spatial axes; LayerNorm: A = feature dim; GroupNorm: A = (C/G) features per group; InstanceNorm: A = spatial per channel), then z = (x - mu)/sqrt(sigma^2 + eps) * gamma + beta. BatchNorm additionally maintains running estimates used at inference and creates the train/eval discrepancy plus a batch-size dependence that breaks small-batch and stateful/online settings - and its coupling of examples inside a minibatch is why it interacts badly with sequence models and with data parallelism (needing synchronized statistics). LayerNorm removes cross-example dependence, which is what makes autoregressive and per-token normalization coherent; RMSNorm drops mean-centering and uses the root-mean-square scale, which is cheaper and empirically equivalent in LLMs, and modern LLMs apply it before each block. Normalization placement is a first-order design question: post-norm x_{l+1} = LN(x_l + f(x_l)) trains stably only to modest depth, while pre-norm x_{l+1} = x_l + LN(f(x_l)) removes the multiplicative residual growth (identity is not rescaled each block) so very deep models train, at the cost of a weaker residual signal, an effectively smaller 'depth budget', and the need for final normalization; DeepNorm, sandwich/normalized-LN and Yarn-style scalings are attempts to get both. Theories of normalization are genuinely contested: the internal-covariate-shift story of the original BatchNorm paper is not well supported, and the better-supported accounts are Lipschitz/smoothness of the loss, gradient variance reduction, and reparameterization of the scale so effective learning rate and weight decay decouple from activation magnitude - the last explains why a normalized network's optimum has a well-defined direction and why weight norm alone does not change the function, which is also why LayerNorm models need decoupled weight decay.",
+              "learning_objectives": [
+                "Write the mean/variance axis sets and parameter counts for Batch/Layer/Group/Instance/RMS normalization.",
+                "Explain BatchNorm's train-versus-eval behavior, running statistics, and why batch size and synchronization matter.",
+                "Derive the LayerNorm backward pass and note the numerically delicate terms.",
+                "Compare pre-norm, post-norm, and DeepNorm/sandwich variants, with the depth-scaling argument for each.",
+                "Explain the scale-invariance argument for why weight decay is not redundant in normalized nets, and why RMSNorm can replace LayerNorm.",
+                "Choose normalization for a new architecture from constraints (batch size, sequence length, online training, autoregressive causality)."
+              ],
+              "prerequisites_strict": ["backpropagation-autodiff-forward-reverse", "optimization-for-neural-networks"],
+              "prerequisites_recommended": ["normalization-and-regularization-for-deep-networks", "transformer-block-internals-design"],
+              "related_concepts": ["normalization-and-regularization-for-deep-networks", "gradient-pathologies-initialization-theory"],
+              "advanced_extensions": ["weight-normalization-and-decoupled-layers", "normalization-for-diffusion-models-ada-group-norm", "batch-statistics-under-distribution-shift", "scale-invariance-and-effective-learning-rate-theory"],
+              "key_results_or_algorithms": ["BatchNorm (Ioffe & Szegedy)", "LayerNorm (Ba et al.)", "GroupNorm/InstanceNorm", "RMSNorm", "Weight Normalization", "DeepNorm", "Pre-LN residual transformers"],
+              "math_foundations": ["Statistics over tensor axes", "Reparameterization and scale invariance", "Lipschitz constants of composed maps", "Bias/variance in minibatch estimators"],
+              "applications": ["Every modern LLM and ViT block", "Stabilizing GAN generators/discriminators", "Diffusion model conditioning (adaLN-adaGN)", "Small-batch vision and streaming training"],
+              "common_misconceptions": [
+                "Internal covariate shift is the established mechanism (empirical and theoretical support is weak/contested).",
+                "BatchNorm at inference uses batch statistics (it uses running averages).",
+                "LayerNorm and BatchNorm are interchangeable in autoregressive models.",
+                "Normalization placement is a cosmetic detail (it changes reachable depth, effective LR, and gradient flow)."
+              ],
+              "further_reading": [
+                { "title": "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift", "authors": "Ioffe and Szegedy", "year": 2015, "type": "paper", "url": null },
+                { "title": "Layer Normalization", "authors": "Ba, Kiros and Hinton", "year": 2016, "type": "paper", "url": "https://arxiv.org/abs/1607.06450" },
+                { "title": "Group Normalization", "authors": "Wu and He", "year": 2018, "type": "paper", "url": null },
+                {
+                  "title": "Root Mean Square Layer Normalization",
+                  "authors": "Zhang and Sennrich",
+                  "year": 2019,
+                  "type": "paper",
+                  "url": null
+                },
+                { "title": "How Does Batch Normalization Help Optimization?", "authors": "Santurkar, Tsipras, Ilyas and Madry", "year": 2018, "type": "paper", "url": null },
+                { "title": "Residual Networks Behave Like Ensembles of Relatively Shallow Networks", "authors": "Veit, Alldrin, Caruana and Malik", "year": 2016, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "activation-functions-mathematics",
+              "name": "Activation Functions and Their Mathematics",
+              "difficulty": "intermediate",
+              "definition": "The scalar nonlinearity applied elementwise to pre-activations; its derivative shape, saturation, monotonicity, zero-mean-ness, and smoothness determine gradient flow, approximation class, and optimization behavior.",
+              "explanation": "Sigmoid and tanh are bounded, saturated, and have derivative <= 1/4 and <= 1 respectively, which multiplicatively attenuates gradients with depth and pushes pre-activations into flat regions - tanh's zero mean is a real advantage over sigmoid for centered data. ReLU removed saturation on the positive side, kept sparse (partly zero-mean-breaking) activations, is piecewise linear so the network computes a continuous piecewise-linear function with a combinatorial region count exponential in depth, and introduced the dying-unit problem when mean pre-activations are negative; leaky/PReLU/ELU/SELU variants trade back saturation for zero-mean-ness (SELU comes with a self-normalizing fixed point under dropout assumptions, which is why it demands specific init). Smooth functions matter more than they look: GELU is x*Phi(x) - a probabilistic gate that became the transformer default - and Swish/SiLU is x*sigmoid(bx), both nonmonotone with bounded negative dips, which softens optimization and interacts with attention entropy; SiLU/GELU are preferred where the model must be differentiable everywhere (second-order methods, curvature regularizers) while ReLU's nondifferentiability is a measure-zero annoyance in practice. Also worth covering: why bounded activations cap attention logits' effect, why softmax/tanh choices change information geometry, and the practical question of choosing activation with the normalization/init scheme jointly rather than as a hyperparameter afterthought. Include the 'which nonlinearity can the network approximate well' framing: piecewise-linear nets are universal on compact sets, and smooth nonmonotone nets change region-count and spectral-bias properties (ReLU has a spectral bias toward low frequencies, affecting where it fits noise).",
+              "learning_objectives": [
+                "Derive derivatives of sigmoid, tanh, ReLU, leaky ReLU, ELU, GELU, SiLU and state their saturation and monotonicity.",
+                "Explain the vanishing-gradient mechanism of sigmoid quantitatively (product of derivative maxima).",
+                "Explain why zero-mean activations help optimization and why ReLU's sparsity is a counterweight.",
+                "Show why GELU is x*Phi(x) and implement both exact and tanh-approximation forms.",
+                "Discuss dying ReLU, self-normalization of SELU, and how activation choice interacts with init.",
+                "Describe the effect of activation smoothness on second-order/curvature-based training and on spectral bias."
+              ],
+              "prerequisites_strict": ["backpropagation-autodiff-forward-reverse"],
+              "prerequisites_recommended": ["multivariable-calculus", "probability-foundations"],
+              "related_concepts": ["gradient-pathologies-initialization-theory", "normalization-layers-mathematics"],
+              "advanced_extensions": ["learnable-activations-paf-swish-families", "frequency-spectral-bias-of-different-activations", "normalization-free-networks-with-nadal-style-scaling"],
+              "key_results_or_algorithms": ["sigmoid/tanh saturation", "ReLU and variants", "ELU/SELU self-normalizing nets", "GELU (Hendrycks & Gimpel)", "Swish/SiLU (Ramachandran et al.)", "maxout/piecewise-linear generalization"],
+              "math_foundations": ["Monotonicity, convexity, boundedness", "The standard normal CDF Phi and its use in GELU", "Piecewise-linear regions of ReLU networks"],
+              "applications": ["Transformer MLP blocks (GELU/SiLU/GLU variants)", "CNN backbones", "GAN discriminators (leaky ReLU)", "Energy-based and normalizing-flow models (invertible activations)"],
+              "common_misconceptions": [
+                "ReLU is linear so a ReLU network is a linear model (composition with piecewise regions is not global linearity).",
+                "Sigmoid was abandoned only for vanishing gradients (also non-zero-centered outputs and cost).",
+                "Any smooth activation is strictly better than ReLU (region-count, sparsity, and inference cost favor ReLU).",
+                "SELU self-normalization holds in arbitrary architectures (its proof assumes specific input/fan conditions)."
+              ],
+              "further_reading": [
+                                { "title": "Gaussian Error Linear Units (GELUs)", "authors": "Hendrycks and Gimpel", "year": 2016, "type": "paper", "url": null },
+                { "title": "Searching for Activation Functions", "authors": "Ramachandran, Zoph and Le", "year": 2017, "type": "paper", "url": null },
+                { "title": "Self-Normalizing Neural Networks", "authors": "Klambauer, Unterthiner, Mayr and Hochreiter", "year": 2017, "type": "paper", "url": null },
+                { "title": "On the Spectral Bias of Neural Networks", "authors": "Rahaman et al.", "year": 2019, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "normalization-and-regularization-for-deep-networks",
+              "name": "Regularization for Deep Networks: Weight Decay, Dropout, Augmentation, Label Smoothing",
+              "difficulty": "intermediate",
+              "definition": "Techniques that reduce generalization gap without changing the model class: penalty terms (L2/weight decay), stochastic unit masking (dropout), input-target transformations (augmentation), and target smoothing (label smoothing, mixup).",
+              "explanation": "Weight decay added to the loss is ridge regularization in parameter space, biasing toward smaller-norm, flatter, better-conditioned solutions; in adaptive optimizers the penalty's effective strength is rescaled by the preconditioner, hence decoupled weight decay (AdamW). Crucially, for scale-invariant parameterizations (normed layers, homogeneous activations) pure L2 does not change the function it only changes effective step size, so weight decay's regularization value must be understood via the induced effective LR and margin rather than raw capacity. Dropout trains an implicit ensemble by sampling Bernoulli masks at unit level; its standard test-time rescaling is an approximation to the exponential ensemble, and its regularizing effect is variance/noise injection plus implicit input-gradient regularization, while it is rarely used in modern LLMs (where it hurts at scale) and still used for encoder-decoder hidden states. Data augmentation is regularization in function space via a prior on invariances, and the strongest versions are systematic (RandAugment, AutoAugment learned by policy, MixUp/CutMix as convex interpolation and its implicit distributional-smoothness regularization). Label smoothing changes the target to (1-eps)y + eps/K, which primarily (a) softens gradients from overconfident logits, (b) improves calibration in the CE-optimal distribution sense, (c) acts as an entropy maximizer - and in vision transformers, where attention logits saturate easily, eps about 0.1 is standard. Also include the modern reality: dropout and weight decay trade off against batch size and augmentation strength, and 'regularization' now often means early stopping, EMA of weights, mixup-family interpolation, and explicit noise, which is why it belongs next to the loss-landscape topic rather than classical statistics.",
+              "learning_objectives": [
+                "Derive the ridge penalty equivalence of weight decay and explain where it fails (adaptive optimizers, scale invariance, bias terms).",
+                "Implement dropout with correct inverted scaling and reason about its ensemble interpretation and limits.",
+                "Explain why label smoothing helps CE-trained deep nets and what it does to calibration and gradient magnitude.",
+                "Describe MixUp/CutMix invariance arguments and their known failure modes in detection/segmentation.",
+                "Rank regularization methods by effect in a modern ViT/LLM recipe (decoupled WD, dropout, augmentation, EMA).",
+                "Predict augmentation-induced train/test mismatch and use RandAugment-style parameterization."
+              ],
+              "prerequisites_strict": ["activation-functions-mathematics", "optimization-for-neural-networks"],
+              "prerequisites_recommended": ["statistical-learning-theory", "supervised-learning-foundations", "normalization-layers-mathematics"],
+              "related_concepts": ["loss-landscapes-and-grokking", "normalization-layers-mathematics"],
+              "advanced_extensions": ["stochastic-depth-and-drop-path-in-residual-nets", "sharpness-aware-minima-and-flatness-as-regularizer", "data-augmentation-as-invariance-prior-design", "early-stopping-as-implicit-ridge"],
+              "key_results_or_algorithms": ["L2/weight decay", "Dropout (Srivastava et al.)", "DropConnect/stochastic depth/DropBlock", "RandAugment, AutoAugment", "MixUp, CutMix", "Label smoothing (Szegedy et al.)", "Exponential moving average of weights"],
+              "math_foundations": ["Penalty-form constrained risk", "Bernoulli/mask expectations", "Convex combinations of distributions (MixUp)", "KL-to-uniform entropy term from label smoothing"],
+              "applications": ["ViT and CNN training recipes", "Fine-tuning small-data vision datasets", "LLM pretraining (weight decay, no dropout, EMA)", "Robustness to distribution shift"],
+              "common_misconceptions": [
+                "Weight decay and L2 regularization are identical in every optimizer (they differ under adaptive preconditioning and scale invariance).",
+                "Dropout approximates model averaging exactly (the geometric-mean approximation is crude and can mis-scale).",
+                "Label smoothing improves calibration unconditionally (with strong models it can degrade uncertainty estimates).",
+                "More augmentation is always better (invariances can be wrong, e.g. horizontal flips for text/medical imaging)."
+              ],
+              "further_reading": [
+                { "title": "Dropout: A Simple Way to Prevent Neural Networks from Overfitting", "authors": "Srivastava, Hinton, Krizhevsky, Sutskever and Salakhutdinov", "year": 2014, "type": "paper", "url": null },
+                { "title": "Rethinking the Inception Architecture for Computer Vision", "authors": "Szegedy, Vanhoucke, Ioffe, Shlens and Wojcik", "year": 2016, "type": "paper", "url": null },
+                { "title": "mixup: Beyond Empirical Risk Minimization", "authors": "Zhang, Cisse, Dauphin and Lopez-Paz", "year": 2018, "type": "paper", "url": null },
+                { "title": "RandAugment: Practical automated data augmentation with a reduced search space", "authors": "Cubuk, Zoph, Mankowitz, Shlens and Le", "year": 2020, "type": "paper", "url": null },
+                { "title": "When Does Label Smoothing Help?", "authors": "Rafael Müller, Simon Kornblith, Geoffrey Hinton", "year": 2019, "type": "paper", "url": null },
+                { "title": "Deep Learning", "authors": "Goodfellow, Bengio and Courville", "year": 2016, "type": "book", "url": "https://www.deeplearningbook.org/" }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "depth-as-dynamics-and-limit-theory",
+          "name": "Depth as Dynamics and Limit Theory",
+          "summary": "Viewpoints that treat trained networks as dynamical systems and as objects with asymptotic regimes: residual nets as discretized ODEs, neural ODEs, and the infinite-width (NTK/mean-field) picture.",
+          "topics": [
+            {
+              "slug": "residual-connections-and-ode-view",
+              "name": "Residual Connections, Network-as-ODE, and Neural ODEs",
+              "difficulty": "advanced",
+              "definition": "A residual block writes x_{l+1} = x_l + h f(x_l), i.e. one Euler step of an ODE dx/dt = f(x); viewing depth as time makes the network a discretized dynamical system and lets the ODE be learned continuously (neural ODEs, adjoint backpropagation).",
+              "explanation": "The Euler-step reading is exact with h = 1/L: as depth grows at fixed total integration length, a residual network converges to a continuous-depth flow generated by the learned vector field, which explains (a) why plain networks explode (each layer multiplies instead of adding, so log-norm grows linearly and identity is unobtainable), (b) why extremely deep residual nets train (the identity path preserves gradient magnitude, and the block functions can be small), (c) why the ensemble-of-paths picture (Veit et al.) works - variable-length paths with skipping, and (d) why scaling residual branches (zero/LayerScale/Fixup) matters. From there the ODE becomes the model: neural ODEs parameterize f with a network and integrate with an adaptive solver, so depth is continuous, and the backward pass uses the adjoint sensitivity method of Pontryagin - solve the augmented ODE for a(x) = dL/dx backwards, giving O(depth)-free memory at the cost of extra integration and possible numerical instability. Extensions worth teaching: continuous normalization flows (invertible, ODE-based generative models), ANODEs, GANs/flow-matching as vector-field learning, Hamiltonian and symplectic networks where conserved structure is imposed, latent-dynamics world models, and control interpretation via the residual-as-learned-controllers framing (Paul Chang's 'functional residual networks' essay). Honest limits: adjoint gradients are less exact than a discrete backward pass, adaptive solvers and stiffness cause training pathologies, and in practice continuous-depth nets have not beaten discrete residual nets at scale - the ODE view is best understood as a design and analysis lens (also the correct frame for understanding depth-scaling instabilities and the 'rank collapse' of plain deep nets).",
+              "learning_objectives": [
+                "Show algebraically that a residual block is an explicit Euler step and identify h in the 1/L scaling.",
+                "Explain why identity shortcuts fix gradient-norm decay and what happens to plain networks.",
+                "Derive the adjoint gradient of a neural ODE and compare its memory/compute profile with unrolled backprop.",
+                "Implement a small neural ODE classifier with a black-box solver and discuss solver choice and stiffness.",
+                "Connect residual-branch scaling (LayerScale, Fixup, zero-init) to the near-identity-flow picture.",
+                "Discuss why neural ODEs have not displaced discrete residual architectures in large-scale training."
+              ],
+              "prerequisites_strict": ["normalization-layers-mathematics", "backpropagation-autodiff-forward-reverse"],
+              "prerequisites_recommended": ["differential-equations", "dynamical-systems", "control-theory-foundations"],
+              "related_concepts": ["infinite-width-limit-ntk-mean-field", "normalization-and-regularization-for-deep-networks"],
+              "advanced_extensions": ["unrolled-ode-view-of-iterative-refinement", "symplectic-and-hamiltonian-networks", "adversarially-trained-continuous-normalizing-flows", "implicit-depth-and-root-finding-layers", "neural-sde-and-jump-diffusion-models"],
+              "key_results_or_algorithms": ["He et al. ResNet", "Euler/1-over-L scaling argument", "Neural ODEs + adjoint method (Chen et al.)", "ANODE / continuous normalizing flows", "Hamiltonian neural networks"],
+              "math_foundations": ["Explicit Euler and higher-order solvers", "Adjoint sensitivity / Pontryagin costate equation", "Flow maps, Lyapunov stability", "Norm growth along composition"],
+              "applications": ["Understanding transformer depth scaling and residual scaling", "Continuous-depth memory-efficient training", "World models and learned latent dynamics", "Generative flows and diffusion as learned vector fields"],
+              "common_misconceptions": [
+                "Residual connections are only a gradient shortcut (they change the function class to near-identity flows and permit depth).",
+                "Neural ODEs are cheap because depth is continuous (adaptive solvers add cost; adjoint gradients are approximate and unstable when stiff).",
+                "The ODE view proves deep nets are principled dynamical systems (it is an analogy plus an exact limit under assumptions)."
+              ],
+              "further_reading": [
+                { "title": "Deep Residual Learning for Image Recognition", "authors": "He, Zhang, Ren and Sun", "year": 2016, "type": "paper", "url": null },
+                { "title": "Neural Ordinary Differential Equations", "authors": "Chen, Rubanova, Bettencourt and Duvenaud", "year": 2018, "type": "paper", "url": null },
+                { "title": "Residual Networks Behave Like Ensembles of Relatively Shallow Networks", "authors": "Veit, Alldrin, Caruana and Malik", "year": 2016, "type": "paper", "url": null },
+                { "title": "ANODE: Unifying Adversarial Learning with Generalizable Deep Neural Networks", "authors": "Grathwohl, Chen, Bettencourt, Sutskever and Duvenaud", "year": 2019, "type": "paper", "url": null },
+                { "title": "Functional Residual Networks: a View of Deep Networks as Controllers", "authors": "Chang", "year": 2018, "type": "blog", "url": null }
+              ]
+            },
+            {
+              "slug": "infinite-width-limit-ntk-mean-field",
+              "name": "Infinite-Width Limit: Neural Tangent Kernel and Mean-Field View",
+              "difficulty": "expert",
+              "definition": "Under a specific scaling of outputs and learning rate, a wide network's training converges to kernel regression with the Neural Tangent Kernel (frozen features, no representation learning), while the alternative mean-field scaling describes gradient flow as movement of the empirical distribution of neurons.",
+              "explanation": "Jacot et al. showed that with output scaled by 1/width and infinitesimal LR, a network's parameters move little, so the dynamics linearize around initialization: the training function evolves by gradient descent in the RKHS induced by Theta(x,x') = <g(x), g(x')> where g = grad_theta f(x); at infinite width the kernel is analytic (for ReLU, a closed-form arcsine-kernel composition over layers), fixed, and the solution is kernel regression - provably no feature learning, and empirically worse than finite-width training on compositional/label-heavy tasks. The NTK is genuinely useful: it gives the cleanest available theory of generalization and of 'which functions are learned fast' (spectral bias: components with large kernel eigenvalues fit first, explaining the low-frequency preference), it justifies muP and init/width scaling rules (the NTK parametrization is one of the two muP regimes), and it supplies a rigorous language for discussing how far from lazy a real model is. Chizat and Bach's distinction names the other limit: in the mean-field parametrization (second layer weights scaled by 1/m, i.e. 'maximal' or mean-field scaling), gradient flow is a Wasserstein gradient flow on the neuron measure, the limiting object is a distribution over neurons rather than a fixed kernel, and the dynamics provably can learn features - with mean-field analyses giving global convergence for two-layer nets under assumptions (Mei-Montenegro-NG, Rotskoff-Vanden-Eijnden, Nitanda-Suzuki) and the notable result that feature-learning scaling yields better-than-kernel rates. The empirical status is the pedagogically important part: real trained networks are measurably NTK-different (kernel alignment studies: NTK predictions often beat the trained net on some tasks and lose on others, and 'beyond-NTK' corrections explain part of the gap), so neither limit describes practice; both are, however, the correct framework for reasoning about width scaling, LR transfer, and whether a loss curve represents feature learning at all.",
+              "learning_objectives": [
+                "Define the NTK as the Gram matrix of output gradients and derive linearization/NTK-gradient-descent equivalence at infinite width.",
+                "State the arcsine-kernel recursion for an L-layer ReLU network.",
+                "Explain spectral bias via kernel eigenvalues and connect it to frequency learning order.",
+                "Contrast the NTK and mean-field scalings of the same architecture and say what each licenses.",
+                "Describe how muP/NTK parametrizations enable hyperparameter transfer across width.",
+                "Give evidence for and against trained networks being in the lazy regime."
+              ],
+              "prerequisites_strict": ["universal-approximation-and-depth", "optimization-for-neural-networks", "residual-connections-and-ode-view"],
+              "prerequisites_recommended": ["random-matrix-theory", "functional-analysis", "measure-theoretic-probability", "differential-equations"],
+              "related_concepts": ["gradient-pathologies-initialization-theory", "loss-landscapes-and-grokking"],
+              "advanced_extensions": ["beyond-the-ntk-hierarchy-of-corrections", "wasserstein-gradient-flow-of-neuron-measures", "deep-learning-as-commuting-kernel-approximation", "ntk-of-transformers-and-attention-layers"],
+              "key_results_or_algorithms": ["NTK definition (Jacot et al. 2018)", "Global convergence of wide-net training", "Chizat-Bach lazy vs feature-learning dichotomy", "Mean-field global convergence for two-layer nets", "arcsine kernel recursion", "MuP/NTK parametrization"],
+              "math_foundations": ["Reproducing-kernel Hilbert spaces", "Gradient flow in function space", "Weak convergence of empirical measures", "Integral-operator spectra"],
+              "applications": ["Reasoning about width and depth scaling in practice", "Explaining spectral bias / slow fitting of high-frequency labels", "Designing transferable hyperparameter recipes", "Analyzing when kernel methods are a fair baseline"],
+              "common_misconceptions": [
+                "The NTK is a theory of how networks are trained (it is the frozen-feature limit that real training departs from).",
+                "Kernel and neural-network generalization bounds transfer one to the other (kernel norms and neural norms are different objects).",
+                "Mean-field results apply to deep residual architectures (most are two-layer, width-scaled, continuous-time statements).",
+                "Infinite width means infinite capacity to generalize well."
+              ],
+              "further_reading": [
+                { "title": "Neural Tangent Kernel: Convergence and Generalization in Neural Networks", "authors": "Jacot, Gabriel and Hongler", "year": 2018, "type": "paper", "url": null },
+                { "title": "On Lazy Training in Differentiable Programming", "authors": "Chizat, Oyallon and Bach", "year": 2019, "type": "paper", "url": null },
+                { "title": "A Note on Lazy Training in Supervised Differentiable Programming", "authors": "Chizat and Bach", "year": 2019, "type": "paper", "url": null },
+                { "title": "A Mean Field View of the Landscape of Two-Layer Networks", "authors": "Mei, Montanari and Nguyen", "year": 2018, "type": "paper", "url": null },
+                { "title": "Trainability of Deep Feedforward Neural Networks and Feature Learning", "authors": "Chizat and Bach", "year": 2022, "type": "paper", "url": null }
+              ]
+            },
+            {
+              "slug": "loss-landscapes-and-grokking",
+              "name": "Loss Landscapes, Flat Minima, Double Descent, and Grokking",
+              "difficulty": "advanced",
+              "definition": "Phenomena about the geometry of deep loss surfaces and the training trajectory: flat-versus-sharp minima and their empirical link to generalization, the double-descent risk curve across the interpolation threshold, and grokking where generalization emerges long after memorization.",
+              "explanation": "Sharpness intuitions (high loss curvature/Hessian trace or large loss-basin width should hurt test performance) motivated SAM and flatness-seeking training and do correlate in practice within an architecture, but the classical mathematical story 'flatness causes generalization' is not clean: scaling by a constant can make any sharp minimum arbitrarily flat without changing the function (a fact that breaks naive norm-based sharpness definitions unless the flatness is measured with a scale-invariant notion such as relative curvature or normalized margin), and deep nets have degenerate directions where the Hessian is zero regardless of solution quality. Empirically the Hessian spectrum is heavy-tailed with a bulk of small eigenvalues and a few large ones; loss surfaces in the same basin are connected by low-barrier paths for over-parameterized nets (mode connectivity), which suggests single-basin training. Double descent reframes the classical U-curve: as parameter count approaches n the model can interpolate the labels exactly, the risk of classical estimators blows up near that threshold (variance of the interpolating solution), and then decreases again as further over-parameterization makes the minimum-norm interpolator implicit - observed for nets, and proven in linear/kernel settings, though 'benign overfitting' depends strongly on data geometry (random-label double descent is weaker). Grokking is the delayed-generalization phenomenon on algorithmic tasks (modular arithmetic, boolean/cobalt-style synthetic data): near-zero train error with test error ~0.5 for long training, then a sharp transition to generalization. Current best accounts are optimization/regularization rather than capacity: weight decay (plus long training and small data) drives the model to a structured, low-complexity solution; ablation of components (attention vs MLP) suggests a memorizing circuit is first found then replaced by an algorithmic circuit; phase-transition language and 'grokking as delayed margin/RBM-like regularization' have all appeared. It is genuinely open whether grokking transfers to real tasks, and its practical lesson is: do not stop training at the point of zero train loss, and treat test-accuracy curves with an explicit 'delayed generalization' hypothesis.",
+              "learning_objectives": [
+                "Define flatness in at least two ways (loss basin width, normalized/relative curvature) and show the scaling counterexample.",
+                "Explain the interpolation-threshold variance blowup that produces the double-descent bump.",
+                "Reproduce grokking on a modular arithmetic task and identify the ingredients (small data, long training, weight decay).",
+                "Connect mode connectivity and loss-basin geometry to the plausibility of flat-minima arguments.",
+                "Argue why a flatness-generalization claim needs a scale-invariant definition.",
+                "State which of these phenomena have rigorous proofs (linear/kernel double descent) and which are empirical."
+              ],
+              "prerequisites_strict": ["optimization-for-neural-networks", "universal-approximation-and-depth"],
+              "prerequisites_recommended": ["statistical-learning-theory", "generalization-theory", "random-matrix-theory", "normalization-and-regularization-for-deep-networks"],
+              "related_concepts": ["infinite-width-limit-ntk-mean-field", "normalization-and-regularization-for-deep-networks"],
+              "advanced_extensions": ["implicit-regularization-of-sgd-on-separable-data", "edge-of-stability-as-training-attractor", "grokking-as-relu-sparse-circuit-discovery", "benign-overfitting-in-linear-regression"],
+              "key_results_or_algorithms": ["Keskar et al. on train/test loss flatness", "SAM (Foret et al.)", "Belkin et al. double descent", "Bartlett, Long, Lugosi (benign overfitting)", "Power et al. grokking", "Yao et al. grokking phase transitions"],
+              "math_foundations": ["Hessian spectra and curvature", "Loss-basin and barrier geometry", "Min-norm interpolation and covariance spectra", "Margin theory"],
+              "applications": ["Deciding training length and weight decay in recipes", "Reading flatness-seeking optimizers critically", "Diagnosing why memorization precedes generalization in small-data fine-tuning"],
+              "common_misconceptions": [
+                "Flat minima are proven to generalize (scale-invariance and degenerate directions complicate the claim).",
+                "Double descent means overfitting is fine in general (it is a risk-curve statement about interpolators and data geometry).",
+                "Grokking is a capacity effect (it disappears with dropout/early LR changes and is regularization-driven).",
+                "Zero training loss is the right stopping criterion."
+              ],
+              "further_reading": [
+                { "title": "On Large-Batch Training for Deep Learning: Generalization Gap and Sharp Minima", "authors": "Keskar, Mudigere, Nocedal, Tang and Zhang", "year": 2017, "type": "paper", "url": null },
+                
+                { "title": "Sharpness-Aware Minimization for Efficiently Improving Generalization", "authors": "Foret, Kluger, Gorbunov and colleagues", "year": 2021, "type": "paper", "url": null },
+                { "title": "Reconciling modern machine-learning practice and the classical bias-variance trade-off", "authors": "Belkin, Hsu, Ma and Mandal", "year": 2019, "type": "paper", "url": null },
+                { "title": "Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets", "authors": "Power et al.", "year": 2022, "type": "paper", "url": null },
+                { "title": "A Scaling Law for the Evolution of Complex Skills in Neural Networks", "authors": "Barak D. Cohen, Noam Rozen, Gal Chechik, Haim Sompolinsky", "year": 2023, "type": "paper", "url": null }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "notes_on_gaps": "PART1"
+}

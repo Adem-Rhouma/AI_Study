@@ -1,0 +1,128 @@
+/* Design tokens — the only place raw colors, sizes and shadows are allowed.
+   Components consume these through Tailwind utilities or var() references. */
+
+:root {
+  color-scheme: light;
+
+  /* Neutral ramp: warm paper rather than pure grey, so long reading sessions stay soft. */
+  --bg-base: #fbfaf7;
+  --bg-raised: #ffffff;
+  --bg-sunken: #f2f0ea;
+  --bg-inverse: #1c1a17;
+  --bg-overlay: rgb(28 26 23 / 0.42);
+
+  --text-primary: #1c1a17;
+  --text-secondary: #4c4842;
+  --text-muted: #6f6a61;
+  --text-inverse: #f7f5f1;
+
+  --border-subtle: #e4e1d9;
+  --border-strong: #c9c5ba;
+
+  --accent: #0f766e;
+  --accent-hover: #115e59;
+  --accent-active: #134e4a;
+  --accent-soft: #ccfbf1;
+  --accent-contrast: #ffffff;
+  --accent-ring: #0f766e;
+
+  --info: #1d4ed8;
+  --info-soft: #dbeafe;
+  --success: #15803d;
+  --success-soft: #dcfce7;
+  --warning: #a16207;
+  --warning-soft: #fef3c7;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+
+  /* Mastery ramp doubles as a luminance ramp, and is always paired with a fill pattern. */
+  --mastery-0: #b3ada1;
+  --mastery-1: #7dd3c0;
+  --mastery-2: #3fb3a1;
+  --mastery-3: #12897a;
+  --mastery-4: #0b5f57;
+  --mastery-5: #073f3a;
+
+  --shadow-1: 0 1px 2px rgb(28 26 23 / 0.06), 0 1px 1px rgb(28 26 23 / 0.04);
+  --shadow-2: 0 6px 16px -6px rgb(28 26 23 / 0.18), 0 2px 4px rgb(28 26 23 / 0.06);
+  --shadow-3: 0 24px 48px -12px rgb(28 26 23 / 0.28), 0 4px 12px rgb(28 26 23 / 0.10);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  --radius-input: 6px;
+  --radius-card: 10px;
+  --radius-modal: 14px;
+  --radius-pill: 999px;
+
+  --font-sans: "IBM Plex Sans", system-ui, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  --text-caption: 13px;
+  --text-body: 17px;
+  --text-small-title: 19px;
+  --text-h4: 21px;
+  --text-h3: 26px;
+  --text-h2: 32px;
+  --text-h1: 40px;
+  --text-display: 48px;
+
+  --measure-reading: 72ch;
+  --rail-width: 264px;
+  --rail-collapsed: 68px;
+  --topbar-height: 60px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg-base: #14161a;
+  --bg-raised: #1b1e24;
+  --bg-sunken: #101216;
+  --bg-inverse: #f7f5f1;
+  --bg-overlay: rgb(6 8 10 / 0.62);
+
+  --text-primary: #eceae4;
+  --text-secondary: #bdb9b1;
+  --text-muted: #928d84;
+  --text-inverse: #16181c;
+
+  --border-subtle: #2b2f36;
+  --border-strong: #3d434c;
+
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-active: #99f6e4;
+  --accent-soft: #10403c;
+  --accent-contrast: #06231f;
+  --accent-ring: #2dd4bf;
+
+  --info: #93c5fd;
+  --info-soft: #14263f;
+  --success: #6ee7a0;
+  --success-soft: #12291f;
+  --warning: #fcd34d;
+  --warning-soft: #2c2412;
+  --danger: #fca5a5;
+  --danger-soft: #2f1717;
+
+  --mastery-0: #5b5f66;
+  --mastery-1: #5e9c93;
+  --mastery-2: #3fb3a1;
+  --mastery-3: #2dd4bf;
+  --mastery-4: #7ff0e2;
+  --mastery-5: #c9fff7;
+
+  /* In dark theme shadows read as black mush; borders and a raised surface carry structure instead. */
+  --shadow-1: 0 1px 0 rgb(255 255 255 / 0.03);
+  --shadow-2: 0 8px 20px -10px rgb(0 0 0 / 0.6);
+  --shadow-3: 0 28px 60px -20px rgb(0 0 0 / 0.75);
+}

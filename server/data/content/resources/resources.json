@@ -1,0 +1,515 @@
+[
+  {
+    "slug": "deep-learning-book",
+    "title": "Deep Learning",
+    "description": "The standard graduate-level reference for deep learning: applied math, machine learning basics, modern networks, and the research frontier as of its publication.",
+    "type": "book",
+    "url": "https://www.deeplearningbook.org/",
+    "authors": "Ian Goodfellow, Yoshua Bengio, Aaron Courville",
+    "publisher": "MIT Press",
+    "publishedYear": 2016,
+    "sourceName": "MIT Press",
+    "difficulty": "intermediate",
+    "estMinutes": 2400,
+    "topicSlugs": [
+      "backpropagation-autodiff-forward-reverse",
+      "activation-functions-mathematics",
+      "optimization-for-neural-networks"
+    ],
+    "tags": [
+      "deep-learning",
+      "reference"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "probabilistic-ml-murphy",
+    "title": "Probabilistic Machine Learning: An Introduction",
+    "description": "A modern, unified treatment of machine learning from a probabilistic viewpoint, with generative models, Bayesian methods and deep learning covered in one consistent notation.",
+    "type": "book",
+    "url": "https://probml.github.io/pml-book/book1.html",
+    "authors": "Kevin P. Murphy",
+    "publisher": "MIT Press",
+    "publishedYear": 2022,
+    "sourceName": "MIT Press",
+    "difficulty": "advanced",
+    "estMinutes": 2600,
+    "topicSlugs": [
+      "bayesian-inference-engineering",
+      "probabilistic-graphical-models",
+      "supervised-learning-foundations"
+    ],
+    "tags": [
+      "probabilistic",
+      "reference"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "murphy-advanced-pml",
+    "title": "Probabilistic Machine Learning: Advanced Topics",
+    "description": "The companion volume covering deep generative models, representation learning, reinforcement learning and causality at research level.",
+    "type": "book",
+    "url": "https://probml.github.io/pml-book/book2.html",
+    "authors": "Kevin P. Murphy",
+    "publisher": "MIT Press",
+    "publishedYear": 2023,
+    "sourceName": "MIT Press",
+    "difficulty": "expert",
+    "estMinutes": 2600,
+    "topicSlugs": [
+      "normalizing-flow-design-exact-likelihood",
+      "model-based-reinforcement-learning"
+    ],
+    "tags": [
+      "probabilistic",
+      "research"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "bishop-prml",
+    "title": "Pattern Recognition and Machine Learning",
+    "description": "The classic Bayesian introduction to pattern recognition; still the clearest route into graphical models, variational inference and kernel methods.",
+    "type": "book",
+    "url": "https://www.microsoft.com/en-us/research/people/cmbishop/prml-book/",
+    "authors": "Christopher M. Bishop",
+    "publisher": "Springer",
+    "publishedYear": 2006,
+    "sourceName": "Springer",
+    "difficulty": "intermediate",
+    "estMinutes": 2200,
+    "topicSlugs": [
+      "generalized-linear-models-and-naive-bayes",
+      "probabilistic-graphical-models"
+    ],
+    "tags": [
+      "bayesian",
+      "classic"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "islr",
+    "title": "An Introduction to Statistical Learning (with Python)",
+    "description": "The accessible entry point to statistical learning: resampling, linear methods, trees, SVMs and unsupervised learning, with worked Python labs.",
+    "type": "book",
+    "url": "https://www.statlearning.com/",
+    "authors": "Gareth James, Daniela Witten, Trevor Hastie, Robert Tibshirani",
+    "publisher": "Springer",
+    "publishedYear": 2023,
+    "sourceName": "Springer",
+    "difficulty": "beginner",
+    "estMinutes": 1500,
+    "topicSlugs": [
+      "model-selection-validation",
+      "decision-trees-and-ensemble-methods",
+      "clustering-and-neighbor-methods"
+    ],
+    "tags": [
+      "statistics",
+      "first-book"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "esl",
+    "title": "The Elements of Statistical Learning",
+    "description": "The advanced companion to ISLR: bias-variance, model selection and inference at mathematical depth.",
+    "type": "book",
+    "url": "https://hastie.su.domains/ElemStatLearn/",
+    "authors": "Trevor Hastie, Robert Tibshirani, Jerome Friedman",
+    "publisher": "Springer",
+    "publishedYear": 2009,
+    "sourceName": "Springer",
+    "difficulty": "advanced",
+    "estMinutes": 2400,
+    "topicSlugs": [
+      "statistical-learning-theory",
+      "model-selection-validation"
+    ],
+    "tags": [
+      "statistics",
+      "reference"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "boyd-convex-optimization",
+    "title": "Convex Optimization",
+    "description": "The standard reference on convex analysis, duality and algorithms; freely available from the authors.",
+    "type": "book",
+    "url": "https://web.stanford.edu/~boyd/cvxbook/",
+    "authors": "Stephen Boyd, Lieven Vandenberghe",
+    "publisher": "Cambridge University Press",
+    "publishedYear": 2004,
+    "sourceName": "Cambridge University Press",
+    "difficulty": "advanced",
+    "estMinutes": 2600,
+    "topicSlugs": [
+      "convex-optimization-and-duality",
+      "second-order-quasi-newton-and-trust-region-methods"
+    ],
+    "tags": [
+      "optimization",
+      "reference"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "mathematics-for-ml",
+    "title": "Mathematics for Machine Learning",
+    "description": "A compact bridge from linear algebra, calculus and probability to the mathematics used by learning algorithms.",
+    "type": "book",
+    "url": "https://mml-book.github.io/",
+    "authors": "Marc Peter Deisenroth, A. Aldo Faisal, Cheng Soon Ong",
+    "publisher": "Cambridge University Press",
+    "publishedYear": 2020,
+    "sourceName": "Cambridge University Press",
+    "difficulty": "intermediate",
+    "estMinutes": 1400,
+    "topicSlugs": [
+      "matrix-decompositions-and-low-rank-approximation",
+      "vector-calculus-and-calculus-of-variations"
+    ],
+    "tags": [
+      "mathematics",
+      "first-book"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "sutton-barto-rl",
+    "title": "Reinforcement Learning: An Introduction",
+    "description": "The definitive introduction to reinforcement learning: bandits, dynamic programming, temporal-difference learning and policy gradients.",
+    "type": "book",
+    "url": "http://incompleteideas.net/book/the-book.html",
+    "authors": "Richard S. Sutton, Andrew G. Barto",
+    "publisher": "MIT Press",
+    "publishedYear": 2018,
+    "sourceName": "MIT Press",
+    "difficulty": "intermediate",
+    "estMinutes": 2000,
+    "topicSlugs": [
+      "policy-gradient-theory",
+      "markov-chains-and-stochastic-processes"
+    ],
+    "tags": [
+      "reinforcement-learning",
+      "classic"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "rasmussen-williams-gp",
+    "title": "Gaussian Processes for Machine Learning",
+    "description": "The reference treatment of Gaussian processes, from regression and classification to kernels and approximate inference.",
+    "type": "book",
+    "url": "http://www.gaussianprocess.org/gpml/",
+    "authors": "Carl Edward Rasmussen, Christopher K. I. Williams",
+    "publisher": "MIT Press",
+    "publishedYear": 2006,
+    "sourceName": "MIT Press",
+    "difficulty": "advanced",
+    "estMinutes": 1600,
+    "topicSlugs": [
+      "gaussian-processes-and-bayesian-nonparametrics"
+    ],
+    "tags": [
+      "bayesian",
+      "reference"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "cs231n",
+    "title": "Stanford CS231n: Deep Learning for Computer Vision",
+    "description": "Lecture notes and slides for the canonical vision course: convolutional architectures, training practice and detection/segmentation.",
+    "type": "lecture-notes",
+    "url": "https://cs231n.stanford.edu/",
+    "authors": "Stanford Vision Lab",
+    "publisher": "Stanford University",
+    "sourceName": "Stanford University",
+    "difficulty": "intermediate",
+    "estMinutes": 1800,
+    "topicSlugs": [
+      "convolutional-architectures-operations-and-lineage",
+      "vision-transformer-and-hybrid-backbones"
+    ],
+    "tags": [
+      "vision",
+      "course"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "cs224n",
+    "title": "Stanford CS224n: Natural Language Processing with Deep Learning",
+    "description": "Course notes covering word vectors, sequence models, attention, transformers and pretrained language models.",
+    "type": "lecture-notes",
+    "url": "https://cs224n.stanford.edu/",
+    "authors": "Stanford NLP Group",
+    "publisher": "Stanford University",
+    "sourceName": "Stanford University",
+    "difficulty": "intermediate",
+    "estMinutes": 1800,
+    "topicSlugs": [
+      "attention-mechanics-scaled-dot-product-kv-cache",
+      "transformer-block-internals-normalization-mlp-stacking"
+    ],
+    "tags": [
+      "nlp",
+      "course"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "spinning-up-rl",
+    "title": "Spinning Up in Deep RL",
+    "description": "OpenAI's practical introduction to deep reinforcement learning with exercises and clean reference implementations.",
+    "type": "course",
+    "url": "https://spinningup.openai.com/en/latest/",
+    "authors": "OpenAI",
+    "publisher": "OpenAI",
+    "sourceName": "OpenAI",
+    "difficulty": "intermediate",
+    "estMinutes": 900,
+    "topicSlugs": [
+      "policy-gradient-theory",
+      "proximal-policy-optimization-gae"
+    ],
+    "tags": [
+      "reinforcement-learning",
+      "hands-on"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "berkeley-deep-rl",
+    "title": "Berkeley CS285: Deep Reinforcement Learning",
+    "description": "Lecture videos and slides covering policy gradients, actor-critic methods, model-based RL and offline RL at research depth.",
+    "type": "course",
+    "url": "https://rail.eecs.berkeley.edu/deeprlcourse/",
+    "authors": "UC Berkeley RAIL Lab",
+    "publisher": "UC Berkeley",
+    "sourceName": "UC Berkeley",
+    "difficulty": "advanced",
+    "estMinutes": 2400,
+    "topicSlugs": [
+      "model-based-reinforcement-learning",
+      "off-policy-evaluation-learning"
+    ],
+    "tags": [
+      "reinforcement-learning",
+      "course"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "d2l",
+    "title": "Dive into Deep Learning",
+    "description": "An interactive, code-first deep learning book with runnable notebooks in PyTorch, NumPy/MXNet and TensorFlow.",
+    "type": "book",
+    "url": "https://d2l.ai/",
+    "authors": "Aston Zhang, Zachary C. Lipton, Mu Li, Alexander J. Smola",
+    "publisher": "Cambridge University Press",
+    "publishedYear": 2023,
+    "sourceName": "Cambridge University Press",
+    "difficulty": "beginner",
+    "estMinutes": 1800,
+    "topicSlugs": [
+      "optimization-for-neural-networks",
+      "normalization-layers-mathematics"
+    ],
+    "tags": [
+      "hands-on",
+      "first-book"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "attention-is-all-you-need",
+    "title": "Attention Is All You Need",
+    "description": "The paper that introduced the Transformer: multi-head scaled dot-product attention and the encoder-decoder stack.",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/1706.03762",
+    "authors": "Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin",
+    "publishedYear": 2017,
+    "sourceName": "NeurIPS 2017",
+    "difficulty": "intermediate",
+    "estMinutes": 60,
+    "topicSlugs": [
+      "attention-mechanics-scaled-dot-product-kv-cache",
+      "transformer-block-internals-normalization-mlp-stacking"
+    ],
+    "tags": [
+      "transformer",
+      "primary-source"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "resnet-paper",
+    "title": "Deep Residual Learning for Image Recognition",
+    "description": "Residual connections and why they let networks train at depth; the architecture lineage behind most modern backbones.",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/1512.03385",
+    "authors": "Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun",
+    "publishedYear": 2015,
+    "sourceName": "CVPR 2016",
+    "difficulty": "intermediate",
+    "estMinutes": 45,
+    "topicSlugs": [
+      "convolutional-architectures-operations-and-lineage",
+      "gradient-pathologies-initialization-theory"
+    ],
+    "tags": [
+      "vision",
+      "primary-source"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "bert-paper",
+    "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "description": "Masked-language-model pretraining and the transfer-learning recipe that started the pretrained-encoder era.",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/1810.04805",
+    "authors": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova",
+    "publishedYear": 2018,
+    "sourceName": "NAACL 2019",
+    "difficulty": "intermediate",
+    "estMinutes": 50,
+    "topicSlugs": [
+      "semi-supervised-self-supervised-and-representation-learning"
+    ],
+    "tags": [
+      "nlp",
+      "primary-source"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "illustrated-transformer",
+    "title": "The Illustrated Transformer",
+    "description": "A widely used visual walkthrough of the Transformer's attention and positional machinery.",
+    "type": "blog",
+    "url": "https://jalammar.github.io/illustrated-transformer/",
+    "authors": "Jay Alammar",
+    "sourceName": "jalammar.github.io",
+    "difficulty": "beginner",
+    "estMinutes": 30,
+    "topicSlugs": [
+      "attention-mechanics-scaled-dot-product-kv-cache"
+    ],
+    "tags": [
+      "visual",
+      "intuition"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "lilian-weng-attention",
+    "title": "Attention? Attention!",
+    "description": "A careful survey-style post tracing attention from additive forms to self-attention and its variants.",
+    "type": "blog",
+    "url": "https://lilianweng.github.io/posts/2018-06-24-attention/",
+    "authors": "Lilian Weng",
+    "publishedYear": 2018,
+    "sourceName": "lilianweng.github.io",
+    "difficulty": "intermediate",
+    "estMinutes": 35,
+    "topicSlugs": [
+      "attention-mechanics-scaled-dot-product-kv-cache",
+      "sub-quadratic-attention-sparsemax-linear-attention"
+    ],
+    "tags": [
+      "survey",
+      "intuition"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "karpathy-rnn",
+    "title": "The Unreasonable Effectiveness of Recurrent Neural Networks",
+    "description": "An influential early demonstration of character-level language modelling with RNNs, with honest discussion of what the models learn.",
+    "type": "blog",
+    "url": "https://karpathy.github.io/2015/05/21/rnn-effectiveness/",
+    "authors": "Andrej Karpathy",
+    "publishedYear": 2015,
+    "sourceName": "karpathy.github.io",
+    "difficulty": "beginner",
+    "estMinutes": 25,
+    "topicSlugs": [
+      "semi-supervised-self-supervised-and-representation-learning"
+    ],
+    "tags": [
+      "intuition",
+      "language"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "hf-nlp-course",
+    "title": "Hugging Face NLP Course",
+    "description": "Hands-on course covering transformer APIs, tokenizers, fine-tuning and evaluation with real datasets.",
+    "type": "course",
+    "url": "https://huggingface.co/learn/nlp-course/chapter1/1",
+    "authors": "Hugging Face",
+    "publisher": "Hugging Face",
+    "sourceName": "Hugging Face",
+    "difficulty": "beginner",
+    "estMinutes": 1200,
+    "topicSlugs": [
+      "vector-quantized-tokenizers-for-generation",
+      "semi-supervised-self-supervised-and-representation-learning"
+    ],
+    "tags": [
+      "hands-on",
+      "tooling"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "pytorch-docs",
+    "title": "PyTorch Documentation",
+    "description": "Authoritative reference for autograd, modules and optimizers used throughout the exercises on this platform.",
+    "type": "docs",
+    "url": "https://pytorch.org/docs/stable/index.html",
+    "authors": "PyTorch Team",
+    "publisher": "PyTorch",
+    "sourceName": "pytorch.org",
+    "difficulty": "intermediate",
+    "estMinutes": 600,
+    "topicSlugs": [
+      "backpropagation-autodiff-forward-reverse",
+      "mathematics-of-automatic-differentiation"
+    ],
+    "tags": [
+      "tooling",
+      "reference"
+    ],
+    "verified": true
+  },
+  {
+    "slug": "scikit-learn-user-guide",
+    "title": "scikit-learn User Guide",
+    "description": "Practical reference for classical estimators, pipelines and model-evaluation utilities.",
+    "type": "docs",
+    "url": "https://scikit-learn.org/stable/user_guide.html",
+    "authors": "scikit-learn developers",
+    "publisher": "scikit-learn",
+    "sourceName": "scikit-learn.org",
+    "difficulty": "beginner",
+    "estMinutes": 600,
+    "topicSlugs": [
+      "model-selection-validation",
+      "feature-engineering"
+    ],
+    "tags": [
+      "tooling",
+      "classical-ml"
+    ],
+    "verified": true
+  }
+]

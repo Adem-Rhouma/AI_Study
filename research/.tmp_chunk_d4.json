@@ -1,0 +1,146 @@
+{
+  "domain": { "slug": "data-engineering-for-ml", "name": "Data Engineering for ML", "summary": "Almost every capability limit and most surprise failures in machine learning are data failures. This domain covers moving data through pipelines with enforceable quality, obtaining labels defensibly at scale, curating and documenting web-scale corpora with provenance and licence awareness, and constructing benchmarks whose scores mean what they claim." },
+  "subdomain": { "slug": "data-engineering-for-ml", "name": "Data Engineering for ML", "summary": "Pipelines and quality contracts, labelling and weak supervision, corpus curation with provenance and documentation, and benchmark validity." },
+  "topics": [
+    {
+      "slug": "ml-data-pipelines-quality",
+      "name": "ML Data Pipelines, Schema Contracts and Feature Stores",
+      "difficulty": "intermediate",
+      "tags": ["data-engineering", "etl", "streaming", "data-quality", "feature-store"],
+      "definition": "The systems that move raw sources into training- and serving-ready data - batch and streaming pipelines, orchestration, schema and quality constraints - plus the feature platform that serves consistent values offline and online.",
+      "explanation": "ML data engineering inherits everything classical data engineering has to solve and adds two unforgiving constraints: the consumer is a statistical model, so silent distribution changes degrade quality without raising errors, and the same feature definition must produce identical values at training time and at serving time, or the model sees inputs it never trained on. Pipelines are structured as ingestion (connectors, change-data capture, event taps), transformation and materialisation. The ETL-versus-ELT distinction is really about where transformation happens and who owns it: ELT pushes raw landings into a warehouse or lakehouse and transforms there with a SQL/dbt-style layer, which favours exploration and schema-on-read, while ETL-style orchestrated transforms favour deterministic, cheap, replayable outputs. Batch is simpler and replayable; streaming (log-based systems such as Kafka with Flink-style processors) delivers freshness and forces you to handle late, out-of-order and duplicated events with watermarks, idempotent keys and exactly-once-ish semantics; most ML systems therefore use a lambda-ish pattern of a streaming path for online features and a batch path for the reproducible training set. Orchestration (Airflow/Dagster-style DAGs, partitions, backfills, retries, SLAs) determines whether the pipeline is operable, and data contracts - explicit schemas with types, nullability, allowed ranges, uniqueness and referential checks, tested at ingest and versioned - determine whether upstream changes are caught at the boundary or discovered in a model regression months later. Quality monitoring covers completeness, validity, uniqueness, consistency, freshness and distribution shift (population statistics, PSI/KS-type tests) rather than only rule violations, and the data-side responses to imbalance and drift (reweighting, resampling, stratified and grouped splits, temporal splits, re-collection, augmentation) belong here rather than to the modelling step. Feature stores add the online/offline problem: point-in-time correct joins over an event-time keyed store to avoid label leakage, shared definitions so the same transform runs in both paths, low-latency serving with staleness bounds, and registry/versioning of features. A dataset that cannot be regenerated from declared inputs and code is a liability; reproducibility of the data is as important as reproducibility of the training run.",
+      "learning_objectives": [
+        "Design an ingestion-to-training-set pipeline and choose batch, streaming or hybrid based on freshness and replayability needs",
+        "State six data-quality dimensions and write enforceable checks for each",
+        "Implement a data contract with schema, range, uniqueness and referential assertions plus a breaking-change policy",
+        "Explain late/out-of-order events, watermarks and idempotency in streaming pipelines",
+        "Describe point-in-time correct feature joins, online/offline skew and leakage via timestamps",
+        "Handle class imbalance and covariate drift at the dataset level and justify the choice",
+        "Make a pipeline reproducible: pinned source snapshots, deterministic partitioning, versioned transformations"
+      ],
+      "prerequisites_strict": [],
+      "prerequisites_recommended": ["supervised-learning-foundations", "feature-engineering", "probability-foundations", "dataset-curation-provenance"],
+      "related_concepts": ["dataset-curation-provenance", "labelling-at-scale", "ml-production-monitoring-incidents", "ml-testing-ci-cd", "training-reliability-checkpointing-scheduling"],
+      "advanced_extensions": ["Lakehouse table formats with time travel and schema evolution", "Data diffs and continuous validation against a golden snapshot", "Streaming joins, CDC and backfill strategies", "Feature importance-based pipeline pruning", "PII detection, minimisation and anonymisation in pipelines"],
+      "key_results_or_algorithms": ["ETL versus ELT architectures", "Log-based streaming with watermarks", "Data contracts and schema registries", "Great-Expectations/deequ-style assertions", "Point-in-time (as-of) joins", "Stratified/grouped/temporal cross-validation splits", "Reweighting, oversampling and cost-sensitive learning", "Feature store online/offline serving"],
+      "math_foundations": [
+        "Distribution comparison: PSI, Kolmogorov-Smirnov and Jensen-Shannon distance on feature marginals",
+        "Class imbalance changes the Bayes decision threshold, so priors must be corrected after resampling",
+        "Event-time versus processing-time semantics; leakage arises when a feature's availability time is not respected"
+      ],
+      "applications": [
+        "Feeding a daily-retrained ranking model with fresh behavioural features",
+        "Preventing a schema change from silently corrupting a training set",
+        "Serving the same feature values online that were used offline",
+        "Building a temporal holdout that mimics production deployment"
+      ],
+      "common_misconceptions": [
+        "Validation passes mean the data is correct: assertions catch violations, not semantic drift or an upstream logic change",
+        "More frequent data is always better: streaming adds correctness burden and often duplicate or partial labels",
+        "Resampling fixes imbalance without consequences: it changes effective priors and can inflate overfitting to duplicates",
+        "A random split is a fair evaluation: with user or time grouping, leakage through repeated entities is common",
+        "Features computed at serving time are the same as during training unless the definition is shared"
+      ],
+      "further_reading": [
+        { "title": "Designing Data-Intensive Applications", "authors": "Martin Kleppmann", "year": 2017, "type": "book", "url": null },
+        { "title": "Hidden Technical Debt in Machine Learning Systems", "authors": "D. Sculley, Gary Holt, Daniel Golovin et al.", "year": 2015, "type": "paper", "url": null },
+        { "title": "The ML Test Score: A Rubric for ML Production Readiness and Technical Debt Reduction", "authors": "Eric Breck et al.", "year": 2017, "type": "paper", "url": null },
+        { "title": "Feature Engineering and Selection: A Practical Approach for Predictive Models", "authors": "Max Kuhn, Kjell Johnson", "year": 2019, "type": "book", "url": null },
+        { "title": "Tectonic/House-style dataset management? (see also) Data Lineage and Dataset Versioning in Hugging Face datasets", "authors": "documentation; author list unverified", "year": null, "type": "docs", "url": null }
+      ]
+    },
+    {
+      "slug": "labelling-at-scale",
+      "name": "Labelling at Scale, Inter-Annotator Agreement and Weak Supervision",
+      "difficulty": "intermediate",
+      "tags": ["annotation", "weak-supervision", "data-quality", "labels"],
+      "definition": "Producing supervised labels defensibly at volume: guidelines and annotator management, measuring agreement, modelling label noise, and generating programmatic or model-assisted labels (weak supervision, LLM annotation, synthetic data) that can be validated.",
+      "explanation": "Labels are the most under-engineered artefact in most ML projects. A usable labelling process starts from a guideline document that defines the task as a decision procedure with worked examples and edge cases, because ambiguity in the specification shows up later as irreducible noise that no model can fit; guidelines are versioned and revised when adjudication reveals systematic disagreements, and any change invalidates comparability between label batches. Annotator quality is managed with qualification tests, continuous gold/honeypot items with known answers, per-annotator accuracy tracking, task-level calibration and disagreement adjudication, and with sampling designs that separate a small high-quality gold set (used for evaluation) from the larger silver set (used for training). Agreement is measured rather than eyeballed: percent agreement understates chance agreement, Cohen's kappa compares two raters against chance, Fleiss' kappa generalises to many raters, and Krippendorff's alpha handles missing data and various distance metrics; all of them fall into known traps - the base-rate paradox makes kappa small when one label dominates, and high agreement does not imply correctness if all annotators share a misconception. Weak supervision replaces per-example human judgement with labeling functions - heuristics, lexicons, distant supervision from knowledge bases, wrapper rules - and combines them with a generative model over their accuracies and correlations (Snorkel's approach), which yields probabilistic training labels and, crucially, an estimate of each source's reliability without ground truth; this works only when the functions' errors are not perfectly correlated with the thing you care about, so a small held-out gold set remains mandatory. Programmatic labelling with an LLM as annotator is now common and inherits the same requirements: prompt and version control, per-class calibration against gold, awareness of position, verbosity and self-preference biases, plus the cost/latency budget. Model-in-the-loop strategies (pre-labeling for human correction, active learning to select informative examples, uncertainty-based routing to experts) shift human effort where it buys most information; human effort spent on training labels is a very different investment from effort spent on evaluation labels, which should be small, expensive and near-correct. Synthetic data - generated by a model rather than observed - is the limiting case of all the above: it can fill long-tail coverage and privacy-constrained gaps, but risks mode collapse, distribution mismatch and feedback loops when later models are trained on outputs of earlier ones, so its usefulness must be demonstrated by a controlled comparison rather than assumed.",
+      "learning_objectives": [
+        "Write an annotation guideline that is a decision procedure, and version it with change control",
+        "Compute and interpret percent agreement, Cohen's/Fleiss' kappa and Krippendorff's alpha, including base-rate pitfalls",
+        "Design a gold-set and honeypot scheme with adjudication and per-annotator quality tracking",
+        "Build labeling functions and combine them probabilistically; explain correlated-error failure",
+        "Use active learning and model pre-labeling to reduce human cost per unit of information",
+        "Evaluate LLM-as-annotator and synthetic-data reliability against a human gold standard",
+        "Separate labelling budgets for training versus evaluation data and justify the split"
+      ],
+      "prerequisites_strict": ["probability-foundations", "statistical-inference"],
+      "prerequisites_recommended": ["supervised-learning-foundations", "ml-data-pipelines-quality", "model-selection-validation"],
+      "related_concepts": ["ml-data-pipelines-quality", "dataset-curation-provenance", "benchmark-design-contamination", "llm-application-engineering", "self-supervised-learning"],
+      "advanced_extensions": ["Confident-learning models of label noise (cleanlab-style)", "Distant and cross-source supervision with correlated errors", "Rasch/Item-response models for annotator and item difficulty", "LLM-judge calibration and bias correction against human panels", "Cost-sensitive active learning and stopping rules", "Data-centric iterations: measuring the value of added labels"],
+      "key_results_or_algorithms": ["Cohen's kappa, Fleiss' kappa, Krippendorff's alpha", "Gold/honeypot quality control and adjudication", "Snorkel labeling functions + generative model", "Distant supervision", "Uncertainty/query-by-committee active learning", "Confident learning for noisy labels", "Model-assisted annotation and human-in-the-loop correction"],
+      "math_foundations": [
+        "Kappa = (p_o - p_e)/(1 - p_e): observed minus chance agreement over the reducible disagreement",
+        "Probabilistic label aggregation: latent true label with per-source accuracy and pairwise correlation",
+        "Sampling error of an evaluation set bounds what annotation effort can prove"
+      ],
+      "applications": [
+        "Building a defensible evaluation set for a moderation or medical triage model",
+        "Labeling millions of examples with heuristics then a small human audit",
+        "Detecting that one annotator batch systematically differs from another",
+        "Generating synthetic long-tail examples to improve rare-class recall"
+      ],
+      "common_misconceptions": [
+        "High agreement means correct labels: shared bias produces agreement and error together",
+        "Kappa near 1 is always required: for rare classes even excellent labelling yields modest kappa (base-rate paradox)",
+        "Weak supervision removes the need for humans: it moves human effort to labeling functions plus a gold set",
+        "More labels are always better: a small audited gold set can be worth more than a large noisy set",
+        "Synthetic data is free: distributional and provenance risks must be measured, and licensing terms may restrict its use"
+      ],
+      "further_reading": [
+        { "title": "Snorkel: Rapid Training Data Creation with Weak Supervision", "authors": "Alexander Ratner et al.", "year": 2017, "type": "paper", "url": null },
+        { "title": "Benchmarking and Answer Generation for Fine-Grained Entity Typing? (see also) Learning Data-Centric AI Systems - a survey of data quality and supervision", "authors": "author list unverified", "year": null, "type": "survey", "url": null },
+        { "title": "Confident Learning: Estimating Uncertainty in Dataset Labels", "authors": "author list unverified", "year": 2021, "type": "paper", "url": null },
+        { "title": "Krippendorff's Alpha reliability coefficient (Krippendorff, Content Analysis)", "authors": "Klaus Krippendorff", "year": 2004, "type": "book", "url": null },
+        { "title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", "authors": "Lianmin Zheng et al.", "year": 2023, "type": "paper", "url": null }
+      ]
+    },
+    {
+      "slug": "benchmark-design-contamination",
+      "name": "Benchmark Design and Train/Test Contamination",
+      "difficulty": "advanced",
+      "tags": ["evaluation", "benchmarks", "contamination", "statistics"],
+      "definition": "Constructing evaluation suites whose scores are valid evidence about model capability, and detecting or bounding the leakage of benchmark content into training data, which is the dominant threat to benchmark credibility.",
+      "explanation": "A benchmark is a measurement instrument and it fails the same ways instruments fail. It needs an explicit construct (what capability is claimed to be measured), an item set that samples that construct without systematic artefacts, a metric whose scale actually orders outcomes (exact-match on free-form generation, or pass@k on code, each have well-known pathologies), and a comparison protocol with uncertainty: on a few thousand items the standard error of an accuracy difference is easily a point or two, so single-number league tables driven by one seed and one prompt template invite over-interpretation, and paired tests (per-item bootstrap, McNemar-type comparisons) plus multiple seeds are the minimum honest report. Sensitivity to evaluation configuration is a real and documented phenomenon - shot count, prompt wording, answer-formatting and decoding temperature can move results far more than the model difference being claimed - so the evaluation config must be pinned and published. Contamination is the special problem of the LLM era: web-crawled pretraining corpora contain benchmark questions, sometimes their answers, and public models are frequently fine-tuned on instruction sets generated from evaluation-adjacent data, so a leaderboard score can reflect memorisation rather than capability. Detection approaches include exact and near-duplicate overlap (n-gram and MinHash containment of benchmark items in released corpora), membership-inference-style signals (per-token loss, perplexity drops, prompt-completion recall probes, paraphrase robustness gaps), and controlled retraining studies in which the suspected items are removed and the score delta measured; each has limited power against unknown corpora and paraphrase-level leakage, so the honest conclusion is that contamination risk should be bounded and reported, not asserted away. Mitigations that actually work are structural: time-rotating or continuously regenerated tasks (questions dated after the training cutoff), private held-out sets with periodic public release, procedurally generated tasks with unbounded instance space, and human or execution-grounded verification such as unit-test-validated code tasks. Reporting standards matter as much as method: state the version and date of the benchmark, licence constraints, contamination test performed and result, sample size and confidence interval, decoding settings, and the number of attempts, and treat any capability claim about a specific benchmark as a claim about the model-benchmark-corpus triple, not the model alone.",
+      "learning_objectives": [
+        "Specify a benchmark's construct, item sampling and metric, and identify validity threats in each",
+        "Quantify sampling error of an accuracy estimate and use paired bootstrap or McNemar tests for model comparison",
+        "Explain configuration sensitivity (shots, prompts, decoding) and pin an evaluation protocol",
+        "Detect contamination with n-gram/MinHash overlap, loss-based and paraphrase-robustness signals, and know their limits",
+        "Design contamination-resistant evaluation: dated, rotating, procedurally generated and privately held-out items",
+        "Write an evaluation report that a reader can audit"
+      ],
+      "prerequisites_strict": ["statistical-inference", "model-selection-validation"],
+      "prerequisites_recommended": ["probability-foundations", "dataset-curation-provenance", "ml-testing-ci-cd", "language-model-pretraining"],
+      "related_concepts": ["dataset-curation-provenance", "ml-lifecycle-technical-debt", "llm-application-engineering", "experiment-tracking-reproducibility", "ml-production-monitoring-incidents"],
+      "advanced_extensions": ["Dataset inference via model-embedding comparison against candidate corpora", "Benchmark difficulty scoring and item response theory for eval sets", "Aggregation of many small evals into capability profiles", "Statistical stopping rules for eval-driven development", "Governance of private held-out sets and leaderboard integrity"],
+      "key_results_or_algorithms": ["Exact/near-duplicate containment checks", "MinHash/LSH corpus overlap estimation", "Perplexity/loss-dip and n-gram recall memorisation probes", "Paired bootstrap and McNemar significance tests", "Time-split and live benchmarks", "Execution-based code evaluation (unit tests)", "Multiple-seed variance reporting"],
+      "math_foundations": [
+        "Standard error of an accuracy estimate sqrt(p(1-p)/n); correlated model comparisons need paired tests, not independent two-proportion tests",
+        "Contamination as prior dependence between training set and test set, invalidating the exchangeability assumption of held-out evaluation"
+      ],
+      "applications": [
+        "Judging whether a reported improvement over a baseline is real",
+        "Auditing a model's benchmark claims against a released training corpus",
+        "Building an internal evaluation suite that resists gaming",
+        "Deciding when to retire a saturated benchmark"
+      ],
+      "common_misconceptions": [
+        "A benchmark score measures capability: it measures the model, the prompt config and the corpus overlap together",
+        "Absence of detected overlap proves no contamination: paraphrase-level and downstream-distilled leakage evade n-gram checks",
+        "One point of leaderboard difference is meaningful: without uncertainty quantification it usually is not",
+        "Bigger eval sets fix everything: item validity and leakage matter more than size",
+        "Public benchmarks are safe to train on for research: doing so destroys their diagnostic value for everyone"
+      ],
+      "further_reading": [
+        { "title": "NLP Evaluation in Trouble: On the Need to Measure LLM Data Contamination for each Benchmark", "authors": "Michael J. Ryan? (Reif et al.)", "year": 2023, "type": "blog", "url": null },
+        { "title": "MMLU: Measuring Massive Multitask Language Understanding", "authors": "Dan Hendrycks et al.", "year": 2020, "type": "paper", "url": null },
+        { "title": "Evaluating Large Language Models Trained on Code (HumanEval / pass@k)", "authors": "Mark Chen et al.", "year": 2021, "type": "paper", "url": null },
+        { "title": "Dataset Inference: A Preliminary for Estimating LLM Pretraining Data", "authors": "author list unverified", "year": 2023, "type": "paper", "url": null },
+        { "title": "Decontamination of Benchmarks? (see also scaling-law and deduplication studies)", "authors": "author list unverified", "year": null, "type": "survey", "url": null },
+        { "title": "Aggregating and Analysing Benchmark Results / Confidence Intervals for Model Comparison (McNemar test)", "authors": "statistics literature; Thomas Dietterich", "year": 1998, "type": "paper", "url": null }
+      ]
+    }
+  ]
+}

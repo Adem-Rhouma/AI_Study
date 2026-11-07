@@ -1,0 +1,815 @@
+{
+  "slug": "foundations-of-machine-learning",
+  "title": "Foundations of Machine Learning",
+  "subtitle": "From “what is learning?” to models you can defend",
+  "summary": "A first serious course in machine learning: what a learning problem is, why generalization is the whole game, linear models derived from first principles, and the discipline of honest model selection. Every claim is derived or cited; nothing is hand-waved.",
+  "difficulty": "beginner",
+  "estHours": 9,
+  "author": "AI Mastery curriculum team",
+  "audience": "Learners comfortable with single-variable calculus and basic linear algebra",
+  "objectives": [
+    "State a learning problem as minimisation of population risk and explain why empirical risk is a proxy for it.",
+    "Derive the bias–variance decomposition for squared loss and use it to read a learning curve.",
+    "Derive the normal equations for least squares and solve them both in closed form and by gradient descent.",
+    "Explain how step size controls convergence of gradient descent on a quadratic, including divergence.",
+    "Design a model-selection protocol with cross-validation that avoids leakage."
+  ],
+  "prerequisitesNote": "Comfort with derivatives and matrix–vector products. No prior machine learning assumed.",
+  "completionCriteria": "Complete every lesson and score at least 70% of exercise points in the Problem Arena.",
+  "topicSlugs": [
+    "supervised-learning-foundations",
+    "statistical-learning-theory",
+    "model-selection-validation",
+    "generalized-linear-models-and-naive-bayes",
+    "convex-optimization-and-duality"
+  ],
+  "isFeatured": true,
+  "modules": [
+    {
+      "title": "What learning is, and what it costs",
+      "summary": "The vocabulary and the one quantity that matters: risk on data you have not seen.",
+      "lessons": [
+        {
+          "slug": "what-is-learning-formally",
+          "title": "What a learning problem actually is",
+          "summary": "Population risk, empirical risk, and why the gap between them is the entire subject.",
+          "estMinutes": 22,
+          "topicSlugs": [
+            "supervised-learning-foundations",
+            "statistical-learning-theory"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "Three ingredients, no more",
+              "payload": {
+                "level": 2
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Every supervised learning problem you will ever meet is the same three objects in different clothing: a **distribution** $\\mathcal{D}$ over inputs and outputs, a **hypothesis class** $\\mathcal{H}$ of candidate predictors, and a **loss** $\\ell$ that scores a prediction against the truth. Learning means using a finite sample from $\\mathcal{D}$ to pick one $h \\in \\mathcal{H}$ that behaves well on draws from $\\mathcal{D}$ you never saw."
+            },
+            {
+              "type": "definition",
+              "text": "The population risk (generalisation error) of a predictor $h$ is the expected loss on a fresh draw from the data-generating distribution.",
+              "payload": {
+                "term": "population risk",
+                "notation": "R(h) = \\mathbb{E}_{(x,y) \\sim \\mathcal{D}}[\\ell(h(x), y)]"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Population risk is what we care about and what we can never compute: it is an expectation over a distribution we do not have, only samples from. The object we can compute is its sample average."
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "\\hat{R}_n(h) = \\frac{1}{n} \\sum_{i=1}^{n} \\ell(h(x_i), y_i)",
+                "label": "empirical risk",
+                "note": "The empirical risk is a Monte Carlo estimate of the population risk for any fixed h."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "Empirical risk minimisation (ERM) is the default learning principle: pick $h$ in $\\mathcal{H}$ minimising $\\hat{R}_n$. Everything else in this course is either a refinement of ERM (regularisation, early stopping) or an analysis of when it works (generalisation bounds).",
+              "payload": {
+                "variant": "key-idea",
+                "label": "Key idea"
+              }
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Why the empirical risk is a trustworthy proxy for a fixed predictor",
+                "steps": [
+                  {
+                    "text": "Fix any single $h$. The losses $\\ell(h(x_i), y_i)$ are i.i.d. draws of a random variable with mean $R(h)$.",
+                    "latex": "\\mathbb{E}[\\ell(h(x), y)] = R(h)"
+                  },
+                  {
+                    "text": "The sample mean is unbiased, so on average the empirical risk equals the population risk.",
+                    "latex": "\\mathbb{E}[\\hat{R}_n(h)] = R(h)"
+                  },
+                  {
+                    "text": "If the loss is bounded in $[0, M]$, Hoeffding's inequality gives a two-sided deviation bound for that fixed $h$.",
+                    "latex": "\\Pr\\left(|\\hat{R}_n(h) - R(h)| > \\varepsilon\\right) \\le 2 \\exp\\left(-\\frac{2 n \\varepsilon^2}{M^2}\\right)",
+                    "note": "This is a statement about one fixed h, not about the h the algorithm chose."
+                  },
+                  {
+                    "text": "To cover the whole class, take a union bound over a finite $\\mathcal{H}$: the price is a factor $|\\mathcal{H}|$ inside the log.",
+                    "latex": "\\Pr\\left(\\exists h \\in \\mathcal{H}: |\\hat{R}_n(h) - R(h)| > \\varepsilon\\right) \\le 2 |\\mathcal{H}| \\exp\\left(-\\frac{2 n \\varepsilon^2}{M^2}\\right)"
+                  }
+                ],
+                "conclusion": "Uniform control over a finite class costs $\\log |\\mathcal{H}|$ samples. For infinite classes the same role is played by capacity measures (VC dimension, Rademacher complexity, PAC-Bayes bounds) — the topic `statistical-learning-theory` in the map."
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Read that conclusion carefully: the danger is not that $\\hat{R}_n$ is a bad estimate for one predictor, but that we *search* over many predictors and report the best. Search is what turns a good estimator into an optimistic one."
+            },
+            {
+              "type": "callout",
+              "text": "A model that scores $0.02$ on the data it was fitted to and $0.31$ on held-out data has not failed to optimise — it has succeeded at optimising the wrong objective. The gap $R(h) - \\hat{R}_n(h)$ is called the **generalisation gap**, and it grows with how hard you search, not with how well you fit.",
+              "payload": {
+                "variant": "pitfall",
+                "label": "Pitfall"
+              }
+            },
+            {
+              "type": "list",
+              "text": "",
+              "payload": {
+                "ordered": true,
+                "items": [
+                  "**Distribution** $\\mathcal{D}$: what “a new example” means. Changing it changes the problem.",
+                  "**Hypothesis class** $\\mathcal{H}$: what you were willing to consider. Constraints here are prior knowledge.",
+                  "**Loss** $\\ell$: what mistakes cost. Squared loss penalises outliers; 0–1 loss counts them."
+                ]
+              }
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "A clinic records whether a patient returns within 30 days ($y \\in \\{0,1\\}$) and you must predict it. Base rate: 18% return. Consider the constant predictor $h(x) = 0$ under 0–1 loss. What is its population risk, and what does that number mean?",
+                "steps": [
+                  "0–1 loss of the constant-0 predictor is 1 exactly when $y = 1$ and 0 otherwise.",
+                  "So $R(h) = \\Pr(y = 1) = 0.18$.",
+                  "Any model you propose must beat 0.18 out-of-sample to have learned anything at all."
+                ],
+                "answer": "$R(h) = 0.18$. This is the **base-rate baseline**: the score of ignoring the features entirely. Report it next to every model score, always.",
+                "note": "Half of all disappointing model results in practice are a model that sits below its own base-rate baseline on held-out data."
+              }
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "Why can we not simply minimise population risk directly?",
+                    "options": [
+                      "Because it is not differentiable",
+                      "Because it is an expectation over a distribution we only have samples from",
+                      "Because it is always zero",
+                      "Because it depends on the optimiser"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "Population risk is defined by an expectation over D. We observe n samples, so we minimise a sample average instead."
+                  },
+                  {
+                    "prompt": "The union bound over a finite hypothesis class shows the sample cost of uniform control grows with…",
+                    "options": [
+                      "the square root of |H|",
+                      "log |H|",
+                      "|H| itself",
+                      "nothing"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "Solving 2|H|exp(-2nε²/M²) ≤ δ for n puts log|H| in the numerator."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can write population risk and empirical risk from memory and say which one is computable.",
+                  "I can explain in one sentence why searching over many hypotheses makes the empirical risk optimistic.",
+                  "I can state the base-rate baseline for a binary problem and compute it from the class prior."
+                ]
+              }
+            },
+            {
+              "type": "reference",
+              "text": "",
+              "payload": {
+                "title": "Understanding Machine Learning: From Theory to Algorithms",
+                "authors": "Shai Shalev-Shwartz, Shai Ben-David",
+                "year": 2014,
+                "type": "book",
+                "note": "Chapters 2–4 give the cleanest statement of ERM, uniform convergence and the finite-class bound used above."
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Understanding Machine Learning: From Theory to Algorithms",
+              "authors": "Shai Shalev-Shwartz, Shai Ben-David",
+              "year": 2014,
+              "type": "book",
+              "url": "https://www.cs.huji.ac.il/~shais/UnderstandingMachineLearning/"
+            }
+          ]
+        },
+        {
+          "slug": "generalization-and-the-bias-variance-tradeoff",
+          "title": "Generalization and the bias–variance tradeoff",
+          "summary": "Deriving the decomposition, reading learning curves, and what double descent does and does not break.",
+          "estMinutes": 24,
+          "topicSlugs": [
+            "statistical-learning-theory",
+            "model-selection-validation"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "One decomposition, two failure modes",
+              "payload": {
+                "level": 2
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Fix squared loss and a regression target $y = f(x) + \\varepsilon$ with $\\mathbb{E}[\\varepsilon] = 0$, $\\mathrm{Var}(\\varepsilon) = \\sigma^2$. The predictor you get depends on the *sample* you happened to draw, so treat $\\hat{f}$ as a random function and average over samples."
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Bias–variance decomposition for squared loss",
+                "steps": [
+                  {
+                    "text": "Define the mean predictor over datasets of size $n$.",
+                    "latex": "\\bar{f}(x) = \\mathbb{E}_{S}[\\hat{f}_S(x)]"
+                  },
+                  {
+                    "text": "Expand the expected squared error at a point, adding and subtracting $\\bar{f}(x)$.",
+                    "latex": "\\mathbb{E}_{S,\\varepsilon}\\left[(\\hat{f}_S(x) - y)^2\\right] = (\\bar{f}(x) - f(x))^2 + \\mathbb{E}_{S}\\left[(\\hat{f}_S(x) - \\bar{f}(x))^2\\right] + \\sigma^2"
+                  },
+                  {
+                    "text": "Name the three terms.",
+                    "latex": "\\text{bias}^2(x) + \\text{variance}(x) + \\text{irreducible noise}"
+                  },
+                  {
+                    "text": "The cross terms vanish because $\\mathbb{E}_S[\\hat{f}_S - \\bar{f}] = 0$ and $\\varepsilon$ is independent of $S$.",
+                    "note": "This is the step people skip; it is why the decomposition is exact rather than approximate."
+                  }
+                ],
+                "conclusion": "Expected error splits into how wrong the *average* fit is (bias), how much individual fits disagree (variance), and noise you cannot remove. Underfitting is bias; overfitting is variance."
+              }
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "\\mathbb{E}\\left[(\\hat{f}(x) - y)^2\\right] = \\underbrace{(\\bar{f}(x) - f(x))^2}_{\\text{bias}^2} + \\underbrace{\\mathbb{E}[(\\hat{f}(x) - \\bar{f}(x))^2]}_{\\text{variance}} + \\underbrace{\\sigma^2}_{\\text{noise}}",
+                "label": "bias–variance"
+              }
+            },
+            {
+              "type": "comparison",
+              "text": "",
+              "payload": {
+                "caption": "The two ways to be wrong, and the lever that moves each.",
+                "items": [
+                  {
+                    "title": "High bias (underfitting)",
+                    "summary": "The class cannot express the target, so every dataset gives a similarly wrong answer.",
+                    "points": [
+                      "Train error and test error are both high and close together",
+                      "Fix: enlarge $\\mathcal{H}$, add features, reduce regularisation",
+                      "Example: fitting a straight line to a clearly curved response"
+                    ]
+                  },
+                  {
+                    "title": "High variance (overfitting)",
+                    "summary": "The class is rich enough to fit noise, so answers swing with the sample.",
+                    "points": [
+                      "Train error low, test error high: a large generalisation gap",
+                      "Fix: more data, regularisation, simpler class, ensembling",
+                      "Example: a degree-40 polynomial through 30 noisy points"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "Fit polynomials of degree $d \\in \\{1, 3, 9, 20\\}$ to $n = 40$ points from $y = \\sin(2x) + \\varepsilon$, $\\varepsilon \\sim N(0, 0.1^2)$. Predict the shape of the train-error and test-error curves as $d$ grows.",
+                "steps": [
+                  "Train error decreases monotonically in $d$: a richer class can always fit the sample at least as well.",
+                  "Test error falls from $d=1$ to $d=3$ (bias drops faster than variance rises), then climbs: at $d=20$ the fit interpolates noise.",
+                  "The test curve is U-shaped; the gap between the curves is the variance term made visible."
+                ],
+                "answer": "Monotone-decreasing train error, U-shaped test error, and a widening gap — the signature of the tradeoff.",
+                "note": "With n = 40 and d = 20 you have 21 parameters: interpolation territory, where classical theory predicts disaster."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "Modern deep networks interpolate their training data and still generalise, and test error can fall again past the interpolation point (**double descent**). This does not refute the decomposition — it shows that variance is not monotone in raw parameter count. Capacity measures that track the *effective* flexibility of the fitted function remain the right lens; the topic `loss-landscapes-and-grokking` covers the current picture.",
+              "payload": {
+                "variant": "note",
+                "label": "Honest boundary"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Practically, you will rarely compute bias and variance separately — you need many independent datasets for that. What you *can* see is the pair of learning curves: train and validation error against training-set size. Bias shows up as a high plateau both curves share; variance shows up as a gap that closes as $n$ grows."
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "Train error 0.02, validation error 0.30, and both barely move when you add data. The dominant term is…",
+                    "options": [
+                      "bias",
+                      "variance",
+                      "noise",
+                      "cannot tell"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "A large gap that shrinks with more data is variance. If the gap persists at large n, suspect leakage or distribution shift instead."
+                  },
+                  {
+                    "prompt": "Which term in the decomposition is unaffected by your modelling choices?",
+                    "options": [
+                      "bias²",
+                      "variance",
+                      "σ²",
+                      "all of them"
+                    ],
+                    "answerIndex": 2,
+                    "explain": "The label noise σ² is a property of D, not of H or the algorithm."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can derive the bias–variance decomposition and say exactly where independence of the noise is used.",
+                  "I can look at a train/validation curve pair and name the dominant error term.",
+                  "I can state what double descent does and does not contradict."
+                ]
+              }
+            },
+            {
+              "type": "reference",
+              "text": "",
+              "payload": {
+                "title": "The Elements of Statistical Learning",
+                "authors": "Trevor Hastie, Robert Tibshirani, Jerome Friedman",
+                "year": 2009,
+                "type": "book",
+                "note": "Section 7.3 gives the decomposition and its use in model assessment."
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "The Elements of Statistical Learning",
+              "authors": "Trevor Hastie, Robert Tibshirani, Jerome Friedman",
+              "year": 2009,
+              "type": "book",
+              "url": "https://hastie.su.domains/ElemStatLearn/",
+              "verified": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Linear models, end to end",
+      "summary": "Least squares derived twice — by calculus and by geometry — then solved by gradient descent with the step size made explicit.",
+      "lessons": [
+        {
+          "slug": "linear-regression-least-squares-to-gradients",
+          "title": "Linear regression: from least squares to gradients",
+          "summary": "The normal equations, their geometric meaning, and the first gradient method you will ever need.",
+          "estMinutes": 26,
+          "topicSlugs": [
+            "generalized-linear-models-and-naive-bayes",
+            "convex-optimization-and-duality"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "The model, the loss, and the two ways in",
+              "payload": {
+                "level": 2
+              }
+            },
+            {
+              "type": "prose",
+              "text": "With features $x \\in \\mathbb{R}^d$ (a leading 1 absorbed for the intercept) and parameters $w \\in \\mathbb{R}^d$, the model is $\\hat{y} = w^\\top x$. Given $n$ examples in a design matrix $X \\in \\mathbb{R}^{n \\times d}$ and targets $y \\in \\mathbb{R}^n$, the squared-error objective is"
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "L(w) = \\frac{1}{2n} \\| X w - y \\|_2^2",
+                "label": "least squares",
+                "note": "The 1/2 is cosmetic: it cancels the exponent when differentiating."
+              }
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "The normal equations",
+                "steps": [
+                  {
+                    "text": "Expand and differentiate using matrix calculus.",
+                    "latex": "\\nabla_w L(w) = \\frac{1}{n} X^\\top (X w - y)"
+                  },
+                  {
+                    "text": "Set the gradient to zero.",
+                    "latex": "X^\\top X w = X^\\top y"
+                  },
+                  {
+                    "text": "If $X^\\top X$ is invertible, the unique stationary point is the global minimum, because $L$ is convex (its Hessian $\\frac{1}{n}X^\\top X$ is positive semidefinite).",
+                    "latex": "w^\\star = (X^\\top X)^{-1} X^\\top y"
+                  }
+                ],
+                "conclusion": "Least squares has a closed form. It also has a geometry: $X w^\\star$ is the orthogonal projection of $y$ onto the column space of $X$, so the residual $y - Xw^\\star$ is orthogonal to every column — which is exactly $X^\\top(Xw - y) = 0$."
+              }
+            },
+            {
+              "type": "callout",
+              "text": "When $d > n$ or columns are nearly collinear, $X^\\top X$ is singular or ill-conditioned and the closed form is unstable. Ridge regression, $L(w) + \\lambda \\|w\\|^2 / (2n)$, adds $\\lambda I$ inside the inverse: a one-line fix with a bias–variance interpretation.",
+              "payload": {
+                "variant": "warning",
+                "label": "Conditioning"
+              }
+            },
+            {
+              "type": "code",
+              "text": "import numpy as np\n\nX, y = load_design_matrix()          # X: (n, d), y: (n,)\n\n# Closed form — fine for moderate d, and the reference answer to test against.\nG = X.T @ X / len(y)\nw_star = np.linalg.solve(G + 1e-8 * np.eye(G.shape[0]), X.T @ y / len(y))\n\n# Gradient descent on the same objective.\nw = np.zeros(X.shape[1])\nstep = 1.0 / np.linalg.eigvalsh(G)[-1]   # 1 / largest eigenvalue of the Hessian\nfor _ in range(2000):\n    grad = X.T @ (X @ w - y) / len(y)\n    w = w - step * grad\n\nprint(np.allclose(w, w_star, atol=1e-6))\n",
+              "payload": {
+                "language": "python",
+                "filename": "least_squares_two_ways.py",
+                "caption": "Both routes solve the same convex problem; the step size 1/L (L = top eigenvalue of the Hessian) is what makes the iterative route converge."
+              }
+            },
+            {
+              "type": "table",
+              "text": "",
+              "payload": {
+                "columns": [
+                  "Route",
+                  "Cost",
+                  "When it wins"
+                ],
+                "rows": [
+                  [
+                    "Normal equations",
+                    "O(nd² + d³)",
+                    "Small d; exact answer; no tuning"
+                  ],
+                  [
+                    "QR / SVD solve",
+                    "O(nd²)",
+                    "Ill-conditioned X; numerically safer than forming XᵀX"
+                  ],
+                  [
+                    "Gradient descent",
+                    "O(nd) per step",
+                    "Huge n or d; streaming data; the template for everything later"
+                  ],
+                  [
+                    "Conjugate gradient",
+                    "O(nd) × √κ iterations",
+                    "Large sparse problems with bad condition number κ"
+                  ]
+                ],
+                "caption": "Same objective, different arithmetic. The course uses gradient descent because every later model is solved that way."
+              }
+            },
+            {
+              "type": "exercise",
+              "text": "",
+              "payload": {
+                "exerciseSlug": "ex-normal-equations"
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can derive ∇L(w) = Xᵀ(Xw − y)/n without looking.",
+                  "I can state the projection interpretation of the normal equations.",
+                  "I can say why ridge stabilises an ill-conditioned design."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Introduction to Applied Linear Algebra: Vectors, Matrices, and Least Squares",
+              "authors": "Stephen Boyd, Lieven Vandenberghe",
+              "year": 2018,
+              "type": "book",
+              "url": "https://web.stanford.edu/~boyd/vmls/",
+              "verified": true
+            }
+          ]
+        },
+        {
+          "slug": "gradient-descent-step-size-and-convergence",
+          "title": "Gradient descent: why step size decides everything",
+          "summary": "A quadratic model you can solve by hand, the exact divergence threshold, and an interactive you can break.",
+          "estMinutes": 24,
+          "topicSlugs": [
+            "convex-optimization-and-duality",
+            "optimization-for-neural-networks"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "The update rule, and the only question that matters",
+              "payload": {
+                "level": 2
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Gradient descent is $w_{k+1} = w_k - \\eta \\nabla L(w_k)$. The gradient says *which way*; the step size $\\eta$ says *how far*, and it is the parameter that decides between slow convergence, fast convergence, oscillation and divergence. To see this exactly, use the simplest non-trivial objective."
+            },
+            {
+              "type": "math",
+              "text": "",
+              "payload": {
+                "latex": "L(w) = (w - w^\\ast)^2, \\qquad \\nabla L(w) = 2(w - w^\\ast)",
+                "note": "A one-dimensional quadratic: convex, smooth, and solvable in closed form under iteration."
+              }
+            },
+            {
+              "type": "derivation",
+              "text": "",
+              "payload": {
+                "title": "Exact dynamics on a quadratic",
+                "steps": [
+                  {
+                    "text": "Write the error $e_k = w_k - w^\\ast$ and substitute the update.",
+                    "latex": "e_{k+1} = e_k - 2\\eta e_k = (1 - 2\\eta) e_k"
+                  },
+                  {
+                    "text": "Unroll the recursion.",
+                    "latex": "e_k = (1 - 2\\eta)^k e_0"
+                  },
+                  {
+                    "text": "Convergence holds exactly when the multiplier has magnitude below 1.",
+                    "latex": "|1 - 2\\eta| < 1 \\iff 0 < \\eta < 1"
+                  },
+                  {
+                    "text": "The fastest choice kills the error in one step; beyond the threshold the error grows geometrically.",
+                    "latex": "\\eta = \\tfrac{1}{2} \\Rightarrow e_1 = 0; \\qquad \\eta > 1 \\Rightarrow |e_k| \\to \\infty",
+                    "note": "For a quadratic with curvature c (L = (c/2)(w-w*)²) the thresholds rescale: 0 < η < 2/c, optimal η = 1/c."
+                  }
+                ],
+                "conclusion": "On a smooth quadratic the whole story is one scalar multiplier. General smooth convex objectives behave the same way locally, with the curvature $c$ replaced by the Hessian's largest eigenvalue — which is why the code above used step = 1/L."
+              }
+            },
+            {
+              "type": "interactive",
+              "text": "",
+              "payload": {
+                "kind": "gradient-descent",
+                "config": {
+                  "start": -3,
+                  "target": 2,
+                  "steps": 20
+                }
+              }
+            },
+            {
+              "type": "callout",
+              "text": "Push the learning-rate slider past $\\eta = 1$ in the figure above: the iterates alternate sign and explode. That is not a bug in the simulation — it is the multiplier $(1-2\\eta)$ exceeding 1 in magnitude. Real training runs show the same signature as a loss that suddenly becomes `nan`.",
+              "payload": {
+                "variant": "pitfall",
+                "label": "Pitfall"
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Two refinements you will meet everywhere. **Momentum** averages past gradients, which damps oscillation along high-curvature directions. **Adaptive methods** (AdaGrad, RMSProp, Adam) scale each coordinate by its own gradient history, effectively choosing a per-coordinate step size — the practical default for deep networks, covered in `optimization-for-neural-networks`."
+            },
+            {
+              "type": "exercise",
+              "text": "",
+              "payload": {
+                "exerciseSlug": "ex-gd-step-size"
+              }
+            },
+            {
+              "type": "quiz",
+              "text": "",
+              "payload": {
+                "questions": [
+                  {
+                    "prompt": "On L(w) = (w − w*)², gradient descent with η = 1.2 produces…",
+                    "options": [
+                      "monotone convergence",
+                      "oscillation with growing error",
+                      "convergence in one step",
+                      "a constant error"
+                    ],
+                    "answerIndex": 1,
+                    "explain": "The multiplier is 1 − 2η = −1.4, so |e_k| = 1.4^k |e_0| with alternating sign."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can derive the exact convergence window 0 < η < 2/c for a quadratic of curvature c.",
+                  "I can explain why 1/L (L = top Hessian eigenvalue) is a safe default step.",
+                  "I can recognise divergence in a training log and name its cause."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "Convex Optimization",
+              "authors": "Stephen Boyd, Lieven Vandenberghe",
+              "year": 2004,
+              "type": "book",
+              "url": "https://web.stanford.edu/~boyd/cvxbook/",
+              "verified": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Choosing and checking models honestly",
+      "summary": "Model selection without self-deception: leakage, cross-validation schemes, and what to report.",
+      "lessons": [
+        {
+          "slug": "model-selection-and-cross-validation",
+          "title": "Model selection and cross-validation without leakage",
+          "summary": "Why the validation set must be untouched by every decision, and how to build one that is.",
+          "estMinutes": 22,
+          "topicSlugs": [
+            "model-selection-validation",
+            "inference-multiple-testing-and-experimental-design"
+          ],
+          "blocks": [
+            {
+              "type": "heading",
+              "text": "Three sets, three jobs",
+              "payload": {
+                "level": 2
+              }
+            },
+            {
+              "type": "prose",
+              "text": "Fitting uses the **training** set. Choosing among models — hyperparameters, features, architecture — uses a **validation** set. Reporting a final number uses a **test** set that is opened exactly once. The moment a decision is made using test-set information, the test set has become a validation set and your reported number is optimistic."
+            },
+            {
+              "type": "callout",
+              "text": "**Leakage** is any path by which information from the evaluation data influences the fitted model: scaling features using whole-dataset statistics, imputing with global means, selecting features by full-data correlation, or tuning until the test score looks good. Each is invisible in the code and visible only in the protocol.",
+              "payload": {
+                "variant": "danger",
+                "label": "Leakage"
+              }
+            },
+            {
+              "type": "list",
+              "text": "",
+              "payload": {
+                "ordered": true,
+                "items": [
+                  "Split off the test set first and store it; do not look at it during development.",
+                  "Inside the remaining data, run $K$-fold cross-validation: fit on $K-1$ folds, score on the held-out fold, average.",
+                  "Put *every* data-dependent step — scaling, imputation, feature selection — inside the fold loop.",
+                  "Pick the configuration by mean CV score; refit on all development data; evaluate once on the test set."
+                ]
+              }
+            },
+            {
+              "type": "table",
+              "text": "",
+              "payload": {
+                "columns": [
+                  "Scheme",
+                  "Fits",
+                  "Use when"
+                ],
+                "rows": [
+                  [
+                    "Hold-out (70/30)",
+                    "1",
+                    "Very large n; CV is unaffordable"
+                  ],
+                  [
+                    "K-fold (K=5 or 10)",
+                    "K",
+                    "The default; low-bias estimate of generalisation"
+                  ],
+                  [
+                    "Stratified K-fold",
+                    "K",
+                    "Imbalanced classes; keeps class ratios per fold"
+                  ],
+                  [
+                    "Repeated K-fold",
+                    "K × R",
+                    "Small n; averages over split noise"
+                  ],
+                  [
+                    "Grouped K-fold",
+                    "K",
+                    "Duplicates or clusters (patients, users, time) must not straddle folds"
+                  ],
+                  [
+                    "Time-series split",
+                    "K",
+                    "Temporal data: train on the past, validate on the future"
+                  ]
+                ],
+                "caption": "The scheme is part of the model. A random K-fold on clustered data estimates the wrong quantity."
+              }
+            },
+            {
+              "type": "code",
+              "text": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.model_selection import GridSearchCV, cross_val_score\nfrom sklearn.linear_model import Ridge\n\n# Scaling lives INSIDE the pipeline, so each fold computes its own statistics.\npipe = Pipeline([(\"scale\", StandardScaler()), (\"ridge\", Ridge())])\ngrid = GridSearchCV(pipe, {\"ridge__alpha\": [0.1, 1.0, 10.0]}, cv=5, scoring=\"neg_mean_squared_error\")\ngrid.fit(X_dev, y_dev)                    # development data only\n\nprint(grid.best_params_, -grid.best_score_)\n\nmodel = grid.best_estimator_.fit(X_dev, y_dev)\nprint(\"test MSE (reported once):\", ((model.predict(X_test) - y_test) ** 2).mean())\n",
+              "payload": {
+                "language": "python",
+                "filename": "honest_cv.py",
+                "caption": "A pipeline keeps fold-local statistics local. Fitting the scaler on the full dataset before CV is the most common leakage bug in practice."
+              }
+            },
+            {
+              "type": "worked_example",
+              "text": "",
+              "payload": {
+                "problem": "A team reports 0.94 AUC. Their script standardises features on the full dataset, then runs 5-fold CV, then tunes on the same CV, then reports the CV mean as the result. Name the two protocol errors and their direction.",
+                "steps": [
+                  "Full-data standardisation leaks fold-held-out information into training: optimistic bias, usually small but real.",
+                  "Reporting the CV mean of the tuned configuration reuses the validation folds for selection: optimistic bias that grows with the number of configurations tried.",
+                  "Neither error is visible in the final number; both are visible in the protocol."
+                ],
+                "answer": "Both errors inflate the reported score. Fix: pipeline-local preprocessing, and a nested CV or a held-out test set for the final figure.",
+                "note": "Nested CV: an outer loop estimates generalisation of the whole selection procedure, an inner loop does the selecting."
+              }
+            },
+            {
+              "type": "exercise",
+              "text": "",
+              "payload": {
+                "exerciseSlug": "ex-cv-leakage"
+              }
+            },
+            {
+              "type": "checklist",
+              "text": "",
+              "payload": {
+                "items": [
+                  "I can list three leakage paths and how to close each.",
+                  "I can choose a CV scheme for clustered and for temporal data and justify it.",
+                  "I can describe nested CV and say which quantity it estimates."
+                ]
+              }
+            }
+          ],
+          "references": [
+            {
+              "title": "An Introduction to Statistical Learning (with Python)",
+              "authors": "Gareth James, Daniela Witten, Trevor Hastie, Robert Tibshirani",
+              "year": 2023,
+              "type": "book",
+              "url": "https://www.statlearning.com/",
+              "verified": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "title": "Understanding Machine Learning: From Theory to Algorithms",
+      "authors": "Shai Shalev-Shwartz, Shai Ben-David",
+      "year": 2014,
+      "type": "book",
+      "url": "https://www.cs.huji.ac.il/~shais/UnderstandingMachineLearning/"
+    },
+    {
+      "title": "Introduction to Applied Linear Algebra: Vectors, Matrices, and Least Squares",
+      "authors": "Stephen Boyd, Lieven Vandenberghe",
+      "year": 2018,
+      "type": "book",
+      "url": "https://web.stanford.edu/~boyd/vmls/",
+      "verified": true
+    }
+  ]
+}

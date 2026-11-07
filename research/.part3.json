@@ -1,0 +1,409 @@
+{
+  "slug": "generative-modeling",
+  "name": "Generative Modeling",
+  "summary": "Models that learn distributions rather than conditional maps: the likelihood/objective taxonomy that organizes the field, autoregressive and latent-variable models, adversarial and flow-based generators, score/diffusion and flow-matching formulations, token-based hybrid pipelines, and the evaluation machinery with its documented failure modes.",
+  "subdomains": [
+    {
+      "slug": "likelihood-objectives-and-latent-models",
+      "name": "Likelihood Objectives and Latent-Variable Models",
+      "summary": "What a generative model can be asked to do (density, sample, infer latents) and the objectives that trade these off: exact likelihood, ELBO bounds, and unnormalized energy.",
+      "topics": [
+        {
+          "slug": "generative-model-landscape-likelihood-elbo-ebm",
+          "name": "The Generative Model Landscape: Likelihood, ELBO Structure, and Energy-Based Objectives",
+          "difficulty": "expert",
+          "definition": "Generative models are organized by what they make available - tractable exact likelihood, tractable sampling, an optimizing bound, or neither - and the four families (autoregressive/flow, latent-variable with an ELBO, adversarial, and energy-based) occupy different points in that trade space.",
+          "explanation": "The canonical 2x2 is (exact vs approximate likelihood) x (explicit vs implicit density), giving: autoregressive and normalizing-flow models with exact factorized or change-of-variable likelihoods; latent-variable models (VAE, GAN+latent, diffusion) that optimize a bound or none; adversarial/implicit models with sampling but no density; and energy-based models with an unnormalized density and hence no likelihood term at all. The ELBO is the load-bearing object: log p(x) = ELBO(q) + KL(q(z|x) || p(z|x)), so the gap is the posterior KL - a bound that is tight iff the variational posterior equals the true posterior - and every 'bound tightening' development is a way of shrinking that gap or of making the objective better suited to the task: importance-weighted bounds (IWAE tightens log p(x) as O(1/k) with k importance samples but does not improve the learned q's KL to posterior in the same way), amortized inference versus per-example optimization (VLAE), auxiliary/inverse autoregressive and masked-dependency variational posteriors to fix the posterior-collapse pathology, hierarchical/deterministic latents (VampNet-style priors, autoregressive priors), and discrete/annealed latents. Diffusion and flow-matching complicate the picture in a way students must handle precisely: with a variational bound written over the forward noise process, the ELBO becomes a weighted integral of denoising score-matching losses (Song et al.'s sufficient condition on the weighting) plus boundary terms, so a diffusion model is simultaneously a bound-optimizer and an implicit generator whose likelihood is computable only by an ODE/SDE probability-flow argument. Energy-based models are the complementary extreme: p(x) = exp(-E_theta(x))/Z, trained by pushing E down on data and up on samples obtained by MCMC (contrastive divergence, PC/CD in RBMs, long-run chains, NCE/Split-VSM as Z-free objectives, InfoNCE with an interpretable mutual-information lower bound); the partition function is intractable, so EBM training is a sampling problem in disguise - which explains both their flexibility (arbitrary unnormalized couplings, and a natural interpretation of diffusion as iterative energy descent, and adversarial-discriminator-as-energy) and their instability. A curriculum should also make the meta-point: likelihood is not the only quality criterion and can be actively misleading for perceptual tasks (ELBO values differ from log-likelihood in diffusion, and the field's post-2020 consensus is that likelihood and FID are weakly correlated), while 'fully tractable likelihood' remains essential for anomaly detection and for inference-time scoring - the topic that keeps generative modeling from being only about pictures.",
+          "learning_objectives": [
+            "Classify a named model by tractability of likelihood, sampling, posterior inference, and latent interpretation.",
+            "Derive the ELBO identity with the KL gap and state when the bound is tight.",
+            "Explain why the importance-weighted estimator tightens the likelihood estimate but changes the learned q, and why gradient variance grows with k.",
+            "Derive the diffusion ELBO as a weighted score-matching integral and identify the boundary term.",
+            "Explain why EBM training requires MCMC and what contrastive divergence actually approximates.",
+            "Argue when exact likelihood is worth its cost (anomaly detection, density comparison, inference-time selection)."
+          ],
+          "prerequisites_strict": ["information-theory", "variational-inference", "probability-foundations"],
+          "prerequisites_recommended": ["monte-carlo-methods", "markov-chain-monte-carlo", "statistical-inference", "measure-theoretic-probability"],
+          "related_concepts": ["vae-latent-variable-objectives", "score-matching-diffusion-theory", "generative-evaluation-metrics-and-failure-modes"],
+          "advanced_extensions": ["f-divergence-and-wasserstein-generative-objectives", "minimum-density-distilation-and-distribution-matching", "amortized-versus-iterative-variational-inference", "partition-function-free-objectives-nce-infonce"],
+          "key_results_or_algorithms": ["ELBO with KL gap", "IWAE", "Variational inference with normalizing flows", "Contrastive divergence / persistent CD", "Score-matching as ELBO weighting", "Noise contrastive estimation"],
+          "math_foundations": ["KL divergence and its asymmetry", "Jensen's inequality applications", "Change-of-variable formula", "Importance sampling and its variance"],
+          "applications": ["Choosing an objective for a new generative task", "Density-based anomaly detection", "Understanding what diffusion training actually optimizes", "Reasoning about model comparison beyond FID"],
+          "common_misconceptions": [
+            "A tighter ELBO always means a better model of the data (it changes the inference network and can just fit the bound better).",
+            "Variational lower bound equals log-likelihood (it is a bound; the gap is a posterior KL).",
+            "EBMs are likelihood-free because they are unnormalized, so they cannot be evaluated at all (they can be compared via metrics, but no density).",
+            "Diffusion models have no likelihood (they have an implicit one via the probability-flow ODE, hard to estimate tightly)."
+          ],
+          "further_reading": [
+            { "title": "Auto-Encoding Variational Bayes", "authors": "Kingma and Welling", "year": 2013, "type": "paper", "url": null },
+            { "title": "Graphical Models, Exponential Families, and Variational Inference", "authors": "Wainwright and Jordan", "year": 2008, "type": "survey", "url": null },
+            { "title": "Variational Inference with Normalizing Flows", "authors": "Rezende and Mohamed", "year": 2015, "type": "paper", "url": null },
+            { "title": "Training Products of Experts by Minimizing Contrastive Divergence", "authors": "Hinton", "year": 2002, "type": "paper", "url": null },
+            { "title": "Generative Adversarial Networks", "authors": "Goodfellow, Pouget-Abadie, Mirza, Xu, Warde-Farley, Ozair, Courville and Bengio", "year": 2014, "type": "paper", "url": null },
+            { "title": "Deep Learning", "authors": "Goodfellow, Bengio and Courville (chapter 20)", "year": 2016, "type": "book", "url": "https://www.deeplearningbook.org/" },
+            { "title": "Probabilistic Machine Learning: Advanced Topics", "authors": "Murphy", "year": 2023, "type": "book", "url": null },
+            { "title": "CS236: Deep Generative Models", "authors": "Stanford University (Ermon)", "year": 2023, "type": "course", "url": "https://cs236.stanford.edu/" }
+          ]
+        },
+        {
+          "slug": "vae-latent-variable-objectives",
+          "name": "Variational Autoencoders and Latent-Variable Modeling",
+          "difficulty": "advanced",
+          "definition": "A VAE is a generative model with a prior p(z), a decoder p_theta(x|z) and an amortized encoder q_phi(z|x), trained to maximize the evidence lower bound, with sampling performed by drawing z and passing it through the decoder.",
+          "explanation": "The reparameterization trick z = mu_phi(x) + sigma_phi(x) * eps with eps ~ N(0, I) is what makes the gradient of the bound low-variance and differentiable through the stochastic node; without it, the score-function (REINFORCE) estimator's variance makes training impractical, and this single change is the reason VAEs are trainable at all. The bound decomposes into a reconstruction term (cross-entropy for discrete or squared error up to a constant for Gaussian decoders) plus a regularizer KL(q(z|x) || p(z)) that pulls the aggregate posterior toward the prior, which is simultaneously the source of VAEs' virtues (a usable latent space, principled missing-data/semi-supervised extensions, interpolation, and an explicit information bottleneck) and their pathologies. Key ones to teach: posterior collapse, where KL terms go to zero for uninformative latents because the powerful decoder does not need them, mitigated by annealing the KL weight, latent-ordering tricks (KL-ball/total-correlation penalties, DNFi-style disentanglement, Variational RNN priors), and discrete-latent difficulty (the straight-through estimator's biased gradients, Gumbel-Softmax's relaxed-but-still-biased objective, and VQ's alternative of a hard codebook with an EMA update). Blur is a real limitation and it is not only about the objective: pixel-space decoders with per-pixel independent Gaussian/Laplacian likelihoods cannot model high-frequency structure well and the ELBO itself is a weak fit criterion for perceptual tasks; the field's fixes were to move diffusion into the decoder role (VDM, diffusion-decoder VAEs) and to accept that latent compression - not generative quality - is VAEs' durable contribution, which is why essentially every modern latent diffusion system uses a VAE (or VQGAN) tokenizer as its compression front end. Also worth stating: beta-VAE's hyperparameter makes the information bottleneck explicit and trades rate for distortion (a rate-distortion reading that is the honest way to describe disentanglement gains), and deterministic/discrete-latent variants are the standard tool in speech and audio tokenization where the codebook is the model.",
+          "learning_objectives": [
+            "Derive the VAE objective and its reconstruction/KL decomposition; explain the rate-distortion interpretation of beta-VAE.",
+            "Explain why reparameterization beats the score-function estimator here, with a variance argument.",
+            "Diagnose posterior collapse from KL-per-dimension statistics and apply two mitigations.",
+            "Explain discrete-latent gradient problems (ST estimator bias, Gumbel-Softmax limitations, VQ alternatives).",
+            "Explain why pixel-space VAE samples look blurry and what the objective-vs-metric explanation is.",
+            "Use a pretrained VAE tokenizer to compute latent statistics and compression rate for an image."
+          ],
+          "prerequisites_strict": ["generative-model-landscape-likelihood-elbo-ebm", "variational-inference"],
+          "prerequisites_recommended": ["variational-autoencoders", "information-theory", "statistical-inference"],
+          "related_concepts": ["vector-quantized-tokenizers-for-generation", "diffusion-sampling-and-inference-time-scaling", "normalizing-flow-design-exact-likelihood"],
+          "advanced_extensions": ["hierarchical-and-autoregressive-prior-vaes", "deterministic-information-bottleneck-and-latent-scaling", "diffusion-decoder-vaes-and-vdm", "semi-supervised-and-missing-data-vaes"],
+          "key_results_or_algorithms": ["VAE (Kingma & Welling)", "Reparameterization trick", "beta-VAE", "annealed/free-bits KL", "Disentangled VAEs (DNFi, FactorVAE)", "VAEM and learned-prior VAEs", "Semi-VAE"],
+          "math_foundations": ["Exponential-family likelihoods and their sufficient statistics", "KL between Gaussians in closed form", "Stochastic gradient estimators", "Information bottleneck / rate-distortion"],
+          "applications": ["Latent compression for image/video/audio diffusion", "Discrete representation learning", "Anomaly detection via reconstruction and KL", "Semi-supervised and missing-data problems"],
+          "common_misconceptions": [
+            "VAE blur proves the model class is weak (the ELBO plus per-pixel likelihood is the cause; the class is fine).",
+            "A smaller beta always improves generation (it trades rate for distortion and can cause collapse-free but unstructured latents).",
+            "Posterior collapse means the latent space is useless (only some dimensions collapse; it is measurable per dimension).",
+            "VAE likelihoods are exact log-likelihoods (they are bounds)."
+          ],
+          "further_reading": [
+            { "title": "An Introduction to Variational Autoencoders", "authors": "Kingma and Welling", "year": 2019, "type": "survey", "url": null },
+            { "title": "beta-VAE: Learnable Degeneration in beta-VAE", "authors": "Duan et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "Variational Diffusion Models", "authors": "Kingma, Salimans, Poole and Ho", "year": 2021, "type": "paper", "url": null },
+            { "title": "Variational Inference with Normalizing Flows", "authors": "Rezende and Mohamed", "year": 2015, "type": "paper", "url": null },
+            { "title": "Neural Discrete Representation Learning (VQ-VAE)", "authors": "van den Oord, Vinyals and Kavukcuoglu", "year": 2017, "type": "paper", "url": null },
+            { "title": "NYU Deep Learning (DL) - generative modeling lectures", "authors": "New York University (LeCun, Deng)", "year": 2023, "type": "course", "url": "https://atcold.github.io/NYU-DL-Lecun/" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "adversarial-and-flow-generators",
+      "name": "Adversarial and Flow-Based Generators",
+      "summary": "Implicit-density adversarial training as a game with measurable failure modes, and explicit-density invertible transformations with exact likelihoods.",
+      "topics": [
+        {
+          "slug": "gan-dynamics-equilibria-lineage",
+          "name": "GANs: Minimax Dynamics, WGAN Theory, and the StyleGAN Lineage",
+          "difficulty": "advanced",
+          "definition": "A GAN trains a generator against a discriminator in a two-player game; the original formulation minimizes a JS-divergence-like value function that provably reaches Nash equilibrium only if both players are optimal, and the practical lineage is a sequence of fixes to optimization, mode coverage, and controllability.",
+          "explanation": "Goodfellow et al.'s analysis is worth restating with its assumptions: with the discriminator able to reach its pointwise optimum D*(x) = p_data/(p_data + p_g), the generator's objective is monotone in JS(p_data || p_g), so minimizing it means matching the data distribution - but that inner maximization is exactly what SGD does not do, and the gradient of the generator loss near a well-fit discriminator vanishes, which is the theoretical root of mode collapse and training instability. Arjovsky et al.'s diagnosis is precise: if the data and generator supports are lower-dimensional, JS saturates and gives no gradient, while the Wasserstein-1 distance does; the critic must be 1-Lipschitz (enforced by weight clipping in WGAN, by a gradient penalty in WGAN-GP, or spectrally in SGAN/SNGAN), and this converts the game into a Kantorovich-Rubinstein dual, giving the meaningful statement 'minimize f-divergences only when supports overlap; otherwise use an integral probability metric'. That theory also explains the practical finding that critic regularization stabilizes GANs (a critic that generalizes is a critic whose gradient is informative), which the self-attention/projection-GAN line formalized as gradient regularization. The architecture lineage teaches something else: from DCGAN's convolutional stability rules (batchnorm in generator except output, strided downsampling, no fully-connected layers, LeakyReLU) through conditional GANs (auxiliary-classifier AC-GAN, class-conditional cGAN; later used for guidance), progressive growing (Karras et al. line) to StyleGAN's decisive idea - a learned per-style MLP mapping a latent z to a style vector w (which then drives per-layer affine modulation in a synthesis network) - which both made the latent space semantically traversable (interpolation, editing, and the famous w-space disentanglement, with the honest caveat that much of the observed effect is linear-structure in the trained generator rather than a property of the encoder) and fixed the 'water faucet' artifacts of earlier progressive nets by injecting noise per pixel and by removing the generator's direct view of z (the path length regularizer). StyleGAN2/3 added the R1 gradient penalty (finite-difference approximation is what most implementations actually use), the equalized-lr trick for Kaiming-without-init, and alias-free up/downsampling with filters, and StyleGAN3 made the generator approximately equivariant to translation by controlling aliasing in both sampling and nonlinearity - a rare case where the architecture is justified by signal-processing analysis rather than empiricism. Evaluation and modern status: GANs now mostly lose to diffusion on diversity/fidelity and coverage, but they win where single-step generation and cheap high-resolution synthesis matter (StyleGAN-based face/head avatars, image-to-image, super-resolution GANs, and GAN-inversion pipelines), and adversarial discriminators remain a component of latent tokenizers and 'adversarial + autoregressive' hybrids. Mode coverage must be discussed with the right metric (JSD is bad at it; see evaluation) and with the note that partial mode collapse is not detectable from a loss curve.",
+          "learning_objectives": [
+            "Derive the optimal discriminator and show the generator objective reduces to a JS-type divergence under inner-optimality.",
+            "Explain with a lower-dimensional-support example why JS saturates and W1 does not; state the KR dual.",
+            "Compare weight clipping, gradient penalty, and spectral-norm constraint (what each enforces and what each distorts).",
+            "Explain StyleGAN's mapping network / per-layer style modulation and the role of the path-length and R1 regularizers.",
+            "Describe why StyleGAN3's aliasing analysis matters for translation equivariance.",
+            "Diagnose mode collapse and instability with appropriate measurements rather than loss values."
+          ],
+          "prerequisites_strict": ["generative-adversarial-networks", "game-theory-foundations", "optimization-convex"],
+          "prerequisites_recommended": ["generative-model-landscape-likelihood-elbo-ebm", "convolutional-architectures-operations-and-lineage", "fourier-analysis", "statistical-inference"],
+          "related_concepts": ["generative-evaluation-metrics-and-failure-modes", "normalizing-flow-design-exact-likelihood", "vector-quantized-tokenizers-for-generation"],
+          "advanced_extensions": ["two-time-scale-dynamics-and-limit-cycles-in-games", "projection-guidance-and-self-attention-gans", "gan-inversion-and-editing-with-encoders", "adversarial-discriminators-inside-diffusion-training"],
+          "key_results_or_algorithms": ["Minimax formulation", "Non-saturating and least-squares objectives", "WGAN / WGAN-GP", "Spectral-norm GAN", "DCGAN rules", "cGAN / AC-GAN", "Progressive Growing", "StyleGAN1-2-3 and its regularizers (path length, R1, equalized LR)", "StyleGAN3 alias-free signal processing"],
+          "math_foundations": ["Nash vs Stackelberg equilibrium", "f-divergences and integral probability metrics", "Lipschitz constraints and duality", "Aliasing/sampling theory for feature maps"],
+          "applications": ["High-resolution face and asset synthesis", "Super-resolution and restoration (perceptual losses + adversarial term)", "Unsupervised/semi-supervised representation learning", "Latent tokenization and image editing"],
+          "common_misconceptions": [
+            "GAN training converges to the Nash equilibrium (it optimizes a coupled dynamic; cycles are the typical behavior).",
+            "Loss values indicate progress or mode coverage (they do not; both players' losses can look fine during collapse).",
+            "StyleGAN's w space is disentangled by construction (the structure is largely learned/empirical, and encoder-based editing is different).",
+            "GANs are obsolete (they are the standard where one-step synthesis quality is decisive)."
+          ],
+          "further_reading": [
+            { "title": "Wasserstein GAN", "authors": "Arjovsky, Chintala and Bottou", "year": 2017, "type": "paper", "url": null },
+            { "title": "Improved Training of Wasserstein GANs", "authors": "Gulrajani, Ahmed, Arjovsky and Bottou", "year": 2017, "type": "paper", "url": null },
+            { "title": "A Style-Based Generator Architecture for Generative Adversarial Networks", "authors": "Karras, Laine and Lehtinen", "year": 2019, "type": "paper", "url": null },
+            { "title": "Analyzing and Improving the Image Quality of StyleGAN", "authors": "Karras, Laine, Aittala, Hellsten, Lehtinen and Aila", "year": 2020, "type": "paper", "url": null },
+            { "title": "Alias-Free Generative Adversarial Networks", "authors": "Karras, Aittala, Laine, Harkonen, Lehtinen and Aila", "year": 2021, "type": "paper", "url": null },
+            { "title": "Which Training Methods for GANs do actually Converge?", "authors": "Mescheder, Geiger and Nowozin", "year": 2018, "type": "paper", "url": null },
+            { "title": "CMU 10-708 / generative modeling reading list and GAN lectures", "authors": "Carnegie Mellon University", "year": 2022, "type": "lecture-notes", "url": null }
+          ]
+        },
+        {
+          "slug": "normalizing-flow-design-exact-likelihood",
+          "name": "Normalizing Flows: Invertible Transformations and Exact Likelihood",
+          "difficulty": "advanced",
+          "definition": "A normalizing flow is an invertible differentiable map f from a base distribution z ~ p_Z to x = f(z), whose density is exact by the change-of-variable formula using the Jacobian determinant log |det J_f|.",
+          "explanation": "Everything interesting about flows is a determinant-efficiency trade-off: the density is exact only if you can compute log |det J| cheaply, and that forces the architecture into structured Jacobians. The families are (1) autoregressive/coupling - RealNVP and NICE split dimensions into a fixed passthrough half and a transformed half conditioned on the passthrough, giving a triangular Jacobian with an O(1) determinant and a trivial inverse; Glow generalizes to 1x1x1 convolutions and affine coupling in image space, and spline coupling (Neural Spline Flows) replaces affine maps with monotonic rational-quadratic splines for much better expressivity at similar cost; (2) masked autoregressive (MAF, PixelNN++ and inverse-autoregressive flows), where ordering matters and an inverse Autoregressive Flow exists to fix the sampling-time cost; (3) continuous flows, where the transformation is a neural ODE and log |det J| = -integral of the divergence of the vector field (instantaneous change of variables), so a single forward/backward solve buys invertibility with arbitrary flexibility at the cost of solver accuracy; FFJORD is the reference, and the residual/ANODE line shows a continuous normalizing flow as an ODE-based flow; (4) Householder/orthogonal and rotation-parameterized flows, plus dequantization and flow-on-graph/point-cloud variants. Because invertibility forbids information loss, a flow's latent code is exactly recoverable (this is what makes flows attractive for density estimation, exact anomaly scoring via the log-likelihood itself, and for latent-variable work where posterior collapse cannot happen since the map is bijective). Practical limitations to state plainly: the exact-likelihood path costs memory and compute relative to latent-space sampling; flows trained with maximum likelihood tend to produce perceptually blurry images (same cause as VAEs, since maximum likelihood is not a perceptual criterion); and coupling architectures have a well-known trouble with permutations/copies that requires many layers or discrete/linear-1x1 tricks (the 'copying problem'). Flows are also the correct entry point for two modern ideas students should connect: the probability-flow ODE of diffusion models (a continuous, exactly-invertible transformation learned as a vector field, which is what makes diffusion likelihoods estimable) and flow matching (learning a transport vector field directly rather than through a discrete noise chain).",
+          "learning_objectives": [
+            "Derive the change-of-variables density and explain why triangular/affine-coupling Jacobians make it tractable.",
+            "Implement a real-NVP-style coupling layer in 2D and demonstrate the copying limitation.",
+            "Explain instantaneous change of variables for continuous flows and the role of the divergence trace estimator.",
+            "Compare neural spline flows to affine coupling on quality/cost.",
+            "Compute an exact log-likelihood with a trained flow and use it for density comparison or anomaly scoring.",
+            "Explain how a probability-flow ODE is a continuous normalizing flow and why likelihood becomes estimable there."
+          ],
+          "prerequisites_strict": ["normalizing-flows", "generative-model-landscape-likelihood-elbo-ebm", "differential-equations"],
+          "prerequisites_recommended": ["measure-theoretic-probability", "residual-connections-and-ode-view", "information-theory"],
+          "related_concepts": ["diffusion-sampling-and-inference-time-scaling", "score-matching-diffusion-theory", "vae-latent-variable-objectives"],
+          "advanced_extensions": ["dequantization-and-discrete-data-in-flows", "householder-and-rotation-parameterized-flows", "flows-for-point-clouds-graphs-and-simulations", "unconditional-vs-conditional-flow-matching-hybridization"],
+          "key_results_or_algorithms": ["NICE / RealNVP affine coupling", "Glow (1x1x1 convolutions)", "MAF / NSF (monotonic splines)", "FFJORD (continuous flow, Hutchinson trace estimator)", "Instantaneous change of variables", "Inverse autoregressive flow"],
+          "math_foundations": ["Jacobian determinants of triangular maps", "Change of variables for densities", "Trace estimation for divergence", "Monotonic rational-quadratic interpolation"],
+          "applications": ["Density estimation and likelihood ranking", "Anomaly detection with exact likelihood", "Variational posteriors (flow-based inference)", "Latent-space manipulation with guaranteed invertibility"],
+          "common_misconceptions": [
+            "Flows are 'just' deterministic VAEs (the invertibility requirement is what shapes the architecture and buys exact likelihood).",
+            "Exact likelihood implies better perceptual samples (maximum likelihood is not a perceptual objective).",
+            "Continuous flows have exact determinants in practice (they depend on solver tolerance and trace estimators).",
+            "Coupling layers can copy features in one layer (they cannot without many layers or 1x1 rotations)."
+          ],
+          "further_reading": [
+            { "title": "Density estimation using RealNVP", "authors": "Dinh, Sohl-Dickstein and Bengio", "year": 2016, "type": "paper", "url": null },
+            { "title": "Glow: Generative Flow with Invertible 1x1 Convolutions", "authors": "Kingma and Dhariwal", "year": 2018, "type": "paper", "url": null },
+            { "title": "Neural Spline Flows", "authors": "Durkan et al.", "year": 2019, "type": "paper", "url": null },
+            { "title": "Flow Matching for Generative Modeling", "authors": "Lipman, Chen, Ben-Hamu, Nickel and Le", "year": 2022, "type": "paper", "url": null },
+            { "title": "FFJORD: Free-form Continuous Dynamics for Generative Flows", "authors": "Grathwohl, Chen, Bettencourt, Sutskever and Duvenaud", "year": 2019, "type": "paper", "url": null }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "token-based-and-autoregressive-generation",
+      "name": "Token-Based and Autoregressive Generation",
+      "summary": "Discretizing signals for generation and the autoregressive models that consume those tokens - the bridge between language-style generation and image/video/audio synthesis.",
+      "topics": [
+        {
+          "slug": "vector-quantized-tokenizers-for-generation",
+          "name": "Vector Quantization: VQ-VAE, VQGAN, and Tokenizers for Generation",
+          "difficulty": "advanced",
+          "definition": "Vector quantization maps continuous latent vectors to the nearest entry of a learned codebook, producing discrete tokens; the quantizer is trained with a straight-through gradient, an embedding-replacement term or an exponential moving average, plus an adversarial decoder loss (VQGAN) for perceptual fidelity.",
+          "explanation": "VQ-VAE reframes the latent variable as discrete: encode x to z_e, replace each z_e by the nearest codebook vector z_q (a hard, non-differentiable assignment), and decode from z_q. Three mechanisms make it work and each has a reason: the straight-through estimator passes dL/dz_q to dL/dz_e (biased but practical, avoiding the variance of score-function gradients); the 'commitment' term ||z_e - sg[z_q]||^2 keeps the encoder from wandering away from the codebook; and either the embedding-replacement trick or an EMA update of codebook vectors (the standard, more stable choice) makes the codebook the running centroid of assigned latents. The famous pathology is codebook collapse, where only a fraction of entries are ever used - caused by poor initialization and by the discreteness/gradient mismatch, mitigated by k-means initialization on encoded data, codebook resets/reinitialization of dead entries, lower commitment weight, jittered noise on z_e, and by finite scalar quantization (FSQ), which abandons learned nearest-neighbour search for a fixed grid and guarantees full usage at slightly worse rate. VQGAN is the key upgrade for images: the reconstruction loss becomes an L1/LPIPS perceptual term plus a patch-based adversarial discriminator, which is what buys high-fidelity reconstruction at 8x8-16x16 compression - and this is why essentially all modern latent-space generators (LDM/Stable Diffusion's f8 tokenizers, most video models' 3D tokenizers, and autoregressive image models from DALL-E through the 'image-as-token-sequence' family) sit on top of a VQ/VAE tokenizer. The intellectual payoff to teach is the unification: once an image is a grid of discrete tokens from a learned vocabulary, language-model machinery transfers directly - transformers, scaling laws, in-context conditioning, prompt-style interfaces, and multimodal interleaved training - while the tokenizer imposes the real limits (rate per token, lossy high-frequency detail, and the fact that a tokenizer trained on one domain silently bounds everything above it). Also cover: the ELBO-style interpretation (quantization as a discrete-latent VAE with a uniform categorical posterior approximation, and the information content H of the token grid as the achievable rate), and the alternative of discrete diffusion on tokens, where the vocabulary structure matters differently.",
+          "learning_objectives": [
+            "Write the VQ-VAE loss with the three terms and explain the stop-gradient placement in each.",
+            "Explain why the straight-through estimator is biased and why it still trains.",
+            "Diagnose codebook utilization from assignment counts and apply two or three fixes (k-means init, EMA, reset, FSQ).",
+            "Explain what VQGAN's perceptual + adversarial losses add over MSE reconstruction and why the discriminator is patch-based.",
+            "Compute bits-per-token and total token budget for a given compression factor and codebook size.",
+            "Argue what a tokenizer's inductive biases impose on downstream generative quality."
+          ],
+          "prerequisites_strict": ["vae-latent-variable-objectives", "tokenization", "convolutional-architectures-operations-and-lineage"],
+          "prerequisites_recommended": ["information-theory", "gan-dynamics-equilibria-lineage", "sequence-modeling"],
+          "related_concepts": ["autoregressive-image-audio-generation", "score-matching-diffusion-theory", "diffusion-transformer-architecture"],
+          "advanced_extensions": ["finite-and-multi-codebook-quantization-fsq-lfq-mq", "residual-vector-quantization-for-audio-and-neural-codecs", "tokenizer-quality-and-its-downstream-ceiling", "discrete-diffusion-on-tokenized-sequences"],
+          "key_results_or_algorithms": ["VQ-VAE", "EMA codebook update / embedding replacement", "Commitment loss", "VQGAN (LPIPS + patch discriminator)", "RVQ / SoundStream-EnCodec-style residual quantization", "FSQ / LFQ / MQ", "DALL-E-style token-image autoregressive generation"],
+          "math_foundations": ["Nearest-neighbour assignment as a Voronoi partition", "Quantization error and rate-distortion", "Stop-gradient semantics in autodiff", "Categorical latents and their entropy"],
+          "applications": ["Latent compression for image/video diffusion", "Neural audio codecs and speech tokenization", "Any 'tokens for everything' multimodal model", "Discrete representation learning"],
+          "common_misconceptions": [
+            "VQ is just a discretization step with no learning issues (codebook utilization and gradient bias are the whole problem).",
+            "Bigger codebooks are always better (more codes, more collapse risk, worse per-code usage).",
+            "A tokenizer is neutral infrastructure (its rate and biases bound the generator above it).",
+            "VQGAN's discriminator is only for aesthetics (it materially changes what frequencies the decoder preserves)."
+          ],
+          "further_reading": [
+            { "title": "Neural Discrete Representation Learning", "authors": "van den Oord, Vinyals and Kavukcuoglu", "year": 2017, "type": "paper", "url": null },
+            { "title": "Taming Transformers for High-Resolution Image Synthesis", "authors": "Esser, Rombach and Ommer", "year": 2020, "type": "paper", "url": null },
+            { "title": "High-Fidelity Neural Audio Compression (EnCodec)", "authors": "Défossez, Copet, Synnaeve and Adi", "year": 2022, "type": "paper", "url": null },
+            { "title": "Zero-Shot Text-to-Image Generation", "authors": "Ramesh, Pavlov, Goh, Gray, Chen et al.", "year": 2021, "type": "paper", "url": null },
+            { "title": "Finite Scalar Quantization: VQ-VAE Made Simple", "authors": "Mentzer et al.", "year": 2023, "type": "paper", "url": null },
+            { "title": "Hugging Face diffusers: VQ-VAE and VQGAN model documentation", "authors": "Hugging Face", "year": 2024, "type": "docs", "url": null }
+          ]
+        },
+        {
+          "slug": "autoregressive-image-audio-generation",
+          "name": "Autoregressive Generation of Images, Audio, and Multimodal Sequences",
+          "difficulty": "advanced",
+          "definition": "Autoregressive generative models factorize p(x) = prod_t p(x_t | x_<t) and model each factor with a classifier; for images the tokens are pixels or learned discrete codes, and for audio they are waveform/codec codes, so generation is a sequence problem solved by the same machinery as language.",
+          "explanation": "Pixel-level autoregression is exact-likelihood and beautifully simple: PixelRNN (row-wise LSTM with masked convolutions) and PixelCNN (causal masked convolutions) model raw pixels in raster order and give proper log-likelihoods; their two well-known defects are the checkerboard artifacts of the naive mask (fixed by the diagonal masked-convolution trick) and, much more importantly, the raster-order bias - a model that sees only north and west of a pixel cannot reason about global structure, which is exactly what diffusion's no-markovianity or a transformer's bidirectional encoder can fix, and which makes likelihood numbers for pixel AR models hard to interpret (likelihood rewards sharpness of the pixel conditional but not semantic plausibility). WaveNet showed the audio version: dilated causal convolutions give exponential receptive field with linear parameters, a mixture-of-Gaussians (mu-law categorical) output for waveform samples, and the first genuinely high-quality neural TTS - the same architecture that later inspired sample-level language models and that remains the reason dilated convolutions are standard in audio. The modern synthesis is that language-model machinery plus VQ tokens makes images/videos/audio 'another sequence': the token grid is flattened, a causal transformer is trained with cross-entropy, and generation is sampling; benefits are a unified multimodal interface, in-context conditioning, scaling laws and likelihood accounting (bits per dimension as a cross-domain currency), and simple support for interleaved text-image data; costs are quadratic-ish inference (a 256x256 image at f16 compression is 256 tokens, but high-resolution grids explode), raster-order damage to spatial reasoning, and slow sampling relative to a diffusion step count - which is why production image/video models mostly use diffusion in latent space while text-to-anything interfaces are autoregressive at the top level, and why the two are converging in hybrid models (AR on semantic tokens, diffusion on continuous ones, as in 'token then refine' designs and in most recent multimodal LMs). Also teach the sampling dimension: temperature, top-k/top-p, and the fact that for a proper AR model you can compute exact likelihoods (making it the reference class for comparing model probability quality, e.g. comparing a diffusion model's likelihood against an AR model's exact one on the same bits/dim currency).",
+          "learning_objectives": [
+            "Write the chain-rule factorization and explain which conditional each architecture (PixelCNN, WaveNet, transformer) is modeling.",
+            "Explain the causal mask for convolutions and the checkerboard-artifact mechanism and fix.",
+            "Derive the dilated-convolution receptive-field formula and the parameter cost tradeoff used in WaveNet.",
+            "Compute tokens and bits/dimension for an image and a waveform under a given tokenizer and compare likelihood across modalities.",
+            "Explain raster-order limitations for spatial/global structure and what designs mitigate them.",
+            "Compare AR and diffusion sampling speed and memory at fixed output resolution."
+          ],
+          "prerequisites_strict": ["vector-quantized-tokenizers-for-generation", "sequence-modeling", "attention-mechanics-scaled-dot-product-kv-cache"],
+          "prerequisites_recommended": ["language-model-pretraining", "tokenization", "autoregressive-decoding-strategies", "diffusion-models"],
+          "related_concepts": ["vector-quantized-tokenizers-for-generation", "flow-matching-rectified-discrete-diffusion", "diffusion-sampling-and-inference-time-scaling"],
+          "advanced_extensions": ["next-scale-and-hierarchical-autoregression", "continuous-token-autoregression-as-diffusion-head", "multimodal-interleaved-sequences-and-unified-interfaces", "likelihood-accounting-and-bits-per-dimension-comparison"],
+          "key_results_or_algorithms": ["PixelRNN / PixelCNN and masked convolutions", "WaveNet (dilated causal conv, MoG output, mu-law)", "Image transformers on VQ tokens (VQGAN-VAE/DALL-E line)", "Sparse Transformers for long token sequences", "Next-token-prediction hybrid AR-diffusion heads"],
+          "math_foundations": ["Chain-rule factorizations", "Causal convolution masking", "Dilation schedules and receptive fields", "Discretization (mu-law, quantization) of continuous outputs"],
+          "applications": ["Text-to-image/video via token sequences", "Neural audio generation and TTS", "Any-modality multimodal unified models", "Exact-likelihood baselines for generative comparison"],
+          "common_misconceptions": [
+            "Autoregressive image models are strictly worse than diffusion (they win on interface, likelihood, and in-context conditioning).",
+            "Higher likelihood means better perceptual quality (pixel-order bias can inflate likelihood).",
+            "Tokenizing an image is lossless (the tokenizer's rate is the ceiling).",
+            "Dilated convolutions solve the receptive-field problem for free (gridding artifacts appear without mixing)."
+          ],
+          "further_reading": [
+            { "title": "Conditional Image Generation with PixelCNN Decoders", "authors": "van den Oord, Kalchbrenner, Vinyals et al.", "year": 2016, "type": "paper", "url": null },
+            { "title": "WaveNet: A Generative Model for Raw Audio", "authors": "van den Oord, Kalchbrenner, Vinyals et al.", "year": 2016, "type": "paper", "url": null },
+            { "title": "Neural Machine Translation in Linear Time", "authors": "Kalchbrenner, Vinyals and van den Oord", "year": 2016, "type": "paper", "url": null },
+            { "title": "Generating Long Sequences with Sparse Transformers", "authors": "Child, Gray, Radford and Sutskever", "year": 2019, "type": "paper", "url": null },
+            { "title": "Autoregressive Image Generation without Vector Quantization", "authors": "Tian, Jiang, Yuan, et al.", "year": 2024, "type": "paper", "url": null },
+            { "title": "MIT 6.S184 / 6.S186: Introduction to Deep Learning and Generative AI", "authors": "MIT (Aryan and Duggal)", "year": 2024, "type": "course", "url": "https://introtodeeplearning.com/" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "score-based-generative-models",
+      "name": "Score, Diffusion, and Flow Generative Models",
+      "summary": "The modern dominant family: score matching and the diffusion formulation, its ODE/SDE sampler theory, flow matching and rectified flows, discrete diffusion, guidance, and inference-time scaling.",
+      "topics": [
+        {
+          "slug": "score-matching-diffusion-theory",
+          "name": "Score Matching and Diffusion: DDPM, Score SDE, and DDIM",
+          "difficulty": "expert",
+          "definition": "Score matching learns the gradient of the data log-density instead of the density; diffusion models make this tractable by learning one denoiser that supplies scores at every noise level, generating samples by reversing a noise-adding process either as a Markov chain (DDPM) or as a deterministic probability-flow ODE (DDIM).",
+          "explanation": "Hyvarinen's score matching avoids the partition function by matching gradients: the original loss L = E[ ||s_theta(x)||^2 / 2 + div s_theta(x) ] needs a trace-Hessian expectation (the 'H' trick), which is why it was limited to low dimensions; sliced score matching projects onto random directions, and denoising score matching (Vincent) replaces the divergence entirely by training on noise-corrupted data at scale sigma to estimate the score of the smoothed distribution, sigma-weighted so that a single network over a range of sigma covers all noise levels. Song and Ermon combined these: with N noise levels, a U-Net trained on the denoising objective, and annealed Langevin dynamics (steps with per-level learning rates), they got images that beat GANs and turned an intractable global score into K tractable local ones. DDPM is the same algorithm derived as variational inference: the forward process q(x_t | x_{t-1}) = N(sqrt(1-beta_t) x_{t-1}, beta_t I) has a closed-form marginals q(x_t|x_0) = N(sqrt(alpha_bar_t) x_0, (1-alpha_bar_t) I); plugging into the ELBO, the KL between two Gaussians of equal variance reduces to a squared-error term in a reparameterized mean, and after substituting eps = x_t - sqrt(alpha_bar_t) x_0 the bound collapses to a sum of weighted MSE losses on predicted noise - simple, stable, and the reason everyone writes the eps-prediction objective. The reverse variance Sigma_t is chosen between beta_t and beta_tilde_t (the posterior variance, optimal for an isotropic Gaussian data prior), an often-missed detail that measurably changes sample quality at low step counts. DDIM reparameterizes the same marginals with a continuous family indexed by eta and, at eta = 0, replaces the stochastic chain by a deterministic map with the same per-level marginals - i.e. an ODE solver over the noise schedule, which explains the observed empirical gifts: fewer steps, same-latent-to-same-image determinism, and the ability to 'edit by inversion' (invert the sampler, perturb, re-solve). The unified SDE view (Song et al.): a forward SDE dx = f(x,t)dt + g(t)dw with the time-reversed SDE dx = [f - g^2 grad log p_t] dt + g dw_bar, plus the equivalent deterministic probability-flow ODE with the -g^2/2 term, so all of DDPM/DDIM are discretizations of one object; this framing yields the practical knobs (schedule choice, the sigma_min cutoff, step-count vs error, and the fact that discretization error is a function of how badly the denoiser's implied drift changes between steps). v-prediction (predicting alpha_bar-weighted x_0 - sqrt(1-alpha_bar) eps) is the parameterization that behaves best across schedules and matters for flow matching. Classifier-free guidance, the actual mechanism behind text conditioning quality, is a score combination grad log p(x|c) + w (grad log p(x|c) - grad log p(x)), i.e. an energy sharpening, and it trades diversity and likelihood for prompt adherence - covered in depth in the sampling topic.",
+          "learning_objectives": [
+            "State the score-matching objective, why the partition function cancels, and why sliced/denoising variants are needed.",
+            "Derive DDPM's forward marginals and reduce the variational bound to the weighted eps-prediction loss.",
+            "Explain the reverse-variance choice (beta_t vs beta_tilde_t) and its effect on few-step sampling.",
+            "Derive DDIM as the eta=0 deterministic case with matched marginals and explain its practical consequences.",
+            "Write the forward/reverse SDE and probability-flow ODE and locate DDPM and DDIM inside that family.",
+            "Explain eps, x0 and v parameterizations and which regimes each suits.",
+            "Estimate total sampling error as a function of step count for a given solver order."
+          ],
+          "prerequisites_strict": ["diffusion-models", "variational-autoencoders", "stochastic-calculus", "probability-foundations"],
+          "prerequisites_recommended": ["generative-model-landscape-likelihood-elbo-ebm", "differential-equations", "diffusion-models", "statistical-inference"],
+          "related_concepts": ["flow-matching-rectified-and-discrete-diffusion", "diffusion-sampling-and-inference-time-scaling", "normalizing-flow-design-exact-likelihood"],
+          "advanced_extensions": ["distillation-to-few-step-deterministic-samplers", "analytic-dpm-and-exponential-integrator-views", "noise-schedule-design-and-signal-to-noise-parameterization", "exact-likelihood-via-probability-flow-odes"],
+          "key_results_or_algorithms": ["Score matching (Hyvarinen)", "Denoising score matching (Vincent)", "NCSN + annealed Langevin (Song & Ermon)", "DDPM", "DDIM", "V-prediction", "Score SDE / probability-flow ODE (Song et al.)", "UniPC/DPM-Solver++ family"],
+          "math_foundations": ["Gaussian algebra for the ELBO", "Scores and their relation to densities up to normalization", "Ito calculus and Girsanov-type time reversal", "ODE/SDE discretization order"],
+          "applications": ["Text-to-image/video generation", "Density estimation via exact probability-flow likelihood", "Solving inverse problems as conditional sampling", "Sample editing via DDIM inversion"],
+          "common_misconceptions": [
+            "DDPM and DDIM are different models (they share the trained network; the sampler differs).",
+            "Diffusion is trained to predict noise because noise is special (it is one convenient parameterization of the score).",
+            "More sampling steps is the only quality lever (schedule, parameterization, and guidance matter as much).",
+            "Score matching requires the divergence term in all variants (DSM removes it)."
+          ],
+          "further_reading": [
+            { "title": "Denoising Diffusion Probabilistic Models", "authors": "Ho, Jain and Abbeel", "year": 2020, "type": "paper", "url": null },
+            { "title": "Denoising Diffusion Implicit Models", "authors": "Song, Meng and Ermon", "year": 2020, "type": "paper", "url": null },
+            { "title": "Score-Based Generative Modeling through Stochastic Differential Equations", "authors": "Song, Sohl-Dickstein, Kingma, Kumar, Ermon and Poole", "year": 2021, "type": "paper", "url": null },
+            { "title": "Generative Modeling by Estimating Gradients of the Data Distribution", "authors": "Song and Ermon", "year": 2019, "type": "paper", "url": null },
+            
+            { "title": "DPM-Solver: A Fast ODE Solver for Diffusion Probabilistic Model Sampling in Around 10 Steps", "authors": "Lu, Zhou, Bao and Zhang", "year": 2022, "type": "paper", "url": null },
+            { "title": "CS236: Deep Generative Models", "authors": "Stanford University (Ermon)", "year": 2023, "type": "course", "url": "https://cs236.stanford.edu/" }
+          ]
+        },
+        {
+          "slug": "flow-matching-rectified-and-discrete-diffusion",
+          "name": "Flow Matching, Rectified Flows, and Discrete Diffusion",
+          "difficulty": "expert",
+          "definition": "Flow matching learns a time-dependent vector field that transports noise to data along a chosen conditional path, trained by a simple regression to the conditional velocity; rectified flows pick straight-line interpolation so the field is nearly constant, and discrete diffusion generalizes the noise chain to categorical state spaces.",
+          "explanation": "Diffusion's formulation entangles the model with the noise schedule: the learned eps has to be converted to a score with schedule-dependent factors, sampling integrates a curved trajectory, and the schedule is a first-class hyperparameter. Flow matching (Lipman et al.) starts instead from a transport problem: choose conditional paths p_t(x | x_1) (Gaussian probability paths interpolating between x_0 ~ N(0,I) and the data x_1), take the marginal path p_t = integral p_t(x|x_1) q(x_1) dx_1, and note that the marginal velocity field u_t(x) that pushes p_0 to p_1 can be regressed on the known conditional velocity u_t(x|x_1) because the conditional flow map is analytically available - giving the conditional flow-matching loss E ||v_theta(x_t, t) - (x_1 - x_0)||^2, which is exact-likelihood-equivalent to the diffusion objective under the corresponding schedule but far simpler to implement and to tune. Rectified flow (Liu, Tong et al.) picks the straight line x_t = (1-t)x_0 + t x_1, so the ideal marginal velocity would transport mass along straight rays and the ODE could be solved in one step; the fact that it cannot be (rays cross, so the true field bends) motivates the refloW/iterative-retraining idea of straightening the learned field to cut step count, and it explains why flow-matching models (Stable Diffusion 3-class, most current video and image models) use fewer steps and simpler schedules than DDPM-era systems. Also teach the equivalence carefully: under linear-Gaussian interpolants, the velocity field, the score, and eps-prediction are interconvertible (x_0-prediction, eps-prediction, v-prediction, and velocity all parametrize the same object with different SNR weightings), so 'flow matching vs diffusion' is largely a difference of weightings and solver geometry rather than of model class - a point on which the literature and blog posts routinely mislead. Discrete diffusion is the genuinely different extension: for categorical data (text, tokenized images, protein sequences) the forward process is a continuous-time Markov chain with generator matrix Q_t (uniform masking, absorbed-mask, or D3PM's variational/score-matched variants), the reverse is a denoising-style prediction of the original class, and the important subtleties are that the noise levels and the token vocabulary interact, that 'diffusion language models' need either continuous-token or categorical formulations to beat AR likelihood/quality, and that any non-reversible process breaks the simple Gaussian ELBO reduction (requiring bounds on transition KLs or a score-matching analog for discrete spaces). Finally, the 'OT-CFM' observation matters for practice: the conditional-path choice is a design space (optimal-transport couplings reduce curvature and hence steps), so flow matching's advantage is architectural flexibility rather than a different objective philosophy.",
+          "learning_objectives": [
+            "Derive the conditional flow-matching loss and state the assumptions that make the marginal velocity recoverable from conditional velocities.",
+            "Show the interconversion between eps/x0/v/velocity parameterizations for linear-Gaussian interpolants.",
+            "Explain why straight-line (rectified) interpolation reduces discretization error and why exact straightening is impossible after marginalization.",
+            "Describe reflow/iterative-straightening and its step-count benefit.",
+            "Set up a discrete diffusion forward chain with a generator matrix and write its denoising objective (D3PM/MDLM/SEDD style).",
+            "Compare diffusion and flow-matching sampling cost/quality empirically at matched compute."
+          ],
+          "prerequisites_strict": ["score-matching-diffusion-theory", "differential-equations", "probability-foundations"],
+          "prerequisites_recommended": ["optimization-convex", "stochastic-calculus", "tokenization", "vector-quantized-tokenizers-for-generation"],
+          "related_concepts": ["score-matching-diffusion-theory", "autoregressive-image-audio-generation", "diffusion-sampling-and-inference-time-scaling"],
+          "advanced_extensions": ["optimal-transport-and-straightened-couplings", "discrete-diffusion-for-language-and-sequences", "consistency-and-kernel-transport-distillation-of-velocity-models", "simulation-free-sampling-and-stochastic-interpolants"],
+          "key_results_or_algorithms": ["Flow Matching (Lipman et al.)", "Rectified Flow / Reflow (Liu et al., Yan et al.)", "OT-CFM couplings", "Stochastic interpolants / Simulation-Free", "D3PM (Allen et al. discrete diffusion)", "MDLM / SEDD (discrete diffusion for language)", "Consistency Models as one-step velocity distillation"],
+          "math_foundations": ["Continuity equation and transport maps", "Conditional vs marginal velocity fields", "Continuous-time Markov chains and generator matrices", "Euler/midpoint integration of time-dependent ODEs"],
+          "applications": ["Current text-to-image/video backbones (SD3-class rectified-flow DiTs)", "Few-step generation and distilled samplers", "Non-autoregressive text generation", "Molecule and sequence generation"],
+          "common_misconceptions": [
+            "Flow matching is a fundamentally different objective from diffusion (under linear interpolants they differ by weighting/parameterization).",
+            "Rectified flow means one-step sampling is enough (crossing rays keep the marginal field curved).",
+            "Discrete diffusion is diffusion with a categorical head (the forward process, bounds, and samplers all change).",
+            "Choosing the interpolant path is irrelevant (it drives curvature and step count)."
+          ],
+          "further_reading": [
+            { "title": "Flow Matching for Generative Modeling", "authors": "Lipman, Chen, Ben-Hamu, Nickel and Le", "year": 2022, "type": "paper", "url": null },
+            { "title": "Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow", "authors": "Liu, Gong and Qin", "year": 2022, "type": "paper", "url": null },
+            { "title": "Building Normalizing Flows with Stochastic Interpolants", "authors": "Albergo and Vanden-Eijnden", "year": 2022, "type": "paper", "url": null },
+            { "title": "Improving and Generalizing Flow-Based Generative Models with Minibatch Optimal Transport", "authors": "Tong et al.", "year": 2024, "type": "paper", "url": null },
+            { "title": "Simple and Effective Masked Diffusion Language Models", "authors": "Sahoo, Arriola et al.", "year": 2024, "type": "paper", "url": null },
+            { "title": "Scalable Diffusion Models with Transformers", "authors": "Peebles and Xie", "year": 2023, "type": "paper", "url": null }
+          ]
+        },
+        {
+          "slug": "diffusion-sampling-and-inference-time-scaling",
+          "name": "Diffusion Samplers, Guidance, and Inference-Time Scaling",
+          "difficulty": "expert",
+          "definition": "The post-training layer of diffusion systems: the numerical solvers and their error behavior, guidance mechanisms that trade diversity for conditioning strength, negative/autoguidance variants, step-count reduction by distillation, and the practice of spending compute at inference to improve outputs.",
+          "explanation": "Training gives a network; generation is numerical analysis. Two first-order samplers bracket the space: DDPM ancestral sampling injects noise at each step and is a discretized reverse SDE whose error accumulates with step count, while DDIM (eta=0) is a deterministic first-order ODE step, so both converge at O(1/N) in the number of steps. The improvement that matters in practice is exploiting structure: the DDPM/DDIM update can be solved exactly in the part where the noise schedule and variance are known (the semi-linear form), leaving only the eps/v prediction as the 'hard' term to be interpolated - which is exactly DPM-Solver and its multistep/high-order variants and UniPC, and is why 20-50 steps became 5-15 for the same perceptual quality without touching the weights. Heun/midpoint and other Runge-Kutta choices (EDM's Karras et al. analysis) are the other lever, together with the sigma schedule (an exponential-in-sigma grid with clipping at both ends was shown empirically crucial), the preconditioning/c-scaling of EDM (input/output scaling by noise level so the network sees a unit-variance, unit-signal problem - a real reason EDM trains and samples better than naive DDPM), and truncation of the trajectory at a small sigma_min instead of 0. Guidance is an energy modification, not a sampler change: classifier guidance adds s_c * grad log p(y|x_t) to the score (cheap, requires a classifier that works on noise, and gives a knob on tradeoffs), while classifier-free guidance trains one network on conditional and unconditional objectives and evaluates eps = eps_uncond + w (eps_cond - eps_uncond); the derivation is a Bayesian rewrite of grad log p(x|y) = grad log p(x) + grad log p(y|x), so w > 1 sharpens the conditional density (w = 1 recovers plain conditional sampling, w = 0 unconditional), and the costs are real: reduced diversity, degraded fidelity past a threshold w, over-saturated images, mode narrowing, and a measurable likelihood drop - hence negative prompt weighting, interval guidance (apply only at mid noise levels), CFG++ / autoguidance (use a deliberately worse model as the 'unconditional' anchor), and guidance-distillation (train the w into the model so one network evaluation suffices, which halves inference cost - the standard production move). Step distillation is the other compute story: progressive adversarial distillation (Salimans-Dhariwal), consistency models / trajectory-matching (song et al. CM, iCT), and adversarial-diffusion hybrid distillation (DMD-style, plus SDXL-Turbo/LCM variants) compress 50 steps into 1-4 by matching distributions rather than trajectories, accepting quality and diversity loss. Inference-time scaling generalizes beyond diffusion: best-of-N with a learned or hand-designed reward, iterative refinement with a verifier, self-consistency voting, and test-time search over samplers - all of which are legitimate budget allocations whose value should be measured against simply training a bigger model, which is the honest comparative question.",
+          "learning_objectives": [
+            "Implement DDPM ancestral, DDIM, and a DPM-Solver++ multistep sampler, and plot FID/quality vs step count for each.",
+            "Explain why exponential integrators (solving the known linear part exactly) beat plain Euler for diffusion ODEs.",
+            "Derive classifier-free guidance from the Bayes-rule score identity and state what w = 1 means.",
+            "Quantify the CFG diversity/fidelity tradeoff (pairwise sample diversity, recall, likelihood) rather than only aesthetics.",
+            "Describe EDM's c-scaling preconditioning and sigma schedule and why they change results.",
+            "Explain two step-distillation approaches and what each sacrifices.",
+            "Design an inference-time scaling budget (best-of-N, refinement, verifier) and compare it to a compute-matched larger model."
+          ],
+          "prerequisites_strict": ["score-matching-diffusion-theory", "flow-matching-rectified-and-discrete-diffusion", "differential-equations"],
+          "prerequisites_recommended": ["diffusion-models", "optimization-convex", "statistical-inference", "monte-carlo-methods"],
+          "related_concepts": ["score-matching-diffusion-theory", "generative-evaluation-metrics-and-failure-modes", "flow-matching-rectified-and-discrete-diffusion"],
+          "advanced_extensions": ["stochastic-samplers-as-langevin-with-annealing", "inverse-problem-solving-with-diffusion-priors-mps-dps", "guidance-in-latent-diffusion-attention-editing-and-masa", "reward-tilted-sampling-and-search-over-samplers"],
+          "key_results_or_algorithms": ["DDPM ancestral sampling", "DDIM", "DPM-Solver / DPM-Solver++ / UniPC", "Heun/Runge-Kutta solvers and EDM scaling/schedule", "Classifier guidance (Dhariwal & Nichol)", "Classifier-free guidance (Ho & Salimans)", "CFG++, autoguidance, interval guidance", "Consistency models / iCT / LCM", "Adversarial distillation (ADD, SDXL-Turbo)", "Best-of-N with reward models"],
+          "math_foundations": ["Order of convergence of ODE/SDE discretizations", "Exponential integrators for semi-linear problems", "Score decomposition under Bayes' rule", "Distribution vs trajectory matching"],
+          "applications": ["Production image/video serving cost reduction", "Controllable generation strength", "Diffusion priors for inpainting/super-resolution/inverse problems", "Test-time compute allocation in multimodal systems"],
+          "common_misconceptions": [
+            "CFG strength is a harmless slider (it changes the target density and reduces diversity/likelihood).",
+            "More solver steps monotonically improve quality (discretization error is not the only error; denoiser error dominates at the ends).",
+            "Distilled few-step models are equally diverse as 50-step sampling (mode narrowing is measurable).",
+            "Inference-time scaling is free quality (it trades N samples/verifier calls against training compute and needs a good scorer)."
+          ],
+          "further_reading": [
+            { "title": "Classifier-Free Guidance", "authors": "Ho and Salimans", "year": 2022, "type": "paper", "url": null },
+            { "title": "Diffusion Model Acceleration with High Order Solvers (DPM-Solver line)", "authors": "Lu, Zhou, Bao and Zhang", "year": 2022, "type": "paper", "url": null },
+            { "title": "Elucidating the Design Space of Diffusion-Based Generative Models", "authors": "Karras, Aittala, Laine and Aila", "year": 2023, "type": "paper", "url": null },
+            { "title": "Consistency Models", "authors": "Song, Dhariwal, Chen and Sutskever", "year": 2023, "type": "paper", "url": null },
+            { "title": "Adversarial Diffusion Distillation", "authors": "Sauer, Lorenz, Ge and Rombach", "year": 2023, "type": "paper", "url": null },
+            { "title": "Classifier Diffusion Probabilistic Models", "authors": "Dhariwal and Nichol", "year": 2021, "type": "paper", "url": null },
+            { "title": "Hugging Face diffusers: schedulers and guidance documentation", "authors": "Hugging Face", "year": 2024, "type": "docs", "url": "https://huggingface.co/docs/diffusers/api/schedulers/overview" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "generative-evaluation",
+      "name": "Evaluating Generative Models",
+      "summary": "How generative quality is measured, and the well-documented ways those measurements fail.",
+      "topics": [
+        {
+          "slug": "generative-evaluation-metrics-and-failure-modes",
+          "name": "Generative Model Evaluation: FID, IS, Precision/Recall, and Likelihood Pitfalls",
+          "difficulty": "advanced",
+          "definition": "Metrics for generative quality split into distribution-comparison scores (FID, FD variants, MMD, kernel/Wasserstein distances, precision/recall), classifier-based scores (IS, BRISQUE-style, CLIP-score for text alignment), and density scores (bits/dimension, ELBO), each with distinct and well-documented failure modes.",
+          "explanation": "Frechet Inception Distance embeds real and generated images with a classifier trained on ImageNet, fits a Gaussian to each embedding cloud, and computes the Frechet distance between them - a metric that is smooth, cheap, and correlates with human judgement over a useful range, but that is (a) a Gaussian approximation of a non-Gaussian cloud, so it cannot see fine multimodal structure; (b) dependent on the reference set, its size, and the crop/augmentation protocol, with FID values computed on 10k versus 50k references differing by more than many papers' claimed improvements; (c) sensitive to image resolution, blur, and the training distribution of the feature extractor, so cross-paper comparison requires matched code and datasets; and (d) gameable and sometimes anti-correlated with diversity, since a model can lower FID by mode-seeking toward visually average, high-likelihood images. The Inception Score is worse on nearly every axis - it measures both confidence and label diversity of an ImageNet classifier, rewards generating 'recognizable' content over faithful coverage, saturates, and is blind to the same-distribution-vs-different-classifier confound; it survives mostly as a historical baseline. Kynkaanniemi et al.'s improved precision/recall is the right corrective in spirit: a k-NN discriminator in feature space (use the 'improved' variant, not the original which is biased by class imbalance) measures coverage (recall) and quality (precision) separately, which is exactly the decomposition FID conflates, and it should be reported per-class for conditional generation. CLIP-score (cosine similarity between CLIP image and text embeddings) has become the de facto alignment metric for text-to-image and video, with equally well-known problems: it is a proxy that models can be optimized against (reward hacking), its absolute values are not comparable across prompts or CLIP variants, it is insensitive to compositional/counting/spatial errors, and it correlates only modestly with human preference. Density metrics need their own warnings: an ELBO is not a log-likelihood, cross-model comparisons require identical evaluation (same bound, same dequantization, same dataset preprocessing, and ideally a tightened bound or an exact probability-flow likelihood), and for perceptually-relevant tasks likelihood can be near-uninformative (diffusion models with equal likelihood can differ dramatically in FID; autoregressive pixel models score well on likelihood and poorly perceptually). The modern practice to teach: report a panel rather than a number - FID with disclosed reference set/code/resolution plus recall, a human or VLM-based preference protocol with statistical significance, task-specific metrics (e.g. CLIP-score for alignment, plus a compositional benchmark for structure), and diversity/coverage diagnostics; use MMD/Wasserstein variants when Gaussian assumptions are wrong; be explicit about seeds, sample counts, and whether metrics are computed on training-augmented or clean images; and treat any single-metric improvement as a hypothesis, not a result.",
+          "learning_objectives": [
+            "Compute FID from Inception features, write its Gaussian Frechet formula, and explain how reference-set size changes it.",
+            "State three distinct failure modes of the Inception Score.",
+            "Implement improved precision/recall as coverage/quality and explain what FID conflates.",
+            "Explain why ELBO-based 'likelihood' numbers are not comparable across model families and what is required for a fair comparison.",
+            "Describe CLIP-score's uses and its known insensitivities (counting, spatial relations, attribute binding).",
+            "Design a defensible evaluation panel for a new image generator and pre-register sample counts and code."
+          ],
+          "prerequisites_strict": ["model-selection-validation", "statistical-inference", "generative-model-landscape-likelihood-elbo-ebm"],
+          "prerequisites_recommended": ["score-matching-diffusion-theory", "generative-adversarial-networks", "convolutional-architectures-operations-and-lineage", "evaluation-benchmarking-in-computer-vision"],
+          "related_concepts": ["evaluation-benchmarking-in-computer-vision", "gan-dynamics-equilibria-lineage", "score-matching-diffusion-theory"],
+          "advanced_extensions": ["maximum-mean-discrepancy-and-kernel-distances-for-generation", "distribution-agnostic-metrics-and-statistical-significance-of-fid-differences", "human-preference-protocols-and-vlm-as-judge", "mode-coverage-diagnostics-in-token-space-for-language-and-audio"],
+          "key_results_or_algorithms": ["FID (Heusel et al.)", "Inception Score (Salimans et al.)", "Improved precision/recall (Kynkaanniemi et al.)", "CLIP-score", "MMD / Sliced-Wasserstein comparisons", "Bits/dimension and BPD normalization conventions"],
+          "math_foundations": ["Frechet distance between Gaussians", "k-NN classifiers and their bias", "Kernel mean embeddings", "Confidence intervals / bootstrap for metric differences"],
+          "applications": ["Comparing diffusion/GAN/AR image models fairly", "Detecting mode collapse", "Reward-model and preference-based training data", "Regression-testing a generative pipeline"],
+          "common_misconceptions": [
+            "Lower FID is always better generation (protocol-dependent, Gaussian-approximated, diversity-blind).",
+            "IS is a mild version of FID (it has different, worse biases).",
+            "Likelihood and perceptual quality track each other (they often do not).",
+            "CLIP-score measures compositional correctness (it mostly measures global alignment).",
+            "FID computed by different codebases is directly comparable."
+          ],
+          "further_reading": [
+            { "title": "GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium (includes FID definition)", "authors": "Heusel, Ramsauer, Unterthiner, Nessler and Hochreiter", "year": 2017, "type": "paper", "url": null },
+            { "title": "Improved Techniques for Training GANs", "authors": "Salimans et al.", "year": 2016, "type": "paper", "url": null },
+            { "title": "Improved Precision and Recall Metric for Assessing Generative Models", "authors": "Kynkaanniemi et al.", "year": 2019, "type": "paper", "url": null },
+            { "title": "CLIPScore: A Reference-free Evaluation Metric for Image Captioning", "authors": "Hessel et al.", "year": 2021, "type": "paper", "url": null },
+            
+            { "title": "torchmetrics: Frechet Inception Distance and related image metrics", "authors": "Lightning AI", "year": 2024, "type": "docs", "url": null }
+          ]
+        }
+      ]
+    }
+  ]
+}

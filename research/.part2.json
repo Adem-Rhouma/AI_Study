@@ -1,0 +1,575 @@
+{
+  "slug": "deep-learning-architectures",
+  "name": "Deep Learning Architectures",
+  "summary": "The design space of trainable function approximators beyond the fundamentals: convolutional hierarchies, recurrent and sequence models, the Transformer with its full internals (attention math, positional encodings, normalization placement, KV-cache mechanics), efficient and sub-quadratic alternatives, state-space models, graph and operator-learning architectures, sparse computation, architecture search, and the non-mainstream families (spiking, capsule, liquid, memory-augmented, world-model).",
+  "subdomains": [
+    {
+      "slug": "convolutional-architectures",
+      "name": "Convolutional Architectures",
+      "summary": "Weight-sharing local operators and the empirical lineage from LeNet/AlexNet to ResNet, DenseNet and EfficientNet, including modern ReLU-free convolutional backbones.",
+      "topics": [
+        {
+          "slug": "convolutional-architectures-operations-and-lineage",
+          "name": "Convolutional Networks: Operators, Receptive Fields, and the Architecture Lineage",
+          "difficulty": "intermediate",
+          "definition": "A convolutional layer applies a small shared linear filter across spatial positions with local connectivity and translation equivariance; a convolutional architecture is a hierarchy of such layers plus pooling, normalization and nonlinearities, whose design history is a sequence of answers to the depth-and-cost problem.",
+          "explanation": "Discrete convolution (correlation in framework terms) maps an input feature map X in R^{CxHxW} to output channels by summing over a k x k spatial window and all input channels, giving C_out parameters per layer independent of resolution - this is the parameter-sharing prior that makes images tractable, and it buys exact translation equivariance (with padding and pooling, approximate invariance). Receptive field grows additively per stacked kxK layer and multiplicatively with stride, so the effective field of a deep stack is far larger than any single filter (a standard computation every student should be able to do, including the dilated version). Key operations to master: strided convolution versus pooling (learned downsampling versus fixed), padding conventions (valid/full/same and framework off-by-one in output size formulas), 1x1 'projection' convolutions for channel mixing and bottleneck cost reduction, and the efficient variants that decouple cost from channel count: grouped convolution (split channels, reduce MACs by group factor; used by ResNeXt with cardinality), depthwise separable convolution (one filter per channel plus a 1x1 pointwise, cutting cost by ~1/k^2 + 1/C_out - the basis of MobileNet, whose inverted residual block with linear bottleneck reorders expansion and depthwise steps), dilated/atrous convolution (exponentially growing field with no resolution loss, for segmentation), deformable convolution (learned sampling offsets), and asymmetric/shift-based cheap spatial mixing. The lineage is conceptually simple and worth teaching as an argument about depth: LeNet (hand-tuned small convnets) to AlexNet (GPUs, ReLU, dropout, overlapping pooling, data augmentation) to VGG (3x3 stacking, uniformity, depth by repetition) to NiN (1x1 as MLP) to GoogLeNet/Inception (parallel multi-scale branches plus factorized bottlenecks to buy depth cheaply) to ResNet (skip connections: depth 152 trained because gradients had an identity path, plus bottleneck design and the observation that residual nets are ensembles of variable-length paths) to DenseNet (dense feature reuse, memory cost) to NASNet/EfficientNet (compound scaling of depth/width/resolution under a resource budget, replacing hand design with search plus a scaling law) to ConvNeXt (showing a pure-convolutional stage design, with modern training recipes - GELU, large kernels, AdamW, mixup - matches ViT performance, i.e. much of ViT's advantage was training, not architecture) and finally the 'ReLU-free' line (RepVGG reparameterizes a multi-branch residual training graph into a plain VGG-like inference graph, showing branch structure can be moved into training and removed at inference; spatially selective convolutions in ConvNeXt V2 similarly restore gating behavior in a conv backbone). The lesson a learner should take: convolutional design is a repeated negotiation among receptive field, parameter/compute budget, gradient path, and trainability - and recipe changes are as consequential as topology changes.",
+          "learning_objectives": [
+            "Derive the output spatial size, parameter count, and MAC count of a convolution layer for given padding, stride, dilation and groups.",
+            "Compute the receptive field (and its stride/jump) of a multi-layer stack including dilated layers.",
+            "Explain why depthwise separable convolution is cheaper and why MobileNetV2 inverts the residual and drops the final nonlinearity.",
+            "Trace the design argument of each generation (AlexNet, VGG, Inception, ResNet, DenseNet, EfficientNet, ConvNeXt, RepVGG) and name the constraint each addressed.",
+            "Implement grouped, depthwise, dilated and deformable convolutions and measure cost differences empirically.",
+            "Explain translation equivariance precisely and state what breaks it in a real convnet."
+          ],
+          "prerequisites_strict": ["gradient-pathologies-initialization-theory", "normalization-layers-mathematics"],
+          "prerequisites_recommended": ["activation-functions-mathematics", "convolutional-networks", "backpropagation-autodiff-forward-reverse"],
+          "related_concepts": ["vision-transformer-and-hybrid-backbones", "residual-connections-and-ode-view", "classical-vision-image-processing-and-feature-based-recognition"],
+          "advanced_extensions": ["reparameterization-equivalence-of-parallel-branches", "spatially-selective-and-shift-based-convs", "convolution-as-structured-matrix-multiplication", "implicit-gemm-cudnn-kernels"],
+          "key_results_or_algorithms": ["Correlation/convolution with shared kernels", "1x1 pointwise convolution", "Grouped and depthwise separable convolution", "Inverted residual with linear bottleneck", "Dilated/atrous convolution", "Deformable convolution", "Residual bottleneck blocks", "Compound scaling (EfficientNet)", "Structural reparameterization (RepVGG)", "Output-size and MAC formulas"],
+          "math_foundations": ["Convolution vs correlation and the kernel-180 flip", "Discrete Fourier view of convolution and filter support", "Translation-equivariance under group action", "Arithmetic intensity and FLOPs vs parameters"],
+          "applications": ["Image/video/medical backbones", "Dense prediction heads needing spatial resolution", "Efficient on-device inference", "Feature pyramids for detection and segmentation"],
+          "common_misconceptions": [
+            "Pooling is required for a convnet to work (strided convolution and attention-free downsampling both substitute).",
+            "Deeper convnets fail only because of overfitting (they fail from gradient/signal scale, which is why residual paths mattered).",
+            "Depthwise convolution preserves the same expressivity as dense convolution (it restricts spatial mixing per channel).",
+            "ConvNeXt's gains come from architecture novelty rather than training-recipe changes."
+          ],
+          "further_reading": [
+            { "title": "Deep Residual Learning for Image Recognition", "authors": "He, Zhang, Ren and Sun", "year": 2016, "type": "paper", "url": null },
+            { "title": "MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications", "authors": "Howard et al.", "year": 2017, "type": "paper", "url": null },
+            { "title": "Densely Connected Convolutional Networks", "authors": "Huang, Liu, van der Maaten and Weinberger", "year": 2017, "type": "paper", "url": null },
+            { "title": "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks", "authors": "Tan and Le", "year": 2019, "type": "paper", "url": null },
+            { "title": "A ConvNet for the 2020s", "authors": "Liu, Mao, Wu, Feichtenhofer, Darrell and Xie", "year": 2022, "type": "paper", "url": null },
+            { "title": "RepVGG: Making VGG-style ConvNets Great Again", "authors": "Ding, Zhang, Tan and Liu", "year": 2021, "type": "paper", "url": null },
+            { "title": "CS231n: Deep Learning for Computer Vision", "authors": "Stanford Vision Lab (Fei-Fei, Karpathy, Johnson)", "year": 2017, "type": "course", "url": "https://cs231n.stanford.edu/" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "sequence-model-architectures",
+      "name": "Sequence Model Architectures",
+      "summary": "Recurrent and encoder-decoder models through attention and the Transformer: the exact computation, the inference-time mechanics, positional encodings, normalization placement, and the sub-quadratic alternatives.",
+      "topics": [
+        {
+          "slug": "recurrent-networks-lstm-gru-seq2seq",
+          "name": "Recurrent Networks, LSTM, GRU, and Sequence-to-Sequence",
+          "difficulty": "intermediate",
+          "definition": "Recurrent networks share one transition function across time (h_t = f(h_{t-1}, x_t)); LSTM and GRU add multiplicative gates that create persistent additive state paths; sequence-to-sequence models attach an attention-bearing decoder to an encoder so the output length need not match the input.",
+          "explanation": "A vanilla RNN computes a fixed-point-like trajectory h_t = tanh(W_hh h_{t-1} + W_xh x_t + b), whose training signal for step t-k is multiplied by k Jacobians W_hh diag(tanh'), so unless the spectral radius of W_hh is tuned to lie near 1 with non-saturating directions, long-range credit assignment either vanishes or explodes; this is why BPTT with truncated windows, and echo-state/'slow' recurrent dynamics, were the classical mitigations. Hochreiter and Schmidhuber's LSTM answers with a cell state updated as c_t = f_t * c_{t-1} + i_t * g_t: because the forget gate can hold at 1, the gradient path is an additive identity (a learned residual connection, as Gers, Schmidhuber and Cummins later made explicit and as modern analyses emphasize), so error can flow across hundreds of steps without saturation; the input/output gates modulate writing and reading, giving an approximately gated linear dynamical system. The GRU merges the two states into a single hidden state with an update gate and reset gate - one fewer multiplicative gate, comparable performance, less memory. Sequence-to-sequence (Sutskever et al. 2014) fixed the fixed-length, single-vector bottleneck of encoder-decoder RNNs: encode x into a state sequence, then decode y_t from an autoregressive state attending over the encoder states. Bahdanau's additive attention was introduced precisely because a single context vector degrades with input length, and it also fixes the alignment problem in translation; attention is simultaneously (i) a differentiable content-based lookup, (ii) a soft alignment that made neural MT competitive with statistical MT, and (iii) an interpretable diagnostic (which caveat: alignment visualizations are not alignments in the linguistic sense). Worth teaching for continuity, not history: RNNs remain the right tool for streaming/online state and constant-memory inference (KV-cache grows linearly in transformers whereas RNN state is fixed), LSTM/GRU cells appear as the recurrent core of gating-based models such as LSTPM and RWKV, and modern deep-recurrence work (layer-stacked LSTMs, residual RNNs) shows recurrent models still win on some sequential-signal and time-series tasks.",
+          "learning_objectives": [
+            "Derive BPTT for an RNN and bound the gradient magnitude by powers of the spectral radius times the activation Lipschitz constant.",
+            "Write the LSTM and GRU update equations and identify the additive (identity) path that mitigates vanishing gradients.",
+            "Explain the fixed-context-vector bottleneck and how attention removes it.",
+            "Implement a small seq2seq with additive attention and compare parameter count and memory with a Transformer baseline.",
+            "State when constant-memory recurrence beats quadratic-in-length KV-cache attention (online/streaming inference)."
+          ],
+          "prerequisites_strict": ["backpropagation-autodiff-forward-reverse", "recurrent-networks"],
+          "prerequisites_recommended": ["dynamical-systems", "sequence-modeling", "attention-mechanisms"],
+          "related_concepts": ["attention-mechanics-scaled-dot-product-kv-cache", "state-space-models-s4-mamba-rwkv-hybrids"],
+          "advanced_extensions": ["residual-and-deeply-stacked-rnns", "unitary-recurrent-nets-and-orthogonal-rnn", "lstm-with-peephole-and-adaptive-ties", "clockwork-and-timer-lstm-for-multi-scale-inputs"],
+          "key_results_or_algorithms": ["BPTT and truncated BPTT", "LSTM gates (S4-1997)", "GRU (Chung et al. 2014)", "LSTPM (Pham et al. 2019)", "Seq2seq (Sutskever et al. 2014)", "Additive attention (Bahdanau et al. 2014)", "Luong scaled dot-product attention"],
+          "math_foundations": ["Discrete dynamical systems and stability", "Gated affine recurrences", "Spectral radius of product matrices", "Conditional distributions as autoregressive factorizations"],
+          "applications": ["Time-series forecasting with regime gating", "Streaming/low-memory inference", "Historical understanding of the encoder-decoder pattern", "Speech and translation baselines"],
+          "common_misconceptions": [
+            "LSTM solves vanishing gradients in general (it does so for the cell-state path; input/output gate paths can still vanish).",
+            "GRU is strictly a simplified LSTM with no behavioral difference (its state mixing differs, with different memory/param tradeoffs).",
+            "Attention visualizations are ground-truth alignments.",
+            "RNNs are obsolete in every sequential setting (fixed-state memory remains attractive at inference)."
+          ],
+          "further_reading": [
+            { "title": "Long Short-Term Memory", "authors": "Hochreiter and Schmidhuber", "year": 1997, "type": "paper", "url": null },
+            { "title": "Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling", "authors": "Chung, Gulcehre, Cho and Bengio", "year": 2014, "type": "paper", "url": null },
+            { "title": "Sequence to Sequence Learning with Neural Networks", "authors": "Sutskever, Vinyals and Le", "year": 2014, "type": "paper", "url": null },
+            { "title": "Neural Machine Translation by Jointly Learning to Align and Translate", "authors": "Bahdanau, Cho and Bengio", "year": 2014, "type": "paper", "url": null },
+            { "title": "Analyzing Sequence Learning with Gated Recurrent Networks: LSTM, GRU and CoupledGRU", "authors": "Gers, Schmidhuber and Cummins", "year": 2019, "type": "paper", "url": null },
+            { "title": "CS224n: Natural Language Processing with Deep Learning", "authors": "Stanford NLP Group (Manning)", "year": 2023, "type": "course", "url": "https://web.stanford.edu/class/cs224n/" }
+          ]
+        },
+        {
+          "slug": "attention-mechanics-scaled-dot-product-kv-cache",
+          "name": "Attention Mechanics: Scaled Dot-Product, Multi-Head, Masking, and the KV-Cache",
+          "difficulty": "intermediate",
+          "definition": "Attention computes, for each query, a convex combination of value vectors whose weights are softmax of query-key dot products scaled by 1/sqrt(d_k); multi-head runs this in parallel subspaces, causal masks enforce autoregressive factorization, and the KV-cache stores past key/value projections so incremental decoding is linear rather than quadratic.",
+          "explanation": "The formula Attention(Q,K,V) = softmax(QK^T/sqrt(d_k))V has three reasons behind each element that courses routinely under-explain. (1) The scaling: if query and key components are roughly independent with unit variance, q.k has variance d_k, so logits grow like sqrt(d_k); unscaled softmax saturates toward one-hot as d_k grows, whose Jacobian collapses (softmax' = diag(p)-pp^T vanishes when p is extreme) and gradient dies - dividing by sqrt(d_k) keeps logit variance O(1). (2) Softmax as a differentiable max with temperature: entropy of attention rows is the temperature's shadow, and large-norm weights, low entropy, and long sequences interact, which is why entropy/attention-collapse regularization and logit soft-capping appear in production models. (3) The complexity and memory: the attention matrix is n x n per head, so training cost and inference memory scale quadratically in length; the exact algorithm (FlashAttention) recomputes rather than materializes that matrix by tiling and online-softmax rescaling, giving identical results with IO-bound cost O(n^2 d / M) instead of O(n^2) HBM traffic. Masking must be understood as additive -inf (or large negative) logits before softmax; a causal mask makes row i depend only on j <= i, which is what makes the model's factorization prod_t p(x_t | x_<t) exact rather than an approximation, and cross-attention masks (padding, look-ahead, prefix) are the same operation over a different axis. Multi-head is not 'more attention' in a naive sense: with d_model = h d_k, each head is a learned low-rank bilinear form in a subspace, so heads specialize in different relation types and, crucially, the model can mix local, syntactic, and positional behaviors that a single full-rank form cannot represent simultaneously. The inference-time machinery is the part most curricula omit: an autoregressive decoder at step t recomputes only x_t, but must attend to all previous positions, so the K/V projections of previous tokens are cached (KV-cache), making per-step compute O(n d) and memory O(2 h d_k n b) - which for long contexts and large batch dominates weight memory. Hence MQA (shared K/V across heads), GQA (grouped sharing), multi-token/Sliding-window variants, KV quantization and eviction policies, paged attention for memory fragmentation, and prefill/decode split serving. Understanding KV-cache is what makes the differences between GPT-style inference cost, streaming, and recurrent models legible.",
+          "learning_objectives": [
+            "Compute the variance of q.k under unit-variance independence assumptions and derive the sqrt(d_k) scaling.",
+            "Implement causal, padding, and prefix masks as additive logit masks, and explain why they preserve exactness of the autoregressive factorization.",
+            "Derive per-step compute and KV-cache memory for batch b, h heads, d_k, context n.",
+            "Explain MQA/GQA/KV quantization and their quality-memory tradeoffs.",
+            "Describe online softmax and why FlashAttention is numerically equivalent to naive attention.",
+            "Analyze attention entropy and the consequences of saturated (one-hot) attention rows."
+          ],
+          "prerequisites_strict": ["attention-mechanisms", "linear-algebra-foundations"],
+          "prerequisites_recommended": ["backpropagation-autodiff-forward-reverse", "probability-foundations", "sequence-modeling"],
+          "related_concepts": ["transformer-block-internals-normalization-mlp-stacking", "sub-quadratic-attention-sparsemax-linear-attention", "positional-encoding-mathematics-rope-alibi-long-context"],
+          "advanced_extensions": ["flashattention-tiled-online-softmax-io-complexity", "paged-attention-and-serving-mechanics", "logit-soft-capping-and-attention-entropy-regularization", "recurrent-attention-and-kv-compression"],
+          "key_results_or_algorithms": ["Scaled dot-product attention", "Multi-head attention", "Causal/padding masks", "MQA / GQA", "FlashAttention online softmax", "KV-cache and incremental decoding", "Sliding-window/local attention"],
+          "math_foundations": ["Softmax Jacobian and entropy", "Low-rank bilinear forms", "Convex combinations as weighted averaging", "Big-O in sequence length and head dim"],
+          "applications": ["All LLM inference", "Vision transformers and cross-attention in multimodal models", "Detecting attention collapse and length extrapolation bugs", "Memory-budget-aware deployment"],
+          "common_misconceptions": [
+            "The 1/sqrt(d_k) scaling is arbitrary (it is variance normalization protecting softmax gradients).",
+            "Multi-head attention is more expensive by a factor of h (head dimension shrinks, cost is roughly constant).",
+            "KV-cache speeds up computation by recomputation (it removes recomputation, but memory is the dominant cost).",
+            "Softmax attention means the model attends to everything (masks make it a restricted averaging)."
+          ],
+          "further_reading": [
+            { "title": "Attention Is All You Need", "authors": "Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser and Polosukhin", "year": 2017, "type": "paper", "url": null },
+            { "title": "Fast and Accurate Model Serving with FlashAttention", "authors": "Dao, Fu, Ermon, Rudra and Re", "year": 2022, "type": "paper", "url": null },
+            { "title": "GQA: Generalized Multi-Query Attention for Efficient Transfer of Decoder Weights", "authors": "Ainslie, Ontanon, Swerdlow, de Clercq, Sengupta et al.", "year": 2023, "type": "paper", "url": null },
+            { "title": "The Illustrated Transformer", "authors": "Olah and Carter", "year": 2018, "type": "blog", "url": "https://jalammar.github.io/illustrated-transformer/" },
+            { "title": "The Annotated Transformer", "authors": "Harvard NLP (Rush et al.)", "year": 2018, "type": "lecture-notes", "url": "http://nlp.seas.harvard.edu/annotated-transformer/" }
+          ]
+        },
+        {
+          "slug": "transformer-block-internals-normalization-mlp-stacking",
+          "name": "Transformer Block Internals: Normalization Placement, MLP Blocks, and Stacking Conventions",
+          "difficulty": "advanced",
+          "definition": "Beyond the attention equation, a working Transformer is a choice of block recipe - where normalization sits (post-norm vs pre-norm vs sandwich/DeepNorm), how the positionwise MLP is shaped (GELU two-layer vs gated GLU variants), how layers are stacked and initialized, and where biases/tying/residual scaling go.",
+          "explanation": "The original encoder block x + LN(x + Attn(x)) is post-norm: normalization follows the residual add, which produces well-scaled activations but forces the residual stream to be renormalized every layer, so the identity path is not preserved and gradient norms at the input grow with depth - empirically the reason post-norm Transformers need careful warmup and rarely scale past tens of layers. Pre-norm x + Attn(LN(x)) makes each block a small perturbation of the residual stream (a near-identity map whose norm grows additively rather than multiplicatively), which is why it trains to hundreds of layers with no warmup gymnastics; the known costs are that later layers see a residual stream whose norm grew (so their relative contribution shrinks - 'residual stream dilution'), that the final output needs an extra normalization, and that representation norm can grow unchecked, motivating per-layer learnable scaling (LayerScale), DeepNorm's fixed alpha/beta pairing to bound depth-rescaling, or normalization-free variants that use scaled tanh or QK-norm to control logits. The MLP block is the other half and is often glossed: a positionwise two-layer network with 4x expansion, whose parameters are typically 2/3 of the block, so the FFN - not attention - carries most of the model's memory/capacity; this is why gated variants (GEGLU, SwiGLU, with 2/3-scaled hidden width to hold parameter count fixed) outperform plain GELU MLPs, why GLU's multiplicative gating is the LLM default, and why MoE replaces this FFN. Practical conventions to know: attention/FFN alternation with shared residual stream, QK-LayerNorm in ViT/CoCa-style models to bound logit scale, weight tying between embedding and unembedding (which interacts with logit magnitude and label smoothing), dropout locations (post-residual vs inside attention vs MLP), no bias in projection layers when followed by LayerNorm (the bias is absorbed), and initialization of residual outputs near zero. A student should be able to read any model config (pre/post-norm, activation, expansion ratio, tie_word_embeddings) and predict trainability, parameter allocation, and rough memory.",
+          "learning_objectives": [
+            "Contrast post-norm and pre-norm recurrences and explain the depth-scaling argument that favors pre-norm.",
+            "Explain the empirical tradeoffs introduced by pre-norm (residual dilution, norm growth) and the fixes (LayerScale, DeepNorm, final LN, QK-norm).",
+            "Account for where parameters live in a block and derive the SwiGLU hidden-width scaling.",
+            "Explain why projection bias is removed before LayerNorm and why attention needs no bias beyond RoPE-equivalent handling.",
+            "Read a HuggingFace config and reconstruct the block diagram, activation, normalization placement, and tying choices.",
+            "Implement a minimal pre-norm encoder/decoder and demonstrate warmup sensitivity differences."
+          ],
+          "prerequisites_strict": ["attention-mechanics-scaled-dot-product-kv-cache", "normalization-layers-mathematics"],
+          "prerequisites_recommended": ["transformer-architecture", "gradient-pathologies-initialization-theory", "activation-functions-mathematics"],
+          "related_concepts": ["mixture-of-experts-sparse-computation", "positional-encoding-mathematics-rope-alibi-long-context"],
+          "advanced_extensions": ["residual-stream-as-a-shared-memory-framework", "normalized-transformers-and-normformer-style-scaling", "sandwich-normalization-and-post-norm-returns", "mu-scaling-of-block-depth-and-width"],
+          "key_results_or_algorithms": ["Post-LN vs Pre-LN Transformer", "DeepNorm", "LayerScale / ReZero", "SwiGLU / GEGLU FFN", "QK-LayerNorm", "Weight tying with unembedding", "Final LN and dropout placement conventions"],
+          "math_foundations": ["Recurrence for residual-stream norm", "Subspace dimension accounting for parameters", "Scale invariance under LayerNorm", "Gated multiplicative nonlinearity"],
+          "applications": ["Designing or fine-tuning any modern LLM/VLM", "Diagnosing depth-related training instability", "Parameter budget allocation between attention and FFN", "Reading/auditing open model configs"],
+          "common_misconceptions": [
+            "Pre-norm is unambiguously better (it changes gradient distribution and can reduce effective depth).",
+            "Attention is where the capacity is (the FFN dominates parameter count and stores much of the knowledge).",
+            "Dropout location is irrelevant (post-residual dropout in deep nets can be harmful).",
+            "Layer normalization before attention is just an implementation detail (it determines reachable depth and needed warmup)."
+          ],
+          "further_reading": [
+            { "title": "On Layer Normalization in the Transformer Architecture", "authors": "Xiong, Rajani, Li, Hsieh, Wang, et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "DeepNet: Scaling Transformers to 1,000 Layers", "authors": "Wang et al.", "year": 2022, "type": "paper", "url": null },
+            { "title": "Language Models with Transformers", "authors": "Shazeer", "year": 2019, "type": "paper", "url": null },
+            { "title": "Pay Attention to MLPs", "authors": "Liu, Zaharia and Zou", "year": 2021, "type": "paper", "url": null },
+            { "title": "ReZero is All You Need: Fast Convergence at Large Depth", "authors": "Bachlechner et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "11-785 Introduction to Deep Learning", "authors": "Carnegie Mellon University (Baltrusaitis)", "year": 2023, "type": "course", "url": "https://cmu-cla.github.io/11785/" }
+          ]
+        },
+        {
+          "slug": "positional-encoding-mathematics-rope-alibi-long-context",
+          "name": "Positional Encoding Mathematics: Sinusoidal, Learned, RoPE, ALiBi, and Long Context",
+          "difficulty": "advanced",
+          "definition": "Because attention is permutation equivariant, order must be injected explicitly: either into the token representations (sinusoidal, learned embeddings) or into the attention logits themselves (RoPE's rotary relative dot product, ALiBi's linear relative bias, or NoPE where causality alone induces order).",
+          "explanation": "Self-attention satisfies Attention(P X) = P Attention(X) for a permutation P of positions, so an architecture with only content-based logits cannot distinguish 'dog bites man' from 'man bites dog'. Vaswani's sinusoidal encoding PE(pos, 2i) = sin(pos / 10000^{2i/d}) is a set of geometrically spaced frequencies; the identity PE(pos+k) = R_k PE(pos) with a rotation matrix makes inner products a function of relative offset, and the Fourier-basis view (a low-dimensional embedding of the cyclic group) explains both extrapolation behavior and the sensitivity to frequency coverage. Learned absolute embeddings are simpler and usually better in-domain but memorize positions, which is why they extrapolate poorly and waste embedding parameters. Attention with Linear BIas (ALiBi) skips input-side position information entirely and adds -h_m * |i-j| to the logits with head-specific slopes forming a harmonic-like sequence, which is monotone recency bias with zero extra parameters and demonstrated strong length extrapolation (a 512-token-trained model usable at thousands) - and it composes with causal masking trivially. RoPE rotates the query and key vectors in 2D coordinate pairs by angle pos * theta_i, so the dot product becomes a function of (i-j) times the content, preserving locality while leaving values untouched; because it is applied inside attention it has become the LLM default, and its generalization is exactly a complex-multiplication structure on the bilinear form - practical consequences include per-dimension frequency choice (base scaling, NTK-aware scaling, and YaRN, which interpolates/reshapes frequencies to extend context), the interaction with attention entropy and with logit capping, and the fact that RoPE alone gives limited extrapolation (it needs explicit frequency rescaling to stretch). NoPE - omitting position encodings in causal decoders - empirically still learns ordering because the autoregressive mask makes position implicit in the trajectory, an instructive result for separating 'position information' from 'position parameters'. At the system level long context is architectural, not just positional: sliding-window/local attention and its hierarchical variants, StreamingLLM's attention sinks (a few initial keys/values stabilize the recurrence, revealing a softmax normalization artifact), Ring/distributed attention for cross-device context, KV-cache compression (quantized, evicted, merged tokens), retrieval as an alternative to in-window memory, and the measured fact that long-context quality is dominated by effective attention over long ranges (position-interpolation fine-tuning) rather than by the encoding scheme alone.",
+          "learning_objectives": [
+            "Prove attention's permutation equivariance and state what breaks it.",
+            "Derive the rotation identity for sinusoidal encodings and show why the dot product becomes relative.",
+            "Derive RoPE's relative-offset property from the complex rotation of q and k; explain why v is not rotated.",
+            "Implement ALiBi's per-head slope schedule and explain its extrapolation advantage and its recency bias cost.",
+            "Explain NTK-aware scaling and YaRN as frequency-domain interventions for context extension.",
+            "Account for the KV-cache cost of long context and compare compression/eviction/sliding-window strategies.",
+            "Summarize the NoPE finding and its implication for treating order as implicit."
+          ],
+          "prerequisites_strict": ["attention-mechanics-scaled-dot-product-kv-cache", "fourier-analysis"],
+          "prerequisites_recommended": ["linear-algebra-foundations", "transformer-block-internals-normalization-mlp-stacking"],
+          "related_concepts": ["sub-quadratic-attention-sparsemax-linear-attention", "state-space-models-s4-mamba-rwkv-hybrids", "vision-transformer-and-hybrid-backbones"],
+          "advanced_extensions": ["fourier-feature-encoding-as-group-representation", "complex-value-and-multi-frequency-rope-variants", "attention-sinks-and-softmax-normalization-artifacts", "ring-and-distributed-attention-for-cross-device-context"],
+          "key_results_or_algorithms": ["Sinusoidal encoding", "Learned absolute embeddings", "RoPE (Su et al.)", "ALiBi (Press et al.)", "Transformer-XL relative shift", "DeBERTa disentangled attention", "Sinusoidal PEs for ViT (2D interpolation)", "NTK-aware scaling and YaRN", "StreamingLLM attention sinks", "Ring Attention"],
+          "math_foundations": ["Rotation groups and complex multiplication", "Fourier series / frequency spacing", "Relative vs absolute coordinate representations", "Softmax as shift-invariant normalization"],
+          "applications": ["Extending context windows of pretrained models", "Vision transformer patch ordering and 2D positional interpolation", "Long-document and long-video reasoning", "Efficient inference with compressed KV"],
+          "common_misconceptions": [
+            "Attention is order-aware (it is permutation-equivariant without positional injection).",
+            "RoPE/ALiBi automatically yield good extrapolation (each needs explicit scaling/fine-tuning).",
+            "Positional encoding cost is negligible (learned embeddings at long context are a real parameter/memory term, and the KV-cache dominates inference).",
+            "Long-context capability follows from training length alone (needle-in-a-haystack quality depends on attention over long ranges, not just window size)."
+          ],
+          "further_reading": [
+            { "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding", "authors": "Su, Lu, Pan, Murtadha, Wen and Liu", "year": 2021, "type": "paper", "url": null },
+            { "title": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation", "authors": "Press, Smith, Lewis and colleagues", "year": 2022, "type": "paper", "url": null },
+            { "title": "Extending Context Window of Large Language Models via Positional Interpolation", "authors": "Chen et al.", "year": 2023, "type": "paper", "url": null },
+            { "title": "YaRN: Efficient Context Window Extension of Large Language Models", "authors": "Peng, Quesnelle, Fan and Shigambetov", "year": 2023, "type": "paper", "url": null },
+            { "title": "Efficient Streaming Language Models with Attention Sinks", "authors": "Xiao, Tian, Chen, Han and Lewis", "year": 2023, "type": "paper", "url": null },
+            { "title": "Foundations of Transformer Models: Part 1 - Positional Encodings", "authors": "Perrin, Wang and others (EleutherAI)", "year": 2023, "type": "blog", "url": null },
+            { "title": "6.S184 / 6.S186: Introduction to Deep Learning and Generative AI", "authors": "MIT (Aryan and Duggal)", "year": 2024, "type": "course", "url": "https://introtodeeplearning.com/" }
+          ]
+        },
+        {
+          "slug": "sub-quadratic-attention-sparsemax-linear-attention",
+          "name": "Sub-Quadratic Attention: Sparsemax, Linear Attention, and Structured Sparsity",
+          "difficulty": "advanced",
+          "definition": "Attention variants that reduce the O(n^2) cost or the softmax's dense convex-combination behavior: sparse-prototype classifiers such as sparsemax and entmax (sparse attention weights), kernelized/linear attention that avoids the n x n matrix entirely, block/local/global patterns, and low-rank approximations.",
+          "explanation": "Softmax returns strictly positive weights on all keys, which costs O(n^2) compute and memory and gives a diffuse, hard-to-interpret mixture. Martins and Astudillo's sparsemax is the Euclidean projection of the score vector onto the probability simplex: unlike softmax it can produce exact zeros and it has a well-defined sparse support, with a closed-form solution via a threshold (sort, cumulative sums, find the support) and gradients that propagate only through the support, and entmax (alpha-entmax, including the 1.5 case) generalizes this with a tunable sparsity level from sparsemax (alpha=1) to softmax (alpha=0). Sparse attention based on entmax was the first demonstration that trainable sparse attention can match softmax attention on seq2seq while yielding interpretable hard alignments - the important conceptual point being that the choice of regularizer in the max-entropy/optimization view (negative entropy gives softmax, squared-norm gives sparsemax) determines attention's sparsity, and that sparsemax's finite-support property means a query can attend to nothing rather than to everything weakly. The other axis is asymptotics: linear attention rewrites softmax-free attention as a matrix product associative trick - given features phi(q), phi(k), compute phi(Q)(phi(K)^T V) so cost is O(n d^2) with O(d^2) state, at the price of dropping the query-key interaction's exact renormalization; Katharopoulos' Performer approximates softmax by random-feature kernel maps (with the unbounded-positive-output caveat), and modern state-space models are best understood as the same algebra (see the SSM topic and structured state space duality). Beyond these: fixed-pattern locality (sliding window, block-sparse BigBird with random/global blocks), content-based sparsity (Reformer's LSH buckets, which are nondifferentiable and hurt recall), and dynamic/token-pruning approaches. A learner should be able to say precisely what is being traded: exactness of the convex combination, sparsity/interpretability, gradient quality, hardware-friendliness (dense GEMMs beat clever sparse patterns on GPUs), and whether the memory state is bounded - which is why sub-quadratic attention is a hardware story as much as a math story, and why the practical winner at scale has mostly been 'keep softmax, make it IO-efficient' (FlashAttention) plus context-level tricks.",
+          "learning_objectives": [
+            "Derive sparsemax as simplex projection, give the threshold/support algorithm, and compute its Jacobian on the support.",
+            "Explain the entropy-regularization argument connecting softmax, sparsemax, and alpha-entmax.",
+            "Implement linear attention with the associativity trick and state its cost and its error sources.",
+            "Compare Performer's random-feature softmax approximation to exact softmax numerically on a toy task.",
+            "Contrast fixed, content-based and learned sparsity patterns with their gradient-trainability differences.",
+            "Argue why hardware efficiency can dominate asymptotic complexity (IO-awareness, dense GEMMs)."
+          ],
+          "prerequisites_strict": ["attention-mechanics-scaled-dot-product-kv-cache", "optimization-convex"],
+          "prerequisites_recommended": ["probability-foundations", "numerical-linear-algebra", "linear-algebra-foundations"],
+          "related_concepts": ["state-space-models-s4-mamba-rwkv-hybrids", "positional-encoding-mathematics-rope-alibi-long-context"],
+          "advanced_extensions": ["exact-sparse-attention-with-optimization-without-a-convex-hull", "kernel-attention-with-learned-feature-maps", "hierarchical-and-block-sparse-attention-io-scheduling", "linear-attention-as-a-recurrent-state-model"],
+          "key_results_or_algorithms": ["Sparsemax (Martins & Astudillo)", "alpha-entmax / sparse sequence-to-sequence", "Performer", "Linear Transformer", "Reformer LSH attention", "BigBird block sparse attention", "Multi-Token Attention"],
+          "math_foundations": ["Euclidean projection onto the simplex", "Fenchel/entropy duality in softmax derivations", "Random Fourier features / RKHS kernels", "Matrix associativity for cost reduction"],
+          "applications": ["Interpretable hard alignment in MT", "Long-document and long-video attention at fixed memory", "Recurrent-style inference with constant state (test-time scaling)", "Efficient attention in low-resource settings"],
+          "common_misconceptions": [
+            "Sparse attention just means skipping far-away keys (trainable sparsity via projection is a different object).",
+            "Linear attention is an exact faster softmax (it changes the model's normalization and expressivity).",
+            "Lower asymptotic complexity guarantees faster wall-clock (memory traffic and dense-GEMM utilization often dominate).",
+            "Softmax must be used because it is the only proper attention weighting (it is the entropy-regularized choice)."
+          ],
+          "further_reading": [
+            { "title": "From Softmax to Sparsemax: A Sparse Model of Attention and Multi-Label Classification", "authors": "Martins and Astudillo", "year": 2016, "type": "paper", "url": null },
+            { "title": "Sparse Sequence-to-Sequence Models", "authors": "Peters, Niculae and Martins", "year": 2019, "type": "paper", "url": null },
+            { "title": "Rethinking Attention with Performers", "authors": "Choromanski, Likhosherstov, Dohan, Song, Gane, Sarlos, et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention", "authors": "Katharopoulos, Vyas, Pappas and Fleuret", "year": 2020, "type": "paper", "url": null },
+            { "title": "Big Bird: Transformers for Longer Sequences", "authors": "Zaheer, Guruganesh, Dubey et al.", "year": 2020, "type": "paper", "url": null }
+          ]
+        },
+        {
+          "slug": "state-space-models-s4-mamba-rwkv-hybrids",
+          "name": "State-Space Models: S4, Selective SSMs (Mamba), RWKV, and Hybrids",
+          "difficulty": "expert",
+          "definition": "State-space models compute a linear recurrence h_t = A h_{t-1} + B x_t, y_t = C h_t whose discretized convolution form makes training parallel (O(n log n) via FFT) while inference is constant-memory; SSMs are the modern synthesis of recurrent efficiency and transformer-scale trainability.",
+          "explanation": "Continuous-time SSMs (x' = Ax + Bu, y = Cx) discretized with a step Delta give h_t = Abar h_{t-1} + Bbar u_t, which unrolled is a linear time-invariant convolution with kernel K = (C B, C A B, C A^2 B, ...). The trick of S4 (Gu, Goel, Re) was to parameterize A as a normal matrix (a diagonal of complex-conjugate scales/angles, i.e. a HiPPO-style initialization approximating the Legendre memory polynomial operator so the state maintains a maximal-memory projection of the past) and to compute the kernel in the frequency domain, so training is a parallel FFT convolution while inference remains an O(1)-per-step recurrence. The limitation of LTI SSMs is that a fixed kernel cannot be input-dependent, so they cannot do selection/copying tasks well (prompt tuning, in-context retrieval), which drove the 'SSMs are not transformers' debate. Mamba (Gu and Dao) removes the LTI restriction: Delta, B, C are produced from the input, making the recurrence input-dependent and enabling content-based memory, and it introduces a hardware-aware selective scan that computes the non-parallel recurrence in chunks with recomputation, plus a purely recurrent (no attention, no MLP-expansion) residual architecture that gives linear scaling in length and constant-memory inference. Mamba-2 / structured state space duality (Dao and Gu) is the theoretically important part: with scalar-per-channel A, the recurrence's output equals a semiseparable-matrix form of attention, giving a precise bridge where transformer attention and SSMs are the same computation restricted differently - this explains linear attention, gated attention, and RWKV as points in one design space, and yields state-space duality: parallel training with attention-like matrices and recurrent inference. RWKV is the RNN-for-Large-Language-Models line: token-shift mixing plus an exponential-decay linear attention ('WKV' as a softmax-free attention with data-dependent keys), trained like a transformer, inferenced like an RNN, with time-mixing/channel-mixing blocks; it is a useful existence proof that sub-quadratic recurrent models can be made at LLM scale. Current practical picture: hybrids (attention every k layers, or Mamba-plus-attention stacks) retain in-context retrieval ability while cutting memory; selective-SSM vision backbones compete on dense prediction; and honest limits must be taught - pure SSMs still underperform transformers on long-context retrieval/copying, and the theory is young enough that 'constant memory' claims depend on implementation.",
+          "learning_objectives": [
+            "Derive the discretization (ZOH/exp) and the unrolled convolution kernel K = CB, CAB, CA^2B and explain why training parallelizes via FFT.",
+            "Explain HiPPO's memory-polynomial objective and why normal-matrix A parameterization matters.",
+            "Explain what breaks LTI-ness in Mamba and why input-dependent Delta/B/C enable selection.",
+            "State the structured state space duality result and derive the semiseparable attention equivalence for scalar A.",
+            "Compare compute/memory profiles at train and inference for transformer, linear attention, RWKV, Mamba.",
+            "Design a hybrid stack and justify which layers keep attention."
+          ],
+          "prerequisites_strict": ["sub-quadratic-attention-sparsemax-linear-attention", "linear-algebra-foundations", "differential-equations"],
+          "prerequisites_recommended": ["attention-mechanics-scaled-dot-product-kv-cache", "fourier-analysis", "control-theory-foundations"],
+          "related_concepts": ["recurrent-networks-lstm-gru-seq2seq", "vision-transformer-and-hybrid-backbones"],
+          "advanced_extensions": ["ssm-as-a-linear-dynamical-system-with-learned-input-to-state", "generalized-attention-as-low-rank-semiseparable-matrix", "ssm-vision-backbones-for-dense-prediction", "chunked-scan-derivations-and-autograd-of-selective-ssms"],
+          "key_results_or_algorithms": ["S4 (HiPPO initialization + FFT convolution)", "S4D / diagonal SSM variants", "Mamba selective SSM + hardware-aware scan", "Mamba-2 / SSD semiseparable form", "RWKV time/channel mixing", "Linear attention as an SSM", "Hybrid attention-SSM stacks"],
+          "math_foundations": ["Linear dynamical systems and discretization", "Polynomial memory representations and orthogonal bases", "Lower-triangular Toeplitz and semiseparable matrices", "FFT convolution"],
+          "applications": ["Long-context modeling at linear cost", "Streaming/constant-memory inference at deployment", "Efficient vision and audio backbones", "Understanding linear-attention/gated-attention unification"],
+          "common_misconceptions": [
+            "SSMs are just a fast approximation to attention (they are a different model class whose equivalence is exact only under scalar-A structure).",
+            "Constant-memory inference means unlimited context for free (retrieval quality is not preserved without attention-like state).",
+            "Mamba's contribution is only the scan kernel (the input-dependent selection is the modeling change).",
+            "SSM-based models lack any attention-like content addressing."
+          ],
+          "further_reading": [
+            { "title": "Efficiently Modeling Long Sequences with Structured State Spaces", "authors": "Gu, Goel and Re", "year": 2021, "type": "paper", "url": null },
+            { "title": "HiPPO: Recurrent Memory with Optimal Polynomial Projections", "authors": "Nguyen, Goel, Kernfeld, Hsieh, Ré and Gu", "year": 2023, "type": "paper", "url": null },
+            { "title": "Mamba: Linear-Time Sequence Modeling with Selective State Spaces", "authors": "Gu and Dao", "year": 2023, "type": "paper", "url": null },
+            { "title": "Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality", "authors": "Dao and Gu", "year": 2024, "type": "paper", "url": "https://arxiv.org/abs/2405.21060" },
+            { "title": "RWKV: Reinventing RNNs for the Transformer Era", "authors": "Peng et al.", "year": 2023, "type": "paper", "url": null },
+            { "title": "Mamba-2 reference implementation and documentation", "authors": "state-spaces (Dao and Gu)", "year": 2024, "type": "docs", "url": null }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "visual-and-structured-architectures",
+      "name": "Visual and Structured Architectures",
+      "summary": "Architectures for images treated as token sets and for non-Euclidean structured data: vision transformers, hybrid backbones, graph neural networks, and neural operators for function-to-function learning.",
+      "topics": [
+        {
+          "slug": "vision-transformer-and-hybrid-backbones",
+          "name": "Vision Transformers and Convolution-Attention Hybrids",
+          "difficulty": "intermediate",
+          "definition": "A Vision Transformer patchifies an image into a sequence of embedding vectors, adds positional information, and applies a standard transformer encoder; hybrids replace, augment, or constrain attention with convolutional local processing.",
+          "explanation": "ViT's contribution was mostly a claim about data and training rather than about new layers: images become 16x16-patch tokens with a linear projection, plus a class token and 2D positions, and the transformer does the rest. Its consequences are exactly the things a student should be able to reason about. Attention has no built-in locality or translation prior and a low inductive bias, so ViTs underperform convnets on small data (ImageNet-size) but surpass them when pretrained at scale or with strong augmentation/distillation - the empirical result that 'scale can substitute for inductive bias'. Positional information in vision is a design surface: learned absolute embeddings, 2D-interpolated sinusoidal embeddings when resolution changes (needed for high-resolution fine-tuning and for any variable input size), relative-position biases, factorized 2D RoPE, and coordinate-aware variants (CoordMamba-style) all trade extrapolation for parameter cost. Global attention is also expensive at image resolution: with (HW/p^2) tokens, quadratic cost is why local/window attention (Swin's shifted windows with no-shift on odd layers giving cross-window flow, with relative position bias and a hierarchical pyramid for dense prediction), axial/factorized attention (Axial-DeepLab, Swin-UNet style), downsampled-token attention (Pyramid ViT), and token reduction/pruning all exist. The hybrid space is where the argument settled: CoaT/BoTNet/CvT/LeViT mix conv-local and attention-global layers; MobileViT trades the tradeoff for on-device use; and the ConvNeXt result (a pure convnet reaching ViT parity with modern recipe) plus the ViT-22B scaling analysis together say the layer type matters less than the training recipe, resolution schedule, and compute allocation, while MAE-style masked reconstruction plus self-attention is where transformers clearly help vision (an architecture-agnostic objective that attention makes easy). Also teach: hierarchical vs plain design (dense tasks need multi-scale feature maps), class-token vs global-average-pooling readout, attention as pooling (attention pooling, Perceiver-style latent arrays as a general resolution-agnostic bottleneck), and how ViT is the backbone of CLIP/DINOv2/SAM, so patch/embedding conventions determine what those systems can see.",
+          "learning_objectives": [
+            "Compute the token count, attention cost, and parameter count of a ViT given image size, patch size, depth, width, heads.",
+            "Explain why ViTs lack convolution's inductive bias and what data/recipe compensates.",
+            "Implement 2D positional interpolation for changing input resolution and explain when it is required.",
+            "Describe Swin's shifted-window mechanism and its hierarchical stage design.",
+            "Compare window/local, axial, pyramid, and pruning approaches to reducing attention cost in vision.",
+            "Explain latent-bottleneck architectures (Perceiver-style) as resolution-agnostic attention."
+          ],
+          "prerequisites_strict": ["transformer-block-internals-normalization-mlp-stacking", "convolutional-architectures-operations-and-lineage"],
+          "prerequisites_recommended": ["positional-encoding-mathematics-rope-alibi-long-context", "attention-mechanics-scaled-dot-product-kv-cache", "self-supervised-learning"],
+          "related_concepts": ["self-supervised-visual-representation-learning", "sub-quadratic-attention-sparsemax-linear-attention", "state-space-models-s4-mamba-rwkv-hybrids"],
+          "advanced_extensions": ["mamba-and-ssm-vision-backbones", "attention-as-generalized-pooling-and-readout-design", "token-pruning-and-merging-for-efficient-inference", "video-tokens-as-spatiotemporal-attention"],
+          "key_results_or_algorithms": ["ViT (Dosovitskiy et al.)", "DeiT (distillation token, augmentation recipe)", "Swin Transformer (shifted windows)", "Pyramid ViT", "CoaT/CvT/BoTNet hybrids", "Perceiver / latent arrays", "MAE (ViT + masked autoencoding)", "DINOv2/ViT-22B scaling"],
+          "math_foundations": ["Sequence length from spatial tiling", "Complexity in tokens and heads", "2D-to-1D index mapping and positional interpolation", "Quadratic attention cost accounting"],
+          "applications": ["Image and video classification", "Vision-language backbones (CLIP-family)", "Segmentation transformers (Segmenter, Mask2Former)", "Multi-resolution dense prediction"],
+          "common_misconceptions": [
+            "ViT is inherently better than CNNs (its advantage is conditional on scale and recipe).",
+            "Positional embeddings transfer across image sizes unchanged (interpolation/adjustment is required).",
+            "Attention provides translation invariance (it provides neither locality nor invariance for free).",
+            "A class token is required (global pooling and attention pooling are valid readouts)."
+          ],
+          "further_reading": [
+            { "title": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale", "authors": "Dosovitskiy et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "Training data-efficient image transformers & distillation through attention", "authors": "Touvron, Cord, Douze, Massa, Sablayrols and Jegou", "year": 2021, "type": "paper", "url": null },
+            { "title": "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows", "authors": "Liu et al.", "year": 2021, "type": "paper", "url": null },
+            { "title": "Masked Autoencoders Are Scalable Vision Learners", "authors": "He, Chen, Xie, Li, Dollár and Girshick", "year": 2021, "type": "paper", "url": null },
+            { "title": "Scaling Vision Transformers to 22 Billion Parameters", "authors": "Dehghani, Djolonga, et al.", "year": 2023, "type": "paper", "url": null },
+            { "title": "Deep Visual Learning", "authors": "ETH Zurich", "year": 2023, "type": "course", "url": null }
+          ]
+        },
+        {
+          "slug": "graph-neural-networks-message-passing-expressiveness",
+          "name": "Graph Neural Networks: Message Passing, Aggregation, and Expressiveness Limits",
+          "difficulty": "advanced",
+          "definition": "A GNN computes node features by iterating a local update in which each node aggregates transformed features of its neighbors (message passing); the learnable components are the message function, the aggregation, and the readout, and the model class is bounded by the Weisfeiler-Lehman test of graph isomorphism.",
+          "explanation": "The standard framework (Gilmer et al.'s MPNN, Bronstein et al.'s formulation) is x_i' = gamma( x_i, rho( { (phi(x_i, x_j), x_e) : j in N(i) } ) ): permutation-invariant aggregation (sum, mean, max - the DeepSets theorem says mean-sum type aggregation with enough width approximates multiset functions) composed with learned transformations, which makes GNNs equivariant on the graph and permutation-invariant at the graph readout level. GCN is the first-order localized Chebyshev/spectral approximation: it normalizes the adjacency as D^{-1/2}(A+I)D^{-1/2} and propagates features, an approximation that is cheap and works but is only a linear filter bank in graph structure, with the constraint that self-loops and symmetric normalization matter (removing them changes spectrum). GAT replaces fixed normalization with learned attention over neighbors, giving data-dependent weights; GraphSAGE samples and aggregates neighbors inductively for large graphs, which is what makes production recommendation/graph systems feasible. Three structural limits define the theory. (1) Expressiveness: the Weisfeiler-Lehman hierarchy - message-passing GNNs are at most as discriminating as 1-WL, so they cannot distinguish regular graphs of the same degree profile, cannot count triangles/substructures, and (Morris et al., Maron et al.) higher-order GNNs correspond to k-WL while subgraph-structure-aware designs (ES-GNN, PNA's degree/bonding centrality scalers, ID incorporation) buy power at extra cost; k-WL equivalence does not mean identical function classes but means the same discrimination ceiling. (2) Depth: repeated smoothing causes oversmoothing - the features converge to a common low-dimensional subspace (signal decays toward the dominant eigenvector; provably in linear models, empirically in deep ones), which motivates JK-net/readout-from-all-layers, residual connections (the same story as ResNet), PairNorm/differentially-private rescaling, and oversquashing in the gradient path (information-theoretic bottleneck along graph curvature, Türe et al.'s argument). (3) Heterophily: aggregation assumes neighbors are similar; on graphs where they are not, designs must separate ego- and neighbor-embedding or use higher-order structure. Graph transformers answer the 'attention can be exact' question by adding positional/structural encodings (random-walk, Laplacian eigenvector, distance) so that full attention over nodes is not permutation-invariant-degenerate - but they pay O(N^2) in node count and need careful sampling/sparsification for large graphs. Include the practical vocabulary: node/graph/link-level tasks, mini-batching by neighborhood sampling, and inductive generalization to unseen graphs, plus honest open problems (there is no accepted notion of 'graph depth limit', benchmarks leak into architecture design, and expressiveness theory is a statement about distinguishability, not learnability).",
+          "learning_objectives": [
+            "Write the MPNN update as message + permutation-invariant aggregate + readout and explain what equivariance this guarantees.",
+            "Derive GCN's layer as a first-order Chebyshev approximation of a spectral filter and note the normalization/self-loop effect.",
+            "Explain the 1-WL ceiling with a concrete pair of graphs a message-passing GNN cannot distinguish.",
+            "Describe two higher-order or structure-aware designs that beat 1-WL and their costs.",
+            "Explain oversmoothing and oversquashing with different mechanisms and fixes.",
+            "Explain what structural encodings a graph transformer needs and why full attention alone is insufficient.",
+            "Implement GraphSAGE-style neighborhood sampling for a graph too large to batch."
+          ],
+          "prerequisites_strict": ["graph-neural-networks", "graph-theory-foundations", "probabilistic-graphical-models"],
+          "prerequisites_recommended": ["attention-mechanics-scaled-dot-product-kv-cache", "linear-algebra-foundations"],
+          "related_concepts": ["convolutional-architectures-operations-and-lineage", "transformer-block-internals-normalization-mlp-stacking"],
+          "advanced_extensions": ["higher-order-and-subgraph-gnn-hierarchies", "topology-informed-simplicial-and-cellular-nets", "oversmoothing-as-spectral-convergence-and-its-measures", "graph-learning-on-set-and-point-cloud-data"],
+          "key_results_or_algorithms": ["Message-passing neural network (Gilmer et al.)", "ChebNet / GCN spectral localization", "GAT", "GraphSAGE", "GIN (sum aggregation maximality)", "JK-Nets", "PairNorm", "PNA (degree-scalers)", "Graph transformers with Laplacian/random-walk encodings", "Deep Sets theorem"],
+          "math_foundations": ["Graph adjacency/Laplacian spectra and eigenvector convergence", "Permutation groups and equivariant maps", "Weisfeiler-Lehman color refinement", "Message passing as belief-propagation-like local computation"],
+          "applications": ["Molecular property prediction and drug discovery", "Combinatorial optimization surrogates", "Recommendation and knowledge-graph reasoning", "Point clouds and mesh learning", "Program/code representation"],
+          "common_misconceptions": [
+            "GNNs are just CNNs on graphs (there is no fixed local order or translation structure to share weights over).",
+            "More message-passing layers capture more global structure (oversmoothing and 1-WL ceilings bound both).",
+            "Attention over nodes makes a graph model automatically expressive (without structural encodings it remains 1-WL-bounded).",
+            "Expressiveness theory predicts learning performance (it bounds distinguishability only)."
+          ],
+          "further_reading": [
+            { "title": "Neural Message Passing for Quantum Chemistry", "authors": "Gilmer, Schoenholz, Riley, Vinyals and Dahl", "year": 2017, "type": "paper", "url": null },
+            { "title": "Semi-Supervised Classification with Graph Convolutional Networks", "authors": "Kipf and Welling", "year": 2016, "type": "paper", "url": null },
+            { "title": "Graph Attention Networks", "authors": "Velickovic, Cucurull, Casanova, Romero, Lio and Bengio", "year": 2017, "type": "paper", "url": null },
+            { "title": "How Powerful are Graph Neural Networks?", "authors": "Xu, Hu, Leskovec and Jegelka", "year": 2018, "type": "paper", "url": null },
+            { "title": "Weisfeiler and Leman Go Neural: Higher-order Graph Neural Networks", "authors": "Morris et al.", "year": 2019, "type": "paper", "url": null },
+            { "title": "Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges", "authors": "Bronstein, Bruna, Cohen and Velickovic", "year": 2021, "type": "survey", "url": null },
+            { "title": "Graph Neural Networks: Foundations, Frontiers, and Opportunities", "authors": "Liu et al.", "year": 2022, "type": "lecture-notes", "url": null }
+          ]
+        },
+        {
+          "slug": "neural-operators-deeponet-fno",
+          "name": "Neural Operators: Learning Maps Between Function Spaces",
+          "difficulty": "expert",
+          "definition": "A neural operator learns a mapping between infinite-dimensional function spaces (e.g. a PDE coefficient field to its solution field) that is discretization-consistent: it takes functions as input and outputs functions, approximated at any resolution by point evaluations.",
+          "explanation": "Standard surrogate modeling trains a network on a fixed grid, so its prediction quality degrades when the grid changes; a neural operator is designed so that resolution affects only the number of evaluations, not the parameterization. DeepONet (Lu, Jagtap, Karniadakis) writes the operator as G(u)(y) = sum_k r_k(v_1,...,v_m)(u) * b_k(y): a branch net that reads a finite set of evaluations of the input function and produces coefficients, and a trunk net that evaluates basis functions at the output query point y - which is universal in the sense of an approximated sum-separable tensor representation, and cheap for arbitrary output points. The Fourier Neural Operator (Li, Kovachki, Azizzadenesheli et al.) replaces the layer's integral kernel with a global convolution implemented in Fourier space: for each mode retained, a learned linear transform multiplies the truncated spectral coefficients, i.e. W_eff = R^{-1} (P) R restricted to k_max modes, giving an O(N log N) global receptive field whose support is resolution-independent. The crucial theoretical property to teach is discretization convergence (FNO and graph kernels are discretization-consistent; approximation results bound the error as a function of grid refinement, which is what a numerical-analysis audience demands), and the design implications: channel lifting/projection, spectral truncation as a low-pass prior (explaining why FNO captures coarse dynamics and struggles with sharp discontinuities unless modes are increased), pointwise nonlinearities between spectral convolutions, and the alternative of kernel-integral (Ginstra-Brand-style) or message-passing-on-point-clouds operators for irregular geometry. Scientific-ML context: operators are used as differentiable surrogates inside inverse problems and control, for turbulence/CFD closure, weather/emulation of dynamical models where equivariance and conservation laws must be built in (equivariant and conservative architectures, neural conservation laws), and as components where PDE solving is done by implicit-neural-VMC or PINN-like residual losses - the distinction between operator learning (supervised map), PINN (physics residual as loss), and mesh-based GNNs is a common exam question. Honest gaps: data cost for high-fidelity PDE datasets, generalization across PDE parameters is not guaranteed, and spectral truncation is a modeling assumption that fails on non-periodic/sharp phenomena (windowing, multi-resolution FNO, wavelet operators address this).",
+          "learning_objectives": [
+            "Define an operator between function spaces and explain discretization-consistency with a concrete failure example of a grid-trained CNN.",
+            "Derive DeepONet's branch/trunk decomposition and state the approximation sense in which it is universal.",
+            "Derive the FNO spectral convolution (lift, truncated-mode multiplication by per-mode weights, project) and its complexity.",
+            "Explain why spectral truncation acts as a low-pass inductive bias and what phenomena it misses.",
+            "Compare operator learning, PINNs, and mesh-GNN surrogates on data, physics-encoding, and generalization.",
+            "Implement a small FNO on a 1D Burgers or Darcy-flow toy problem and evaluate resolution transfer."
+          ],
+          "prerequisites_strict": ["fourier-analysis", "differential-equations", "linear-algebra-foundations"],
+          "prerequisites_recommended": ["functional-analysis", "measure-theoretic-probability", "differential-equations", "graph-neural-networks"],
+          "related_concepts": ["graph-neural-networks-message-passing-expressiveness", "convolutional-architectures-operations-and-lineage", "residual-connections-and-ode-view"],
+          "advanced_extensions": ["equivariant-and-conservative-operator-architectures", "wavelet-and-multi-resolution-operators", "operator-learning-inside-inverse-problems-and-control", "mamba/state-space-as-a-linear-operator-solver"],
+          "key_results_or_algorithms": ["DeepONet (branch/trunk)", "Fourier Neural Operator", "Galerkin-type truncated spectral convolution", "Graph/point-cloud operators (GNO)", "PINN (residual-learning baseline)", "Discretization-invariance approximation theorems"],
+          "math_foundations": ["Banach/Hilbert space mappings and integral kernels", "Fourier series truncation and Parseval", "Approximation of operators by finite-dimensional representations", "Well-posedness basics for the PDEs being emulated"],
+          "applications": ["CFD and weather emulation surrogates", "Subgrid closure and turbulence modeling", "Inverse design and parameter estimation", "Fast solvers inside optimization loops"],
+          "common_misconceptions": [
+            "A CNN on images is a neural operator (it is only grid-resolution bound by construction).",
+            "Operator learning is a differentiable PDE solver (it learns the solution map; PINNs instead minimize residuals).",
+            "More Fourier modes always help (truncation is the regularizer that makes it learnable and cheap).",
+            "Discretization-consistency is automatically satisfied by any architecture with global receptive field."
+          ],
+          "further_reading": [
+            { "title": "Learning nonlinear operators via DeepONet based on the universal approximation theorem of operators", "authors": "Lu, Jin, Zhang and Karniadakis", "year": 2021, "type": "paper", "url": null },
+            { "title": "Fourier Neural Operator for Parametric Partial Differential Equations", "authors": "Li, Kovachki, Azizzadenesheli, Liu, Bhattacharya, Stuart and Anandkumar", "year": 2020, "type": "paper", "url": null },
+            { "title": "Physics-informed neural networks", "authors": "Raissi, Perdikaris and Karniadakis", "year": 2019, "type": "paper", "url": null },
+            { "title": "Neural Operator: Graph Kernel Network for Partial Differential Equations", "authors": "Li, Kovachki, Azizzadenesheli, Liu, Bhattacharya, et al.", "year": 2023, "type": "paper", "url": null },
+            { "title": "Introduction to Scientific Machine Learning (lecture notes)", "authors": "MIT", "year": 2023, "type": "lecture-notes", "url": null }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "scalable-and-specialized-computation",
+      "name": "Scalable and Specialized Computation",
+      "summary": "Architectures organized around compute allocation and hardware: sparse mixture-of-experts routing, automatic architecture search, the diffusion transformer, and the specialized families (spiking, capsule, liquid, memory-augmented, world-model).",
+      "topics": [
+        {
+          "slug": "mixture-of-experts-sparse-computation",
+          "name": "Mixture-of-Experts and Sparse Computation",
+          "difficulty": "advanced",
+          "definition": "A mixture-of-experts replaces a dense layer with N parallel expert networks plus a learned router that sends each token to a small subset of experts, so parameters grow while per-token FLOPs stay roughly constant.",
+          "explanation": "Shazeer et al.'s originally noisy-top-k formulation (add learned Gaussian noise to the gating logits, keep top-k, differentiate through a softmax over the selected set) became Switch Transformer (top-1 routing, which cuts routing compute and simplifies sharding) and GShard (top-2 with capacity factor). Every design question is a load-balancing question: routers collapse to using a few experts unless (a) an auxiliary balance loss (Switch's fraction-of-tokens-to-expert term) or expert-bias adjustment (ST-MoE's free load-balancing via a bias term that changes routing but not the gradient) is added, and (b) a capacity factor bounds tokens per expert so the fixed-shape tensors required by distributed hardware do not drop tokens - dropped-token handling is a real correctness issue. The engineering core: experts are placed across devices with all-to-all communication, so throughput is set by network topology, and per-expert FFN width, expert granularity (fine-grained experts with shared/fixed experts, as in DeepSeek-MoE), and routing level (per-layer, per-token, or finer) determine quality per FLOP. What MoE actually buys is capacity without inference cost - the reason it dominates frontier-scale language models and multimodal models - and what it costs: memory for all experts at inference (or expert offloading/quantization), unstable training at scale (router drift, expert specialization collapse), and difficult knowledge-localization interpretation; 'the model has 671B parameters but 37B active' is a statement about FLOPs, not about memory or data requirements, which is a common misreading. Extend to non-LLM sparse computation as the same idea: dynamic routing (capsules), conditional computation by early exit or depth adaptivity, expert dropout, and MoE layers inside diffusion transformers (which is how DiT-style models scale generative capacity per step).",
+          "learning_objectives": [
+            "Derive the top-k noisy gating forward pass and describe how gradients reach experts (selection mask, softmax renormalization).",
+            "Explain capacity factor, token dropping, and the auxiliary load-balancing loss; write the Switch balance term.",
+            "Estimate parameters vs activated FLOPs and memory for a given MoE configuration and compare to a dense model at equal FLOPs.",
+            "Explain fine-grained expert segmentation and shared experts (DeepSeek-MoE style) and why they improve utilization.",
+            "Diagnose router collapse from expert-utilization statistics and apply an appropriate fix.",
+            "Describe the sharding/communication pattern (all-to-all) and its bandwidth sensitivity."
+          ],
+          "prerequisites_strict": ["transformer-block-internals-normalization-mlp-stacking", "optimization-for-neural-networks"],
+          "prerequisites_recommended": ["computational-complexity", "optimization-for-neural-networks"],
+          "related_concepts": ["transformer-block-internals-normalization-mlp-stacking", "neural-architecture-search-for-architectures"],
+          "advanced_extensions": ["expert-parallelism-and-pipeline-moe-scheduling", "conditional-computation-adaptive-depth-and-early-exit", "moe-in-diffusion-transformers-and-multimodal-models", "routing-interpretability-and-expert-localization"],
+          "key_results_or_algorithms": ["Sparsely-gated MoE (Shazeer et al.)", "Switch Transformer (top-1)", "GShard (top-2 + capacity factor)", "ST-MoE (expert choice / load-balancing bias)", "Mixture-of-Experts with shared experts and fine-grained segmentation"],
+          "math_foundations": ["Sparsemax/top-k as simplex projection (link to sparse attention)", "Constrained optimization for balance", "All-to-all communication volume accounting", "Mixture densities and identifiability"],
+          "applications": ["Frontier LLM parameter scaling", "Multimodal and generative backbones", "On-device models with expert offloading", "Cheap capacity growth under fixed inference budget"],
+          "common_misconceptions": [
+            "MoE models are cheaper in memory because they are sparse in FLOPs (all experts must be resident unless offloaded).",
+            "The router learns to be balanced automatically (without balance objectives it degenerates).",
+            "More experts is monotonically better (granularity, capacity, and communication interplay).",
+            "MoE is equivalent to ensembling (shared representation and learned routing make it a conditional layer)."
+          ],
+          "further_reading": [
+            { "title": "Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer", "authors": "Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton and Uszkoreit", "year": 2017, "type": "paper", "url": null },
+            { "title": "Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity", "authors": "Fedus, Zoph and Parmar", "year": 2021, "type": "paper", "url": null },
+            { "title": "GShard: Scaling Giant Models with Conditional Computation and Automatic Sharding", "authors": "Lepikhin, Lee, Xu, et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "ST-MoE: Designing Stable and Transferable Sparse Expert Models", "authors": "Zoph, Irwan, Madan, et al.", "year": 2022, "type": "paper", "url": null },
+            { "title": "Mixture-of-Experts with Expert Choice Routing", "authors": "Zhou et al.", "year": 2022, "type": "paper", "url": null }
+          ]
+        },
+        {
+          "slug": "neural-architecture-search-for-architectures",
+          "name": "Neural Architecture Search: Meta-Learning, DARTS, Weight Sharing, and LLM-Driven Search",
+          "difficulty": "advanced",
+          "definition": "Neural architecture search automates the design of a network's topology and hyperparameters by searching over a space of candidate architectures with an evaluator, using reinforcement learning or meta-learning, differentiable relaxation, one-shot weight sharing, or proposal generation by an LLM.",
+          "explanation": "Early NAS (Zoph and Le 2016) used an RL controller emitting a description, with the child trained and its validation accuracy as reward - correct but absurdly expensive, which motivated the two efficiency ideas that define the field. First, transfer/meta-learning of architecture quality: the 'predictor' and 'one-shot' lines train a supernet once and evaluate many sub-networks by reusing its shared weights, which is the basis of ENAS (RNN controller over a shared-weight cell space) and of OFA (once-for-all, elastic kernels/depth/width with a post-training specialization pass and, importantly, a fair-evolutionary search over the trained supernet). Second, differentiable relaxation: DARTS converts the discrete choice 'which operation on which edge' into a mixture alpha_e * sum_o w_o(x), optimizes architecture parameters alpha jointly with weights by gradient (bilevel optimization), then discretizes by keeping the largest alphas - and its known pathology is that the relaxed optimum is a bad proxy for the discrete one (PC-DARTS, PDARTS, and studies of the DARTS 'collapse to skip connections' failure exist because of this), so the field's honest summary is that relaxation gives cheap searches with reproducibility problems. Weight-sharing searches have their own statistical subtlety: subnets within a supernet differ in weight initialization and training length, so rankings can be dominated by weight inheritance rather than topology (this is the 'search space and ranking' critique of EfficientNet-era work). Third, LLM-driven and quality-diversity search: evolutionary/quality-diversity methods (NEAT, omni-QD, MAP-Elites) and LLMs that propose code-level architectures or act as mutation operators, plus cost-aware multi-objective search over latency/memory, are the current frontier - they help because the search space can be expressed as constrained code and because the objective includes hardware metrics that hand-designed spaces ignore. The critical evaluation questions: how is compute counted (search budget vs final training budget), is the search fair, and does the found architecture beat human designs under matched budget? Also teach the transfer result that NAS cells are dataset-agnostic but not task-agnostic, and the sobering point that in most deployed systems, hand-designed architectures plus better recipes win - so NAS is best framed as a tool for hardware-constrained specialization, not a replacement for architectural understanding.",
+          "learning_objectives": [
+            "State the NAS search space, search strategy, and evaluation-strategy triad and classify a given method.",
+            "Explain how RL-based NAS and ENAS differ and why weight sharing changes cost.",
+            "Write the DARTS bilevel objective and the continuous relaxation, and describe its discretization failure modes.",
+            "Explain once-for-all elastic subnet specialization and the fairness problem in ranking shared-weight subnets.",
+            "Evaluate a NAS paper's claim critically with respect to search budget and matched-budget baselines.",
+            "Describe how LLM-guided search and quality-diversity methods change the search space representation."
+          ],
+          "prerequisites_strict": ["transformer-block-internals-normalization-mlp-stacking", "optimization-convex"],
+          "prerequisites_recommended": ["optimization-convex", "supervised-learning-foundations", "model-selection-validation", "policy-gradient-methods"],
+          "related_concepts": ["mixture-of-experts-sparse-computation", "convolutional-architectures-operations-and-lineage"],
+          "advanced_extensions": ["zero-cost-proxy-and-subnet-accuracy-predictors", "hardware-aware-multi-objective-architecture-search", "llm-guided-code-level-architecture-search", "quality-diversity-and-neuroevolution-on-open-ended-spaces"],
+          "key_results_or_algorithms": ["NAS with RL controller (Zoph & Le)", "ENAS", "DARTS", "PDARTS/PC-DARTS", "Once-for-All", "EfficientNet compound scaling via MAML-based search", "Random search as baseline", "MAP-Elites/omni-QD"],
+          "math_foundations": ["Bilevel optimization and implicit gradients", "Discrete relaxation and its gap", "Multi-objective Pareto fronts", "Budget accounting (search vs train FLOPs)"],
+          "applications": ["On-device/mobile backbone design", "Accelerator-specific layer choice", "Efficient attention/SSM variant search", "Hyperparameter + architecture joint search"],
+          "common_misconceptions": [
+            "NAS found architectures beat humans because they are smarter (matched-budget fairness and recipe effects are usually confounders).",
+            "DARTS' relaxed architecture is a good estimate of the discrete one.",
+            "Searching once gives a transferable architecture across tasks.",
+            "Weight-sharing makes evaluation unbiased."
+          ],
+          "further_reading": [
+            { "title": "Neural Architecture Search with Reinforcement Learning", "authors": "Zoph and Le", "year": 2016, "type": "paper", "url": null },
+            
+            { "title": "Differentiable Architecture Search", "authors": "Liu, Simonyan and Yang", "year": 2018, "type": "paper", "url": null },
+            { "title": "Once-for-All: Train One Network and Specialize it for Efficient Deployment", "authors": "Cai et al.", "year": 2019, "type": "paper", "url": null },
+            { "title": "Designing Network Design Spaces", "authors": "Tan and Le", "year": 2020, "type": "paper", "url": null },
+            { "title": "EvoPrompting: Language Models for Code-Level Neural Architecture Search", "authors": "Leng, Cai et al.", "year": 2023, "type": "paper", "url": null }
+          ]
+        },
+        {
+          "slug": "diffusion-transformer-architecture",
+          "name": "The Diffusion Transformer (DiT) and Token-Based Generative Backbones",
+          "difficulty": "advanced",
+          "definition": "A diffusion transformer is a transformer denoiser that predicts the noise (or velocity) of latent patches conditioned on timestep and label, replacing the U-Net convolutional backbone that dominated latent diffusion, with conditioning injected by adaptive normalization, in-context tokens, or cross-attention.",
+          "explanation": "Peebles and Xie's DiT showed that the denoising network's architecture was not the bottleneck: patchify the VAE latent into tokens, run a plain transformer block, and condition on t and class via adaLN-Zero, where the modulation parameters (shift/scale on the normalized activations and the output gate) are produced by a small MLP of the conditioning signal with zero-initialized gates so each block starts as identity - which is the residual-scaling argument from the Transformer internals topic applied to generative training. Two findings matter for scaling: representation quality (self-attention over tokens versus convolutional locality) is largely irrelevant at sufficient compute, while model size measured by Gflops correlates monotonically with generative quality (FID) - a transformer-style scaling law for generation, and the reason modern image and video generators (Sora-class, most frontier text-to-image models) are DiT-based. Conditioning mechanisms are the design surface: adaLN(-Zero) is cheap but couples all tokens to one global signal, cross-attention (as in Stable Diffusion's text conditioning, which requires a separate conditioning pathway and more parameters) allows spatially varying conditioning, and in-context conditioning (concatenating tokens) is used for reference images/editing and for classifier-free guidance bookkeeping. Timestep embedding itself is a positional-encoding problem: t is embedded with sinusoidal features (the same Fourier-features logic as positional encodings) so the network can resolve high-frequency noise-level dependence - and its sensitivity explains why noise-schedule and timestep-embedding choices interact. Video generative versions add spatiotemporal factorized attention (space then time blocks or full 3D attention), which is where compute actually blows up, plus 3D VAE tokenization. The architectural takeaways to teach: the generative model's backbone obeys the same pre-norm/residual/MoE design rules as LLMs; token resolution determines cost quadratically; and scaling generative quality is primarily a compute/data/parameter matter rather than a topology invention - which is precisely the claim the DiT paper provides evidence for, and the reason it is a curricular landmark. Honest limits: FID-vs-Gflops monotonicity is a coarse quality proxy (see generative evaluation), and DiT does not address sampling cost per step or distillation, which is where subsequent work concentrated.",
+          "learning_objectives": [
+            "Describe the DiT pipeline end to end (VAE latent, patchify, transformer blocks, adaLN-Zero, unpatchify, denoising target).",
+            "Explain adaLN-Zero conditioning and why zero-initialized gates help training stability.",
+            "Explain the sinusoidal timestep embedding and its interaction with the noise schedule.",
+            "Compare adaLN, cross-attention, and in-context conditioning with respect to spatial selectivity and parameter cost.",
+            "Summarize the Gflops-vs-FID scaling result and what it licenses architecturally.",
+            "Adapt a DiT block for video (spatiotemporal factorization) and estimate attention cost."
+          ],
+          "prerequisites_strict": ["vision-transformer-and-hybrid-backbones", "transformer-block-internals-normalization-mlp-stacking", "diffusion-models"],
+          "prerequisites_recommended": ["score-matching-diffusion-theory", "vector-quantized-tokenizers-for-generation", "attention-mechanics-scaled-dot-product-kv-cache"],
+          "related_concepts": ["transformer-block-internals-normalization-mlp-stacking", "positional-encoding-mathematics-rope-alibi-long-context"],
+          "advanced_extensions": ["moe-diffusion-transformers", "spatiotemporal-attention-for-video-generation", "rectified-flow-training-of-dits", "token-resolution-scaling-and-latent-design"],
+          "key_results_or_algorithms": ["DiT", "adaLN / adaLN-Zero", "sinusoidal time embedding", "In-context conditioning", "U-Net vs transformer denoiser comparison", "Spacetime DiT for video (DiT line: Peebles-Xie successors)"],
+          "math_foundations": ["Timestep conditioning as a scalar-to-vector embedding", "Adaptive affine transforms in normalization", "Attention cost in spatiotemporal token count", "Scaling-law-style regression of metric vs compute"],
+          "applications": ["Text-to-image and video generators", "Editing and reference-conditioned generation", "Scaling-law-driven design of generative backbones", "Guidance-embedded ('autoguidance') training"],
+          "common_misconceptions": [
+            "Diffusion requires a U-Net (attention-only denoisers match and scale better).",
+            "More parameters always means better sampling speed (per-step cost grows; sampling count is a separate axis).",
+            "Conditioning method is a detail (it determines whether generation can be spatially controlled).",
+            "DiT's FID scaling result proves FID tracks perceptual quality."
+          ],
+          "further_reading": [
+            { "title": "Scalable Diffusion Models with Transformers", "authors": "Peebles and Xie", "year": 2023, "type": "paper", "url": null },
+            { "title": "High-Resolution Image Synthesis with Latent Diffusion Models", "authors": "Rombach, Blattmann, Lorenz, Esser and Ommer", "year": 2022, "type": "paper", "url": null },
+            { "title": "Diffusion Models Beat GANs on Image Synthesis", "authors": "Ho and Salimans", "year": 2021, "type": "paper", "url": null },
+            { "title": "Hugging Face Diffusers documentation: models, pipelines, and schedulers", "authors": "Hugging Face", "year": 2024, "type": "docs", "url": "https://huggingface.co/docs/diffusers/index" },
+            { "title": "CS236: Deep Generative Models", "authors": "Stanford University (Ermon)", "year": 2023, "type": "course", "url": "https://cs236.stanford.edu/" }
+          ]
+        },
+        {
+          "slug": "spiking-capsule-liquid-networks",
+          "name": "Spiking, Capsule, and Liquid Neural Networks",
+          "difficulty": "advanced",
+          "definition": "Three non-mainstream families: spiking networks compute with discrete events and membrane dynamics on neuromorphic hardware; capsule networks represent entities as pose-equivariant vectors routed by agreement; liquid networks are continuous-time recurrent systems with adaptive time constants whose parameters change with the environment.",
+          "explanation": "Spiking neural networks replace real-valued activations with binary/ungraded spikes over discrete time; the Leaky Integrate-and-Fire model dv/dt = (input - (v - v_rest))/tau with threshold and reset is a discretized dynamical system whose temporal integration is intrinsic, so information is carried by timing/rate/pop-code schemes and the network is asynchronous-event-driven by construction. Learning needs a workaround because spikes are nondifferentiable: surrogate-gradient backpropagation (replace the spike's derivative with a smooth kernel; this is now the dominant method and works on deep SNNs), ANN-to-SNN conversion (bound the error by discretization step, a nice analysis result), and STDP-style local rules (biologically motivated, weaker on modern tasks). The hardware story is the reason the family persists: Intel Loihi 2 and IBM NorthPole-style machines exploit event sparsity and memory locality for orders-of-magnitude energy advantages on sensing/streaming workloads, and a key open problem is that SNNs have not matched ANNs on static vision benchmarks, so claims of superiority must be qualified by task and energy metric. Capsule networks (Hinton et al. 2011, dynamic routing 2017) propose a representation change rather than a hardware change: a capsule outputs a vector whose length is an existence probability and whose orientation encodes pose; a transformation matrix predicts the child capsule's pose from a parent's, and dynamic routing-by-agreement (iteratively increased coupling weights where child and prediction agree) handles the part-whole relations that pooling destroys. Their strengths are genuinely interesting - robustness to viewpoint/occlusion, decoupling existence from pose, small-data pose extrapolation - and their weaknesses are why they did not scale: EM-like routing is slow and unstable to train, the equivariance is fragile at scale, and modern architectures obtain viewpoint robustness by data and by relative/2D positional encodings instead. Liquid neural networks (Hasani et al.) are continuous-time recurrent networks (often RC-families: a leaky-integrate-and-fire-like or dynamic-memory cell) whose time constants are functions of the input, so effective memory adapts online; the motivation is closed-loop control on real robots with unanticipated perturbations, where classical deep-RL policies are brittle; results show few-parameter liquid cells generalize across driving conditions with a strong adaptivity story, and the theory connects to reservoir computing and to neural ODEs (see the ODE topic). Teaching all three honestly means naming the common thread: each attacks an assumption the standard network makes (continuous differentiable activations, scalar per-unit features, fixed time constants), and each pays for that with a harder optimization problem - which is a better lesson than either dismissal or hype.",
+          "learning_objectives": [
+            "Write the LIF dynamics, its discretization, and the code options (rate, temporal, population) for encoding information.",
+            "Explain surrogate-gradient learning in deep SNNs and the ANN-to-SNN conversion error bound idea.",
+            "Describe capsule layers, the pose-transformation prediction, and dynamic routing-by-agreement's iterative update.",
+            "Explain what pooling destroys that capsules try to restore, and why the benefit has not scaled.",
+            "Define a liquid/adaptive time-constant cell and explain why input-dependent tau helps closed-loop control.",
+            "Compare energy and accuracy claims across these families without conflating the two metrics."
+          ],
+          "prerequisites_strict": ["activation-functions-mathematics", "differential-equations"],
+          "prerequisites_recommended": ["residual-connections-and-ode-view", "convolutional-architectures-operations-and-lineage", "control-theory-foundations"],
+          "related_concepts": ["residual-connections-and-ode-view", "state-space-models-s4-mamba-rwkv-hybrids", "memory-augmented-and-world-model-architectures"],
+          "advanced_extensions": ["event-driven-backprop-on-spiking-dynamics", "snn-on-neuromorphic-hardware-mapping", "equivariant-and-geometric-alternatives-to-capsules", "liquid-tick-and-hardware-in-the-loop-robotic-control"],
+          "key_results_or_algorithms": ["LIF neuron and spike coding", "Surrogate-gradient SNN training", "ANN-SNN conversion", "STDP", "CapsNets + dynamic routing", "Catastrophic failure of naive capsule scaling", "Liquid Time-constant Networks (LTC)", "Closed-loop control results on adaptive vehicles"],
+          "math_foundations": ["ODE discretization and stiffness", "Threshold/reset discontinuities and smoothed surrogates", "Rigid-body pose prediction via learned linear maps", "Routing as an EM-like fixed point"],
+          "applications": ["Low-power event-camera and wearable sensing", "Neuromorphic deployment (Loihi-class hardware)", "Viewpoint-robust small datasets", "Adaptive robot control under distribution shift"],
+          "common_misconceptions": [
+            "SNNs are universally more efficient (efficiency depends on event sparsity and task; accuracy on static benchmarks lags).",
+            "Capsules are a failed idea with no content (their part-whole/pose point is valid; the optimization cost is the issue).",
+            "Liquid networks are a new nonlinearity (they are continuous-time recurrent models with input-dependent dynamics).",
+            "Biological plausibility implies engineering superiority."
+          ],
+          "further_reading": [
+            { "title": "Dynamic Routing Between Capsules", "authors": "Sabour, Frosst and Hinton", "year": 2017, "type": "paper", "url": null },
+            { "title": "Training Deep Spiking Neural Networks Using Backpropagation", "authors": "Neftci, Mostafa and Zenke", "year": 2019, "type": "survey", "url": null },
+            { "title": "Liquid Neural Networks", "authors": "Hasani, Le, Phillips, Efe, Kar, et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "Closed-loop Neural Networks Learning Adaptive Controllers for Autonomous Vehicles", "authors": "Hasani et al.", "year": 2022, "type": "paper", "url": null },
+            { "title": "Loihi 2: A New Era of Neuromorphic Computing", "authors": "Loihi 2 team (Intel)", "year": 2023, "type": "survey", "url": null }
+          ]
+        },
+        {
+          "slug": "memory-augmented-and-world-model-architectures",
+          "name": "Memory-Augmented Networks and World-Model Architectures",
+          "difficulty": "advanced",
+          "definition": "Memory-augmented architectures add an explicit external memory (linear memory, differentiable neural computer, neural Turing machine) to a controller; world-model architectures learn an environment's latent dynamics (recurrent state-space model, RSSM, JEPA) so that predictions, planning and policy learning happen inside the learned model.",
+          "explanation": "The motivation for explicit memory is a capacity/addressing argument: a fixed-width hidden state must both represent and store, so information density in an RNN is bounded, whereas an external memory matrix M (rows = slots) with content-based addressing (weights over slots from a key-query similarity, softmax or sharper) and read/write heads gives near-unbounded storage with O(1)-per-slot addressing and, importantly, is differentiable end-to-end when the addressing is soft. NTM (Graves et al. 2016) demonstrated learned algorithms (copy, associative recall, addition) with interpolation and convolutional addressing; DNC (Graves et al. 2016) added a linked-list structure for FIFO/LIFO control and a usage-based allocation gate, and it solved bAbI-style reasoning and procedural tasks - and the honest assessment is that these models were computationally heavy, sensitive to hyperparameters, and were displaced by transformers whose attention *is* a soft memory over the context (the KV-cache is exactly a content-addressable, growing memory), which is the right conceptual link to teach rather than treating DNC as dead history. Adjacent lineages worth naming: Memory Networks/End-to-end memory networks for QA, Transformer-XL's segment memory, Memorizing Transformers and kNN-augmented retrieval (external nonparametric memory), RAG as memory-at-inference, Titans-style learned outer retrievers, and Hopfield-network-based attention reinterpretations (attention as one step of a modern-Hopfield energy minimization - a genuinely unifying view of what the softmax weighting computes). World models are the other half: Ha and Schmidhuber's original formulation trained a VAE latent plus an RNN predictor of latent dynamics (MDN-RNN) and controlled a tiny policy inside the model, which is the clean statement of the idea; the DeepMDP/CEM line (model-encoder and one-step prediction with a path-integral controller) and PlaNet's Recurrent State-Space Model - deterministic hidden h_t plus stochastic latent z_t, learned by ELBO with prior/posterior and used for MPPI-style planning - are the technically precise version, and Dreamer/DreamerV3 turn the same latent dynamics into a learned policy and value via imagined rollouts with latent-space regularization (RSSM is the reason long-horizon imagination is cheap). JEPA/latent-predictive models move the same idea to representation learning: predict a frozen/teacher target representation instead of pixels, which avoids wasting capacity on reconstructable detail and is the current basis of 'world model' claims for video. What to teach as open problems: compounding model error in imagination, whether learned latent dynamics support real planning or only short-horizon rollouts, the persistent gap between memory capacity in theory and in learned systems, and the fact that 'world model' is used much more loosely in marketing than in the RSSM/JEPA technical sense.",
+          "learning_objectives": [
+            "Describe NTM/DNC memory read/write heads, content-based addressing, and the interpolation and sharpening mechanisms.",
+            "Explain DNC's linked-list temporal addressing and usage-based allocation.",
+            "Argue in what sense attention/KV-cache is a differentiable external memory and where the analogy breaks.",
+            "Write the RSSM generative model and its ELBO, distinguishing prior and posterior latents.",
+            "Explain why learning a policy in imagination is cheaper and how model error compounds with horizon.",
+            "State the JEPA objective and contrast it with pixel-reconstruction objectives.",
+            "Assess why neural-computer lineages faded and what modern retrieval-augmented systems recovered."
+          ],
+          "prerequisites_strict": ["recurrent-networks-lstm-gru-seq2seq", "attention-mechanics-scaled-dot-product-kv-cache"],
+          "prerequisites_recommended": ["deep-rl-foundations", "markov-decision-processes", "variational-autoencoders", "policy-gradient-methods"],
+          "related_concepts": ["recurrent-networks-lstm-gru-seq2seq", "spiking-capsule-liquid-networks", "score-matching-diffusion-ddpm-ddim-flow-matching"],
+          "advanced_extensions": ["hopfield-network-energy-view-of-attention", "nonparametric-and-knn-augmented-language-models", "learned-outer-memory-and-episodic-retrieval-systems", "planning-in-latent-space-with-mppi-and-diffusion-policies"],
+          "key_results_or_algorithms": ["Memory Networks", "NTM", "DNC", "End-to-end memory networks", "Transformer-XL segment memory", "Memorizing Transformer / RETRO-style retrieval", "World Models (Ha & Schmidhuber)", "PlaNet RSSM", "Dreamer / DreamerV3", "I-JEPA / V-JEPA"],
+          "math_foundations": ["Content-addressable storage as kernel smoothing", "Soft attention as convex combination; sharpening as temperature", "Latent-variable generative model and ELBO", "MDP rollout error and model-bias accumulation"],
+          "applications": ["Algorithm learning and symbolic recall tasks", "Model-based RL and robot control", "Long-horizon planning in learned simulators", "Video prediction and physical-reasoning benchmarks", "Retrieval-augmented language systems"],
+          "common_misconceptions": [
+            "DNC failed because memory is the wrong idea (transformers implement a soft, growing memory; the failure was optimization cost).",
+            "A world model is any video prediction model (technical sense requires a controllable latent dynamics model used for planning).",
+            "Imagined rollouts are as reliable as environment rollouts (model bias compounds with horizon).",
+            "Attention needs no positional or content structure to work as memory."
+          ],
+          "further_reading": [
+            { "title": "Neural Turing Machines", "authors": "Graves, Wayne and Danihelka", "year": 2014, "type": "paper", "url": null },
+            { "title": "Hybrid Computing using a Neural Network with Dynamic External Memory", "authors": "Graves, Wayne, Reynolds et al.", "year": 2016, "type": "paper", "url": null },
+            { "title": "World Models", "authors": "Ha and Schmidhuber", "year": 2018, "type": "paper", "url": null },
+            { "title": "Learning Latent Dynamics for Planning from Pixels", "authors": "Hafner et al.", "year": 2019, "type": "paper", "url": null },
+            { "title": "Mastering Diverse Domains through World Models (DreamerV3)", "authors": "Hafner, Pasukonis, Ba and Lillicrap", "year": 2023, "type": "paper", "url": null },
+            { "title": "Hopfield Networks is All You Need", "authors": "Ramsauer et al.", "year": 2020, "type": "paper", "url": null },
+            { "title": "Self-supervised Learning from Images with a Joint-Embedding Predictive Architecture", "authors": "Assran et al.", "year": 2023, "type": "paper", "url": null }
+          ]
+        }
+      ]
+    }
+  ]
+}

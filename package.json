@@ -18,7 +18,9 @@
     "db:reset": "npm run db:reset --workspace server",
     "curriculum:build": "npm run curriculum:build --workspace server",
     "test": "npm run test --workspace server && npm run test --workspace web",
-    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web"
+    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web",
+    "audit": "node scripts/audit-critical-info.cjs",
+    "audit:json": "node scripts/audit-critical-info.cjs --json"
   },
   "engines": {
     "node": ">=20.11"

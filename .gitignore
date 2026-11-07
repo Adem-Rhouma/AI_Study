@@ -26,6 +26,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Generated audit reports
+audit-report.json
+
 # Editors / OS
 .idea/
 .vscode/

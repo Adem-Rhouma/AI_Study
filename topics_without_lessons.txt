@@ -1,0 +1,202 @@
+Topics whose /explore page shows 'No lesson covers this topic yet'
+Generated from: C:\Users\rkeks\Documents\project\AI_Study\server\data\ai-mastery.sqlite
+Total: 198 topics (198 published)
+
+Epistemics, FAIR Data, and Reproducibility in ML for Science  |  /explore/ai-science-epistemics-fair-reproducibility  |  AI for Science / Epistemics and Reliability of AI for Science
+AI for Mathematics: Theorem Proving, Formalisation, and Conjecture Generation  |  /explore/ai-for-mathematics  |  AI for Science / Learned Models for Molecules, Matter, and Cells
+Data-Driven Weather and Climate Forecasting  |  /explore/weather-climate-machine-learning  |  AI for Science / Learned Models for Molecules, Matter, and Cells
+Generative Models for Molecules and Materials and Their Evaluation Pitfalls  |  /explore/generative-models-molecules-materials  |  AI for Science / Learned Models for Molecules, Matter, and Cells
+Genomics, Single-Cell, and Astronomy Machine Learning  |  /explore/genomics-single-cell-astronomy-ml  |  AI for Science / Learned Models for Molecules, Matter, and Cells
+Molecular and Atomistic Machine Learning (Interatomic Potentials)  |  /explore/molecular-atomistic-machine-learning  |  AI for Science / Learned Models for Molecules, Matter, and Cells
+Protein Structure Prediction and Its Evaluation  |  /explore/protein-structure-prediction  |  AI for Science / Learned Models for Molecules, Matter, and Cells
+Differentiable Programming, Surrogate Models, and Inverse Problems  |  /explore/differentiable-programming-surrogate-inverse  |  AI for Science / ML for Scientific Computing
+Neural Operators and Learned PDE Solvers  |  /explore/neural-operators-learned-pde-solvers  |  AI for Science / ML for Scientific Computing
+Physics-Informed Neural Networks (PINNs)  |  /explore/physics-informed-neural-networks  |  AI for Science / ML for Scientific Computing
+Data Poisoning, Backdoors, and Model Supply-Chain Risk  |  /explore/data-poisoning-backdoor-supply-chain  |  Adversarial Robustness and AI Security / Attacks on the Training Pipeline and Deployed Systems
+Jailbreaking, Prompt Injection, and Red-Teaming LLM Agents  |  /explore/jailbreaking-prompt-injection-agents  |  Adversarial Robustness and AI Security / Attacks on the Training Pipeline and Deployed Systems
+Model Extraction, Membership Inference, and Gradient Inversion  |  /explore/model-extraction-membership-gradient-inversion  |  Adversarial Robustness and AI Security / Attacks on the Training Pipeline and Deployed Systems
+Adversarial Evasion Attacks and Robustness Evaluation  |  /explore/adversarial-evasion-and-robustness-evaluation  |  Adversarial Robustness and AI Security / Evasion Attacks, Defences, and Robustness Evaluation
+Adversarial Training and Certified Robustness  |  /explore/adversarial-training-certified-robustness  |  Adversarial Robustness and AI Security / Evasion Attacks, Defences, and Robustness Evaluation
+Corrigibility, Dangerous-Capability Evaluations, and Dual-Use  |  /explore/corrigibility-capability-evals-dual-use  |  Alignment and Safety Research / Inner Alignment, Deception, and Corrigibility
+Mesa-Optimization, Inner Alignment, and Deceptive Alignment  |  /explore/inner-alignment-deceptive-alignment  |  Alignment and Safety Research / Inner Alignment, Deception, and Corrigibility
+Reward-Model Limitations and RLHF/DPO as Alignment Techniques  |  /explore/reward-modeling-limits-alignment-techniques  |  Alignment and Safety Research / Specification, Rewards, and Oversight
+Scalable Oversight and Weak-to-Strong Generalization  |  /explore/scalable-oversight-weak-to-strong  |  Alignment and Safety Research / Specification, Rewards, and Oversight
+Specification Gaming and Reward Hacking  |  /explore/specification-gaming-reward-hacking  |  Alignment and Safety Research / Specification, Rewards, and Oversight
+Causal Discovery: Algorithms, Assumptions, and the Limits of Identifiability  |  /explore/causal-discovery-identifiability  |  Causal Inference and Causal AI / Causal Formalisms and Identification
+Correlation, Causation, and the Two Formalisms  |  /explore/causal-inference-foundations-potential-outcomes  |  Causal Inference and Causal AI / Causal Formalisms and Identification
+Experimental Design for AI Systems: Interference, Switchback, Power, and Sequential Tests  |  /explore/experiments-networks-time-series  |  Causal Inference and Causal AI / Causal Formalisms and Identification
+Structural Causal Models, Interventions, and Counterfactuals  |  /explore/structural-causal-models-do-calculus  |  Causal Inference and Causal AI / Causal Formalisms and Identification
+Treatment-Effect Estimation with Machine Learning  |  /explore/treatment-effect-estimation-ml  |  Causal Inference and Causal AI / Causal Formalisms and Identification
+Unmeasured Confounding: Instruments, Proximal Inference, and Sensitivity Analysis  |  /explore/unmeasured-confounding-proxies  |  Causal Inference and Causal AI / Causal Formalisms and Identification
+Causal Representation Learning, Invariance, and Fairness  |  /explore/causal-representation-learning  |  Causal Inference and Causal AI / Causal Reasoning Inside Machine Learning
+Dimensionality Reduction and Manifold Learning  |  /explore/dimensionality-reduction-and-manifold-learning  |  Classical Machine Learning / Dimensionality Reduction and Manifold Learning
+Probabilistic Graphical Models and Classical Bayesian Inference  |  /explore/probabilistic-graphical-models  |  Classical Machine Learning / Graphical Models and Bayesian Inference
+Gaussian Processes and Bayesian Nonparametrics  |  /explore/gaussian-processes-and-bayesian-nonparametrics  |  Classical Machine Learning / Parametric, Linear and Kernel Models
+Support Vector Machines and Kernel Methods  |  /explore/support-vector-machines-and-kernel-methods  |  Classical Machine Learning / Parametric, Linear and Kernel Models
+Feature Engineering, Selection and Preprocessing  |  /explore/feature-engineering  |  Classical Machine Learning / The Modelling Workflow: Features, Validation and Interpretation
+Clustering, Nearest-Neighbor, Density and Anomaly Methods  |  /explore/clustering-and-neighbor-methods  |  Classical Machine Learning / Trees, Ensembles and Instance-Based Methods
+Decision Trees and Ensemble Methods  |  /explore/decision-trees-and-ensemble-methods  |  Classical Machine Learning / Trees, Ensembles and Instance-Based Methods
+Camera Geometry, Stereo Depth, and Structure-from-Motion  |  /explore/geometric-vision-camera-geometry-depth-sfm-and-slam  |  Computer Vision / Classical and Geometric Vision
+Image Formation, Classical Image Processing, and Feature-Based Recognition  |  /explore/classical-vision-image-processing-and-feature-based-recognition  |  Computer Vision / Classical and Geometric Vision
+3D Representations: Point Clouds, Neural Radiance Fields, and Gaussian Splatting  |  /explore/three-dimensional-representations-point-clouds-neural-rendering-gaussian-splatting  |  Computer Vision / Motion, 3D, and Video Understanding
+Motion, Multi-Object Tracking, Pose, and Video Understanding  |  /explore/motion-pose-and-video-understanding  |  Computer Vision / Motion, 3D, and Video Understanding
+Image Classification Practice and Modern Vision Training Recipes  |  /explore/image-classification-recipes-and-modern-vision-training  |  Computer Vision / Recognition, Detection, and Dense Prediction
+Object Detection and Keypoint Estimation: from R-CNN to DETR  |  /explore/object-detection-and-pose-estimation  |  Computer Vision / Recognition, Detection, and Dense Prediction
+Semantic, Instance, and Panoptic Segmentation: U-Net to SAM  |  /explore/segmentation-from-unet-to-sam  |  Computer Vision / Recognition, Detection, and Dense Prediction
+Evaluation, Benchmarking, Robustness, and Application-Critical Vision  |  /explore/evaluation-benchmarking-in-computer-vision  |  Computer Vision / Visual Representation Learning and Multimodal Vision
+Self-Supervised Visual Representation Learning: Contrastive, Masked, and Distillation  |  /explore/self-supervised-visual-representation-learning  |  Computer Vision / Visual Representation Learning and Multimodal Vision
+Vision-Language Models, Multimodal Alignment, and Visual Reasoning  |  /explore/vision-language-models-and-visual-reasoning  |  Computer Vision / Visual Representation Learning and Multimodal Vision
+Convolutional Networks: Operators, Receptive Fields, and the Architecture Lineage  |  /explore/convolutional-architectures-operations-and-lineage  |  Deep Learning Architectures / Convolutional Architectures
+Mixture-of-Experts and Sparse Computation  |  /explore/mixture-of-experts-sparse-computation  |  Deep Learning Architectures / Scalable and Specialized Computation
+Neural Architecture Search: Meta-Learning, DARTS, Weight Sharing, and LLM-Driven Search  |  /explore/neural-architecture-search-for-architectures  |  Deep Learning Architectures / Scalable and Specialized Computation
+Spiking, Capsule, Liquid, Memory-Augmented, and World-Model Architectures  |  /explore/specialized-and-world-model-architectures  |  Deep Learning Architectures / Scalable and Specialized Computation
+The Diffusion Transformer (DiT) and Token-Based Generative Backbones  |  /explore/diffusion-transformer-architecture  |  Deep Learning Architectures / Scalable and Specialized Computation
+Positional Encoding Mathematics: Sinusoidal, Learned, RoPE, ALiBi, and Long Context  |  /explore/positional-encoding-mathematics-rope-alibi-long-context  |  Deep Learning Architectures / Sequence Model Architectures
+Recurrent Networks, LSTM, GRU, and Sequence-to-Sequence  |  /explore/recurrent-networks-lstm-gru-seq2seq  |  Deep Learning Architectures / Sequence Model Architectures
+State-Space Models: S4, Selective SSMs (Mamba), RWKV, and Hybrids  |  /explore/state-space-models-s4-mamba-rwkv-hybrids  |  Deep Learning Architectures / Sequence Model Architectures
+Sub-Quadratic Attention: Sparsemax, Linear Attention, and Structured Sparsity  |  /explore/sub-quadratic-attention-sparsemax-linear-attention  |  Deep Learning Architectures / Sequence Model Architectures
+Graph Neural Networks: Message Passing, Aggregation, and Expressiveness Limits  |  /explore/graph-neural-networks-message-passing-expressiveness  |  Deep Learning Architectures / Visual and Structured Architectures
+Neural Operators: Learning Maps Between Function Spaces  |  /explore/neural-operators-deeponet-fno  |  Deep Learning Architectures / Visual and Structured Architectures
+Vision Transformers and Convolution-Attention Hybrids  |  /explore/vision-transformer-and-hybrid-backbones  |  Deep Learning Architectures / Visual and Structured Architectures
+Infinite-Width Limit: Neural Tangent Kernel and Mean-Field View  |  /explore/infinite-width-limit-ntk-mean-field  |  Deep Learning Foundations and Theory / Depth as Dynamics and Limit Theory
+Loss Landscapes, Flat Minima, Double Descent, and Grokking  |  /explore/loss-landscapes-and-grokking  |  Deep Learning Foundations and Theory / Depth as Dynamics and Limit Theory
+Residual Connections, Network-as-ODE, and Neural ODEs  |  /explore/residual-connections-and-ode-view  |  Deep Learning Foundations and Theory / Depth as Dynamics and Limit Theory
+From Perceptron to Multilayer Networks  |  /explore/perceptron-to-multilayer-networks-history  |  Deep Learning Foundations and Theory / Network Expressivity, Depth, and History
+Universal Approximation, Depth Separation, and Representation Learning  |  /explore/universal-approximation-and-depth  |  Deep Learning Foundations and Theory / Network Expressivity, Depth, and History
+Evolution Strategies, CMA-ES, and the Natural-Gradient Connection  |  /explore/evolution-strategies-cmaes  |  Evolutionary, Nature-Inspired, and Population-Based Computation / Evolutionary Optimisation
+Evolutionary Computation: Formal Structure, Genetic Algorithms, and Schema Theory  |  /explore/evolutionary-computation-foundations  |  Evolutionary, Nature-Inspired, and Population-Based Computation / Evolutionary Optimisation
+Genetic Programming, Differential Evolution, and Multiobjective Optimisation  |  /explore/genetic-programming-multiobjective  |  Evolutionary, Nature-Inspired, and Population-Based Computation / Evolutionary Optimisation
+Neuroevolution, Quality-Diversity, and Open-Endedness  |  /explore/neuroevolution-quality-diversity  |  Evolutionary, Nature-Inspired, and Population-Based Computation / Learning-Evolution Interfaces and Nature-Inspired Methods
+Swarm and Artificial-Immune Methods, Artificial Life, and Reservoir Computing  |  /explore/nature-inspired-algorithms-critique-alife-reservoir  |  Evolutionary, Nature-Inspired, and Population-Based Computation / Learning-Evolution Interfaces and Nature-Inspired Methods
+Dataset Shift, Noisy Labels, Imbalance and Federated Learning  |  /explore/dataset-shift-noisy-labels-imbalance-and-federated-learning  |  Foundations of Machine Learning / Adaptivity, Continuity and Data Robustness
+Transfer, Online, Active and Continual Learning  |  /explore/transfer-online-active-and-continual-learning  |  Foundations of Machine Learning / Adaptivity, Continuity and Data Robustness
+Semi-Supervised, Self-Supervised and Representation Learning  |  /explore/semi-supervised-self-supervised-and-representation-learning  |  Foundations of Machine Learning / Learning Paradigms
+Unsupervised Learning Foundations  |  /explore/unsupervised-learning-foundations  |  Foundations of Machine Learning / Learning Paradigms
+GANs: Minimax Dynamics, WGAN Theory, and the StyleGAN Lineage  |  /explore/gan-dynamics-equilibria-lineage  |  Generative Modeling / Adversarial and Flow-Based Generators
+Normalizing Flows: Invertible Transformations and Exact Likelihood  |  /explore/normalizing-flow-design-exact-likelihood  |  Generative Modeling / Adversarial and Flow-Based Generators
+Generative Model Evaluation: FID, IS, Precision/Recall, and Likelihood Pitfalls  |  /explore/generative-evaluation-metrics-and-failure-modes  |  Generative Modeling / Evaluating Generative Models
+The Generative Model Landscape: Likelihood, ELBO Structure, and Energy-Based Objectives  |  /explore/generative-model-landscape-likelihood-elbo-ebm  |  Generative Modeling / Likelihood Objectives and Latent-Variable Models
+Variational Autoencoders and Latent-Variable Modeling  |  /explore/vae-latent-variable-objectives  |  Generative Modeling / Likelihood Objectives and Latent-Variable Models
+Diffusion Samplers, Guidance, and Inference-Time Scaling  |  /explore/diffusion-sampling-and-inference-time-scaling  |  Generative Modeling / Score, Diffusion, and Flow Generative Models
+Flow Matching, Rectified Flows, and Discrete Diffusion  |  /explore/flow-matching-rectified-and-discrete-diffusion  |  Generative Modeling / Score, Diffusion, and Flow Generative Models
+Score Matching and Diffusion: DDPM, Score SDE, and DDIM  |  /explore/score-matching-diffusion-theory  |  Generative Modeling / Score, Diffusion, and Flow Generative Models
+Autoregressive Generation of Images, Audio, and Multimodal Sequences  |  /explore/autoregressive-image-audio-generation  |  Generative Modeling / Token-Based and Autoregressive Generation
+Vector Quantization: VQ-VAE, VQGAN, and Tokenizers for Generation  |  /explore/vector-quantized-tokenizers-for-generation  |  Generative Modeling / Token-Based and Autoregressive Generation
+Equivariant Networks for 3D Structure, Molecules, and Point Clouds  |  /explore/equivariant-networks-molecular  |  Graph and Geometric AI / Expressiveness, Applications, and Methodology
+GNN Expressibility: Weisfeiler-Leman Hierarchy, Oversmoothing, and Oversquashing  |  /explore/gnn-expressiveness-wl  |  Graph and Geometric AI / Expressiveness, Applications, and Methodology
+Graph Learning in Practice: Optimisation, Knowledge Graphs, Generation, and Methodology  |  /explore/graph-applications-learning-optimization  |  Graph and Geometric AI / Expressiveness, Applications, and Methodology
+Geometric Deep Learning: Groups, Equivariance, and Message Passing  |  /explore/geometric-deep-learning-symmetry  |  Graph and Geometric AI / Graph Theoretic and Symmetry Foundations
+Graph Neural Network Architectures and Graph Embeddings  |  /explore/gnn-architectures  |  Graph and Geometric AI / Graph Theoretic and Symmetry Foundations
+Spectral Graph Theory, Random Walks, and Graph Isomorphism  |  /explore/spectral-graph-theory-foundations  |  Graph and Geometric AI / Graph Theoretic and Symmetry Foundations
+AI Winters: Overpromise, Patron Withdrawal, and the Cycle  |  /explore/ai-winters-funding-incentives  |  History, Foundations, and Philosophy of AI / AI Intellectual History
+The Successive Paradigms of AI  |  /explore/ai-paradigm-eras  |  History, Foundations, and Philosophy of AI / AI Intellectual History
+Levels of Description, the Cognitive Science Interface, and Benchmarks  |  /explore/levels-of-description-cognition  |  History, Foundations, and Philosophy of AI / Philosophy of Machine Intelligence and Cognition
+Reading a Field's History Without Mythologising It  |  /explore/reading-ai-history-critically  |  History, Foundations, and Philosophy of AI / Philosophy of Machine Intelligence and Cognition
+The Imitation Game, Its Critiques, and Modern Evaluation  |  /explore/turing-test-machine-intelligence  |  History, Foundations, and Philosophy of AI / Philosophy of Machine Intelligence and Cognition
+The Symbol-Grounding Problem and the Embodiment Hypotheses  |  /explore/symbol-grounding-embodiment  |  History, Foundations, and Philosophy of AI / Philosophy of Machine Intelligence and Cognition
+Model Packaging, Portability and Edge Deployment  |  /explore/model-packaging-edge-deployment  |  Inference Systems / Deployment Formats, Edge Inference and Vector Retrieval
+Quantisation, Pruning and Distillation for Deployment  |  /explore/model-compression-for-inference  |  Inference Systems / Deployment Formats, Edge Inference and Vector Retrieval
+Vector Search and Approximate Nearest Neighbour Indexes  |  /explore/ann-vector-search-indexes  |  Inference Systems / Deployment Formats, Edge Inference and Vector Retrieval
+Continuous Batching, SLOs and Serving Economics  |  /explore/llm-serving-continuous-batching  |  Inference Systems / LLM Serving Architecture and Scheduling
+KV Cache Management and PagedAttention  |  /explore/kv-cache-paged-attention  |  Inference Systems / LLM Serving Architecture and Scheduling
+Prefill/Decode Disaggregation and Phase-Aware Scheduling  |  /explore/prefill-decode-disaggregation  |  Inference Systems / LLM Serving Architecture and Scheduling
+Speculative Decoding and Decoding-Time Acceleration  |  /explore/speculative-decoding  |  Inference Systems / LLM Serving Architecture and Scheduling
+Circuits, Features, and Superposition  |  /explore/circuits-features-superposition  |  Interpretability and Explainability / Mechanistic Interpretability
+Sparse Autoencoders, Causal Interventions, and Open Problems  |  /explore/sparse-autoencoders-causal-interventions  |  Interpretability and Explainability / Mechanistic Interpretability
+Attention, Concepts, and Introspection as Explanations and Their Limits  |  /explore/explanation-evaluation-attention-critique  |  Interpretability and Explainability / Post-Hoc Explanations and Their Critiques
+Attribution Methods (LIME, SHAP) and Their Failure Modes  |  /explore/attribution-lime-shap-failure-modes  |  Interpretability and Explainability / Post-Hoc Explanations and Their Critiques
+Expert Systems, Rule Engines, and Retrieval as Knowledge Representation  |  /explore/expert-systems-and-rules-in-production  |  Knowledge Representation and Automated Reasoning / Logic Programming, Solvers, and Search
+Logic Programming and Answer-Set Programming  |  /explore/answer-set-programming  |  Knowledge Representation and Automated Reasoning / Logic Programming, Solvers, and Search
+Neuro-symbolic Methods, Program Synthesis, and ILP  |  /explore/neurosymbolic-program-synthesis  |  Knowledge Representation and Automated Reasoning / Logic Programming, Solvers, and Search
+Planning under Uncertainty, Partial Observability, and Temporal Domains  |  /explore/planning-under-uncertainty-tamp  |  Knowledge Representation and Automated Reasoning / Logic Programming, Solvers, and Search
+SAT, SMT, and Constraint Solving  |  /explore/sat-smt-constraint-solving  |  Knowledge Representation and Automated Reasoning / Logic Programming, Solvers, and Search
+Search Algorithms, Heuristics, and Classical Planning  |  /explore/automated-planning-search  |  Knowledge Representation and Automated Reasoning / Logic Programming, Solvers, and Search
+Theorem Proving at Scale: ATPs, Interactive Provers, and AI-Assisted Mathematics  |  /explore/theorem-proving-verification  |  Knowledge Representation and Automated Reasoning / Logic Programming, Solvers, and Search
+First-Order Logic and Automated Deduction  |  /explore/first-order-logic-deduction  |  Knowledge Representation and Automated Reasoning / Representation Formalisms and Logic
+KR Formalisms: Frames, Semantic Networks, Description Logics, Ontologies  |  /explore/knowledge-representation-formalisms  |  Knowledge Representation and Automated Reasoning / Representation Formalisms and Logic
+Modal, Epistemic and Temporal Logic for Agents  |  /explore/epistemic-temporal-logic-agents  |  Knowledge Representation and Automated Reasoning / Representation Formalisms and Logic
+Nonmonotonic Reasoning: Defaults, Circumscription, Argumentation  |  /explore/nonmonotonic-reasoning  |  Knowledge Representation and Automated Reasoning / Representation Formalisms and Logic
+Long-Run Training Reliability, Checkpointing and Cluster Scheduling  |  /explore/training-reliability-checkpointing-scheduling  |  Large-Scale Training Systems / Long-Run Reliability, Checkpointing and Cluster Scheduling
+Activation Memory: Checkpointing, Recomputation and Offloading  |  /explore/activation-checkpointing-memory-optimization  |  Large-Scale Training Systems / Parallelism and Communication
+Collective Communication and Interconnect Fabrics  |  /explore/collective-communication-interconnects  |  Large-Scale Training Systems / Parallelism and Communication
+Data Parallelism, ZeRO Stages and Fully Sharded Data Parallel  |  /explore/data-parallelism-zero-sharding  |  Large-Scale Training Systems / Parallelism and Communication
+Mixture-of-Experts and Expert Parallelism  |  /explore/expert-parallelism-moe-training  |  Large-Scale Training Systems / Parallelism and Communication
+Pipeline Parallelism and Microbatch Schedules  |  /explore/pipeline-parallelism-schedules  |  Large-Scale Training Systems / Parallelism and Communication
+Tensor Parallelism and Sequence/Context Parallelism  |  /explore/tensor-parallelism-sequence-parallelism  |  Large-Scale Training Systems / Parallelism and Communication
+Accelerator Landscape and Hardware-Software Co-design  |  /explore/accelerator-landscape-hardware-codesign  |  ML Systems & Hardware / GPU Architecture, Performance Models and Compilers
+GPU Architecture and the CUDA Programming Model  |  /explore/gpu-architecture-cuda-programming  |  ML Systems & Hardware / GPU Architecture, Performance Models and Compilers
+ML Compilers, Intermediate Representations and Operator Fusion  |  /explore/ml-compilers-operator-fusion  |  ML Systems & Hardware / GPU Architecture, Performance Models and Compilers
+Numerical Formats and Mixed-Precision Training  |  /explore/numerical-formats-mixed-precision  |  ML Systems & Hardware / GPU Architecture, Performance Models and Compilers
+Roofline Analysis, Profiling and Performance Tuning  |  /explore/roofline-model-performance-profiling  |  ML Systems & Hardware / GPU Architecture, Performance Models and Compilers
+Approximation Theory for Machine Learning  |  /explore/approximation-theory-for-machine-learning  |  Mathematical Foundations / Approximation Theory and Numerical Methods
+Numerical Methods for PDEs, Quadrature and Sampling  |  /explore/numerical-methods-for-pdes-quadrature-and-sampling  |  Mathematical Foundations / Approximation Theory and Numerical Methods
+Tensor and Multilinear Algebra  |  /explore/tensor-and-multilinear-algebra  |  Mathematical Foundations / Calculus, Variational Methods and Tensor Algebra
+Vector Calculus and the Calculus of Variations  |  /explore/vector-calculus-and-calculus-of-variations  |  Mathematical Foundations / Calculus, Variational Methods and Tensor Algebra
+Computational Complexity and Hardness of Learning  |  /explore/computational-complexity-and-hardness-of-learning  |  Mathematical Foundations / Computational Complexity and Statistical Learning Theory
+Minimax Rates, No-Free-Lunch and PAC-Bayes  |  /explore/minimax-rates-no-free-lunch-and-pac-bayes  |  Mathematical Foundations / Computational Complexity and Statistical Learning Theory
+Logic, Probabilistic Reasoning and Knowledge Representation  |  /explore/logical-and-probabilistic-foundations-of-reasoning  |  Mathematical Foundations / Discrete Mathematics, Logic and Graphs
+Spectral Graph Theory for Learning  |  /explore/spectral-graph-theory-for-learning  |  Mathematical Foundations / Discrete Mathematics, Logic and Graphs
+Dynamical Systems, Stability and Optimal Control  |  /explore/dynamical-systems-stability-and-control  |  Mathematical Foundations / Dynamical Systems, Games and Control
+Game Theory for Machine Learning  |  /explore/game-theory-for-learning  |  Mathematical Foundations / Dynamical Systems, Games and Control
+Fourier Analysis for Machine Learning  |  /explore/fourier-analysis-for-machine-learning  |  Mathematical Foundations / Functional Analysis and Harmonic Analysis
+Functional Analysis and Reproducing Kernel Hilbert Spaces  |  /explore/functional-analysis-and-reproducing-kernel-hilbert-spaces  |  Mathematical Foundations / Functional Analysis and Harmonic Analysis
+Differential Geometry and Information Geometry  |  /explore/differential-geometry-and-information-geometry  |  Mathematical Foundations / Geometry, Topology and Random Matrix Theory
+Random Matrix Theory for Machine Learning  |  /explore/random-matrix-theory-for-ml  |  Mathematical Foundations / Geometry, Topology and Random Matrix Theory
+Topological Data Analysis and Persistent Homology  |  /explore/topological-data-analysis-and-persistent-homology  |  Mathematical Foundations / Geometry, Topology and Random Matrix Theory
+Algorithmic Information Theory and Minimum Description Length  |  /explore/algorithmic-information-theory-and-mdl  |  Mathematical Foundations / Information Theory and Encoding
+Information Theory and f-Divergences  |  /explore/information-theory-and-f-divergences  |  Mathematical Foundations / Information Theory and Encoding
+Matrix Analysis and Eigenvalue Theory  |  /explore/matrix-analysis-and-eigenvalue-theory  |  Mathematical Foundations / Linear Algebra and Matrix Theory
+Matrix Decompositions and Low-Rank Approximation  |  /explore/matrix-decompositions-and-low-rank-approximation  |  Mathematical Foundations / Linear Algebra and Matrix Theory
+Numerical Linear Algebra and Stability  |  /explore/numerical-linear-algebra-and-stability  |  Mathematical Foundations / Numerical Analysis and Automatic Differentiation
+Distributed and Federated Optimization  |  /explore/distributed-and-federated-optimization  |  Mathematical Foundations / Optimization
+First-Order, Proximal and Splitting Methods  |  /explore/first-order-proximal-and-splitting-methods  |  Mathematical Foundations / Optimization
+Non-Convex Optimization and Landscape Analysis  |  /explore/nonconvex-optimization-and-landscape-theory  |  Mathematical Foundations / Optimization
+Second-Order, Quasi-Newton and Trust-Region Methods  |  /explore/second-order-quasi-newton-and-trust-region-methods  |  Mathematical Foundations / Optimization
+Stochastic Approximation and SGD Theory  |  /explore/stochastic-approximation-and-sgd-theory  |  Mathematical Foundations / Optimization
+High-Dimensional Probability and Concentration  |  /explore/high-dimensional-probability-and-concentration  |  Mathematical Foundations / Probability and Stochastic Processes
+Markov Chains and Stochastic Processes  |  /explore/markov-chains-and-stochastic-processes  |  Mathematical Foundations / Probability and Stochastic Processes
+Measure-Theoretic Probability and Martingales  |  /explore/measure-theoretic-probability-and-martingales  |  Mathematical Foundations / Probability and Stochastic Processes
+Optimal Transport and Wasserstein Geometry  |  /explore/optimal-transport-and-wasserstein-geometry  |  Mathematical Foundations / Probability and Stochastic Processes
+Statistical Decision Theory and Minimax Estimation  |  /explore/statistical-decision-theory-and-minimax-estimation  |  Mathematical Foundations / Statistics and Inference
+Algorithmic Auditing and AI Governance  |  /explore/algorithmic-accountability-auditing-governance  |  Privacy, Fairness, Accountability, and Governance / Fairness, Accountability, and Governance
+Fairness Definitions, Impossibility, and Mitigation  |  /explore/fairness-definitions-impossibility-mitigation  |  Privacy, Fairness, Accountability, and Governance / Fairness, Accountability, and Governance
+Differential Privacy, Composition, and DP-SGD  |  /explore/differential-privacy-dp-sgd  |  Privacy, Fairness, Accountability, and Governance / Privacy-Enhancing Technologies
+Federated Learning, Secure Aggregation, and Private Inference  |  /explore/federated-secure-aggregation-private-inference  |  Privacy, Fairness, Accountability, and Governance / Privacy-Enhancing Technologies
+Approximate Inference: Loopy BP, Variational Methods, EP, and AMP  |  /explore/approximate-inference-variational-ep  |  Probabilistic and Bayesian AI / Bayesian Inference and Graphical Models
+Bayesian Modelling and Inference in Practice  |  /explore/bayesian-inference-engineering  |  Probabilistic and Bayesian AI / Bayesian Inference and Graphical Models
+Bayesian Optimization and Bayesian Experimental Design  |  /explore/bayesian-optimization-experimental-design  |  Probabilistic and Bayesian AI / Bayesian Inference and Graphical Models
+Gaussian Processes as a Modelling Framework  |  /explore/gaussian-process-modeling  |  Probabilistic and Bayesian AI / Bayesian Inference and Graphical Models
+Graphical Models: Representation, Inference, and Structure Learning  |  /explore/probabilistic-graphical-model-learning  |  Probabilistic and Bayesian AI / Bayesian Inference and Graphical Models
+Monte Carlo, MCMC, and Sequential Monte Carlo in Practice  |  /explore/mcmc-smc-inference-engineering  |  Probabilistic and Bayesian AI / Bayesian Inference and Graphical Models
+Uncertainty Quantification, Calibration, and Conformal Prediction  |  /explore/uncertainty-quantification-conformal  |  Probabilistic and Bayesian AI / Bayesian Inference and Graphical Models
+Exploration and Intrinsic Motivation: Optimism, Novelty, Curiosity  |  /explore/exploration-intrinsic-motivation  |  Reinforcement Learning & Sequential Decision Making / Exploration, Reward Specification, and Learning from Data
+Imitation Learning: Behavior Cloning, DAgger, and Inverse RL  |  /explore/imitation-learning-inverse-rl  |  Reinforcement Learning & Sequential Decision Making / Exploration, Reward Specification, and Learning from Data
+Reward Shaping, Reward Modeling, and Specification Gaming  |  /explore/reward-shaping-specification-gaming  |  Reinforcement Learning & Sequential Decision Making / Exploration, Reward Specification, and Learning from Data
+Model-Based RL: Dyna to World Models, MBPO, Dreamer, and MuZero  |  /explore/model-based-reinforcement-learning  |  Reinforcement Learning & Sequential Decision Making / Planning, Search, and Model-Based RL
+Monte-Carlo Tree Search and Rollout Planning  |  /explore/mcts-planning-under-uncertainty  |  Reinforcement Learning & Sequential Decision Making / Planning, Search, and Model-Based RL
+Trajectory Optimization, Differential Dynamic Programming, and Model Predictive Control  |  /explore/trajectory-optimization-mpc  |  Reinforcement Learning & Sequential Decision Making / Planning, Search, and Model-Based RL
+Actor-Critic Family: A2C/A3C, DDPG, TD3, SAC, and MPO  |  /explore/actor-critic-continuous-control  |  Reinforcement Learning & Sequential Decision Making / Policy Gradient and Actor-Critic Methods
+PPO, GAE, and Practical Policy Optimization  |  /explore/proximal-policy-optimization-gae  |  Reinforcement Learning & Sequential Decision Making / Policy Gradient and Actor-Critic Methods
+The Policy Gradient Theorem, REINFORCE, Baselines, and Natural Gradients  |  /explore/policy-gradient-theory  |  Reinforcement Learning & Sequential Decision Making / Policy Gradient and Actor-Critic Methods
+Off-Policy Evaluation and Off-Policy Learning  |  /explore/off-policy-evaluation-learning  |  Reinforcement Learning & Sequential Decision Making / RL from Data and in the World
+Offline RL: Distribution Shift and the Theory of Pessimism  |  /explore/offline-rl-pessimism  |  Reinforcement Learning & Sequential Decision Making / RL from Data and in the World
+Safe and Constrained Reinforcement Learning  |  /explore/safe-constrained-rl  |  Reinforcement Learning & Sequential Decision Making / RL from Data and in the World
+Bandits and Regret: The Entry Point to Sequential Decision-Making  |  /explore/bandits-regret-analysis  |  Reinforcement Learning & Sequential Decision Making / Sequential Decision-Making Foundations
+MDP Solution Theory: Dynamic Programming, Fixed Points, and Linear Programming  |  /explore/mdp-solution-theory  |  Reinforcement Learning & Sequential Decision Making / Sequential Decision-Making Foundations
+POMDPs: Belief-State Reduction and Planning under Partial Observability  |  /explore/pomdp-belief-planning  |  Reinforcement Learning & Sequential Decision Making / Sequential Decision-Making Foundations
+Deep Q-Networks and Descendants: Double, Dueling, Prioritized, Rainbow  |  /explore/deep-q-network-lineage  |  Reinforcement Learning & Sequential Decision Making / Value-Based Reinforcement Learning
+Distributional RL: C51, QR-DQN, and the Return Distribution View  |  /explore/distributional-reinforcement-learning  |  Reinforcement Learning & Sequential Decision Making / Value-Based Reinforcement Learning
+Monte-Carlo Methods, Temporal-Difference Learning, and Eligibility Traces  |  /explore/td-learning-eligibility-traces  |  Reinforcement Learning & Sequential Decision Making / Value-Based Reinforcement Learning
+The Deadly Triad: Bootstrapping, Function Approximation, and Off-Policy Training  |  /explore/deadly-triad-function-approximation  |  Reinforcement Learning & Sequential Decision Making / Value-Based Reinforcement Learning
+Conformal Prediction and Safety Cases  |  /explore/conformal-prediction-and-assurance  |  Reliability and Assurance Engineering / Distribution Shift, OOD Detection, and Uncertainty
+Distribution Shift, Concept Drift, and Out-of-Distribution Detection  |  /explore/distribution-shift-drift-and-ood  |  Reliability and Assurance Engineering / Distribution Shift, OOD Detection, and Uncertainty
+Uncertainty Estimation and Calibration as Safety Infrastructure  |  /explore/uncertainty-quantification-calibration  |  Reliability and Assurance Engineering / Distribution Shift, OOD Detection, and Uncertainty
+Drift Monitoring, Silent Failure, and Human Factors  |  /explore/monitoring-human-factors-automation-complacency  |  Reliability and Assurance Engineering / Monitoring, Human Factors, and Assurance Practice
+Robot State Estimation: Filters, Factor Graphs, and Sensing  |  /explore/robot-state-estimation  |  Robotics and Embodied Intelligence / Perception, Estimation, and Mapping
+SLAM: Simultaneous Localisation and Mapping  |  /explore/robot-slam-mapping-representations  |  Robotics and Embodied Intelligence / Perception, Estimation, and Mapping
+Manipulation: Grasping, Contact Mechanics, and Dexterous Hands  |  /explore/robot-manipulation-grasping-contact  |  Robotics and Embodied Intelligence / Robot Learning and Deployed Autonomy
+Robot Foundation Models, Scaling Laws, and Deployed Embodied Autonomy  |  /explore/robot-foundation-models-and-scaled-autonomy  |  Robotics and Embodied Intelligence / Robot Learning and Deployed Autonomy
+Robot Learning: Demonstration, Imitation, and Reinforcement Learning  |  /explore/robot-learning-imitation-and-rl  |  Robotics and Embodied Intelligence / Robot Learning and Deployed Autonomy
+Robot Control: Position, Force, Impedance, and Visual Servoing  |  /explore/robot-control-and-force-interaction  |  Robotics and Embodied Intelligence / Robot Mechanics, Control, and Interaction
+Robot Kinematics and Rigid-Body Dynamics  |  /explore/robot-kinematics-dynamics  |  Robotics and Embodied Intelligence / Robot Mechanics, Control, and Interaction
+Robot Motion Planning and Navigation  |  /explore/robot-motion-planning  |  Robotics and Embodied Intelligence / Robot Mechanics, Control, and Interaction
